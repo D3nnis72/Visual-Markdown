@@ -4,6 +4,7 @@ visual:
   created: 2026-10-28
   as-of: 2026-11-01
   lang: de
+  badges: { angereichert: ok, offen: warn, fehlt: bad, läuft: info, später: muted }
 ---
 # Alle Bausteine im Überblick
 
@@ -19,6 +20,7 @@ visual:
   created: 2026-10-28
   as-of: 2026-11-01
   lang: de
+  badges: { angereichert: ok, offen: warn, fehlt: bad, läuft: info, später: muted }
 ```
 
 ## Abschnitte mit Kennung {#abschnitte updated=2026-11-01}
@@ -89,12 +91,15 @@ Die fünf Arten von GitHub zeichnet MPE selbst.
 
 ## Normales Markdown {#markdown updated=2026-11-01}
 
-Text mit **fett**, *kursiv*, `Code` und einem [Link](https://github.com), der als Badge mit Link-Icon erscheint. Tastenkürzel wie <kbd>Cmd</kbd> + <kbd>C</kbd> haben eine eigene Form. Tabellen sehen aus wie die Karte der Schrittliste.
+Text mit **fett**, *kursiv*, `Code` und einem [Link](https://github.com), der als Badge mit Link-Icon erscheint. Tastenkürzel wie <kbd>Cmd</kbd> + <kbd>C</kbd> haben eine eigene Form. Tabellen sehen aus wie die Karte der Schrittliste. Wörter, die unter `badges:` im Frontmatter stehen, erscheinen in Tabellenzellen als farbige Pillen.
 
 | Lieferant | Positionen | Stand |
 | --- | ---: | --- |
 | Lieferant A | 120 | angereichert |
 | Lieferant B | 45 | offen |
+| Lieferant C | 80 | läuft |
+| Lieferant D | 12 | fehlt |
+| Lieferant E | 30 | später |
 
 - [x] Eine erledigte Aufgabe
 - [ ] Eine offene Aufgabe
@@ -139,4 +144,4 @@ sequenceDiagram
 
 ## Noch nicht gebaut {#offen updated=2026-11-01}
 
-Aus der ersten Runde fehlen noch Karten für Entscheidungen und Fragen, `chart` für Diagramme aus Tabellen, Badges für gefärbte Tabellenzellen und das Wasserzeichen im PDF. Die zweite Runde mit Links und Erklärungen für IDs, `scale`, `gallery` und `compare` ist noch nicht begonnen.
+Aus der ersten Runde fehlen noch generische Karten mit `> [!card Icon Farbe] Titel`, `chart` für Diagramme aus Tabellen und das Wasserzeichen im PDF. Die zweite Runde mit Links und Erklärungen für IDs, `scale`, `gallery` und `compare` ist noch nicht begonnen.

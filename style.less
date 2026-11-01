@@ -402,6 +402,8 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
   --vm-error-fill: #faeae7;
   --vm-error-stroke: #c35c51;
   --vm-table-body: #ffffff;
+  --vm-bad-text: #b3443a;
+  --vm-info-fill: #eceefe;
 
   .vm-band, .vm-error {
     display: flex;
@@ -549,6 +551,26 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
     white-space: nowrap;
     svg { flex: none; }
   }
+  /* Badges in Tabellenzellen wie die Health-Werte in LioCare: getönte Fläche, Punkt, getönter Text. */
+  .vm-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 1px 7px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 18px;
+    white-space: nowrap;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    &::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  }
+  .vm-pill-ok { background: var(--vm-band-fill); color: var(--vm-success); }
+  .vm-pill-warn { background: var(--vm-warn-fill); color: var(--vm-warning); }
+  .vm-pill-bad { background: var(--vm-error-fill); color: var(--vm-bad-text); }
+  .vm-pill-info { background: var(--vm-info-fill); color: var(--vm-running); }
+  .vm-pill-muted { background: var(--vm-subtle); color: var(--vm-muted); }
   .vm-badge.vm-date-stale, .vm-badge.vm-date-missing { background: var(--vm-warn-fill); color: var(--vm-warning); }
   code.vm-id { padding: 0; background: none; color: inherit; font-size: 11px; cursor: text; user-select: all; -webkit-user-select: all; }
   /* Beschreibung, Braucht, Als Nächstes, Dependencies und Ziel: kleine gedämpfte
@@ -602,6 +624,8 @@ body.vscode-dark .markdown-preview.markdown-preview {
   --vm-error-fill: #3f1717;
   --vm-error-stroke: #e5484d;
   --vm-table-body: #1e1e1e;
+  --vm-bad-text: #ff8c8c;
+  --vm-info-fill: #1f2759;
 }
 
 /* Chrome soll die Komponentenfarben auch ohne Hintergrundgrafiken drucken. */

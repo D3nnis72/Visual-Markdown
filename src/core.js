@@ -4,6 +4,7 @@ import { parseSteps } from './steps/parse.js';
 import { validateSteps, computeSteps } from './steps/compute.js';
 import { renderSteps, renderError } from './steps/render.js';
 import { renderSection, sectionIds } from './sections.js';
+import { parseBadges, isTableSeparator, isTableRow, renderTableRow } from './badges.js';
 
 export function transform(markdown, { today = new Date() } = {}) {
   const { visual, endLine } = readVisual(markdown);
@@ -17,6 +18,8 @@ export function transform(markdown, { today = new Date() } = {}) {
   let changed = Boolean(band);
   let fence = null;
   let section = null;
+  const badges = parseBadges(visual?.badges);
+  let tableBody = false;
   const insertBand = () => output.push('', band, '');
   if (band && bandAfter === -1) insertBand();
   for (let i = 0; i < lines.length; i++) {
@@ -47,6 +50,12 @@ export function transform(markdown, { today = new Date() } = {}) {
         output.push('', html, '');
         changed = true;
         i = end;
+      } else if (badges.size && tableBody && isTableRow(line)) {
+        output.push(renderTableRow(line, badges));
+        changed = true;
+      } else if (badges.size && isTableSeparator(line) && isTableRow(lines[i - 1] ?? '')) {
+        output.push(line);
+        tableBody = true;
       } else if (!open && (section = renderSection(line, lang, today))) {
         output.push(...section);
         changed = true;
@@ -55,6 +64,7 @@ export function transform(markdown, { today = new Date() } = {}) {
         if (open) fence = { char: open[1][0], length: open[1].length };
       }
     }
+    if (!isTableRow(line)) tableBody = false;
     if (band && i === bandAfter) insertBand();
   }
   return changed ? output.join('\n') : markdown;

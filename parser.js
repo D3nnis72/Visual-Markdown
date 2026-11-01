@@ -447,6 +447,28 @@ var __visualMarkdown = (() => {
     return ids;
   }
 
+  // src/badges.js
+  var BADGE_COLORS = ["ok", "warn", "bad", "info", "muted"];
+  var SEPARATOR = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/;
+  function parseBadges(value) {
+    const map = /* @__PURE__ */ new Map();
+    const body = /^\{(.*)\}$/.exec(String(value ?? "").trim())?.[1] ?? "";
+    for (const entry of body.split(",")) {
+      const [word, color] = entry.split(":").map((part) => part?.trim().replace(/^(["'])(.*)\1$/, "$2"));
+      if (word && BADGE_COLORS.includes(color)) map.set(word.toLowerCase(), color);
+    }
+    return map;
+  }
+  var isTableSeparator = (line) => line.includes("-") && SEPARATOR.test(line);
+  var isTableRow = (line) => line.trim().startsWith("|");
+  function renderTableRow(line, badges) {
+    return line.replace(/(\|)([^|]*)(?=\|)/g, (match, pipe, cell) => {
+      const word = cell.trim();
+      const color = badges.get(word.toLowerCase());
+      return color ? `${pipe}${cell.replace(word, `<span class="vm-pill vm-pill-${color}">${escapeHtml(word)}</span>`)}` : match;
+    });
+  }
+
   // src/core.js
   function transform(markdown, { today = /* @__PURE__ */ new Date() } = {}) {
     const { visual, endLine } = readVisual(markdown);
@@ -460,6 +482,8 @@ var __visualMarkdown = (() => {
     let changed = Boolean(band);
     let fence = null;
     let section = null;
+    const badges = parseBadges(visual?.badges);
+    let tableBody = false;
     const insertBand = () => output.push("", band, "");
     if (band && bandAfter === -1) insertBand();
     for (let i = 0; i < lines.length; i++) {
@@ -490,6 +514,12 @@ var __visualMarkdown = (() => {
           output.push("", html, "");
           changed = true;
           i = end;
+        } else if (badges.size && tableBody && isTableRow(line)) {
+          output.push(renderTableRow(line, badges));
+          changed = true;
+        } else if (badges.size && isTableSeparator(line) && isTableRow(lines[i - 1] ?? "")) {
+          output.push(line);
+          tableBody = true;
         } else if (!open && (section = renderSection(line, lang, today))) {
           output.push(...section);
           changed = true;
@@ -498,6 +528,7 @@ var __visualMarkdown = (() => {
           if (open) fence = { char: open[1][0], length: open[1].length };
         }
       }
+      if (!isTableRow(line)) tableBody = false;
       if (band && i === bandAfter) insertBand();
     }
     return changed ? output.join("\n") : markdown;

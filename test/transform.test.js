@@ -67,3 +67,23 @@ test('flags a section id without date and leaves other headings alone', () => {
   assert.equal(run('## Normal\n\nText'), '## Normal\n\nText');
   assert.equal(run('```\n## Code {#x updated=2026-11-01}\n```'), '```\n## Code {#x updated=2026-11-01}\n```');
 });
+const badgeDoc = table => `---\nvisual:\n  badges: { fertig: ok, offen: warn, fehlt: bad, läuft: info, später: muted }\n---\n# T\n\n${table}`;
+test('turns table cells with a configured word into colored pills', () => {
+  const html = run(badgeDoc('| Lieferant | Stand |\n| --- | --- |\n| A | offen |\n| B | Fertig |\n| C | fast fertig |'));
+  assert.match(html, /\| A \| <span class="vm-pill vm-pill-warn">offen<\/span> \|/);
+  assert.match(html, /\| B \| <span class="vm-pill vm-pill-ok">Fertig<\/span> \|/);
+  assert.match(html, /\| C \| fast fertig \|/);
+  assert.match(html, /\| Lieferant \| Stand \|/);
+});
+test('leaves tables alone without badges and inside code fences', () => {
+  const table = '| A | B |\n| --- | --- |\n| x | offen |';
+  assert.equal(transform(table), table);
+  assert.doesNotMatch(run(badgeDoc('```\n' + table + '\n```')), /vm-pill/);
+});
+test('reads all five colors and ignores unknown ones', () => {
+  const html = run(badgeDoc('| S |\n| :-- |\n| fehlt |\n| läuft |\n| später |').replace('später: muted', 'später: muted, egal: lila'));
+  assert.match(html, /vm-pill-bad">fehlt/);
+  assert.match(html, /vm-pill-info">läuft/);
+  assert.match(html, /vm-pill-muted">später/);
+  assert.doesNotMatch(html, /vm-pill-lila/);
+});

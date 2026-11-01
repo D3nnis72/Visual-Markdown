@@ -82,6 +82,17 @@ Positionsnummern gibt es nicht, weil sie sich bei jedem Zustandswechsel verschie
 
 Der Agent pflegt Zustände, Wartegründe, Abschlussbedingungen und Daten in der Datei. Bei jeder Änderung an einem Schritt setzt er dessen `updated` und das `as-of` des Dokuments auf den aktuellen Tag. Der Renderer berechnet daraus die Übersicht, erkennt aber keinen Arbeitsfortschritt außerhalb der Datei. Unterpunkte werden noch nicht unterstützt. Unbekannte Felder, doppelte Kürzel, fehlende Vorgänger und Zyklen erscheinen als Fehler mit Zeilennummer.
 
+## Badges
+
+Eine Zeile `badges:` unter `visual:` im Frontmatter ordnet festen Wörtern eine Farbe zu:
+
+```yaml
+visual:
+  badges: { fertig: ok, offen: warn, fehlt: bad, läuft: info, später: muted }
+```
+
+Jede Tabellenzelle, deren ganzer Text eines dieser Wörter ist, erscheint dann als getönte Pille mit Punkt, wie die Health-Werte in LioCare. Groß- und Kleinschreibung spielt keine Rolle. Die Farben sind `ok` grün, `warn` gelb, `bad` rot, `info` indigo und `muted` grau, andere Werte werden ignoriert. Kopfzeilen, Zellen mit weiterem Text und Tabellen in Codeblöcken bleiben, wie sie sind. In der Datei bleibt die Tabelle eine normale Markdown-Tabelle.
+
 ## Abschnitte
 
 Ein Abschnitt bekommt eine feste Kennung und das Datum seiner letzten Änderung direkt in die Überschrift:
