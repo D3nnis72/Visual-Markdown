@@ -1,0 +1,17 @@
+{
+  "name": "visual-markdown",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build-parser.mjs",
+    "test": "node scripts/build-parser.mjs && node --test test/",
+    "tokens": "node scripts/count-tokens.mjs",
+    "preview": "node scripts/preview.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "gpt-tokenizer": "^4.1.0",
+    "markdown-it": "^15.0.3",
+    "less": "^4.9.1"
+  }
+}
