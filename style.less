@@ -1,6 +1,13 @@
 /* Notion-Look für Markdown Preview Enhanced */
 
 .markdown-preview.markdown-preview {
+  --m-warn-fill: #fdf3dc;
+  --m-warn-stroke: #d9a441;
+  --m-ok-fill: #e7f4ec;
+  --m-ok-stroke: #4caf78;
+  --m-bad-fill: #fbe9e7;
+  --m-bad-stroke: #e5645a;
+
   --text: #37352f;
   --muted: rgba(55, 53, 47, 0.65);
   --border: rgba(55, 53, 47, 0.16);
@@ -156,6 +163,13 @@ body.preview-container.vscode-dark { background: #191919; }
 
 /* Dunkles Theme (wenn VS Code dunkel ist) */
 body.vscode-dark .markdown-preview.markdown-preview {
+  --m-warn-fill: #2c2412;
+  --m-warn-stroke: #b8863a;
+  --m-ok-fill: #12261b;
+  --m-ok-stroke: #3f9a68;
+  --m-bad-fill: #2d1a18;
+  --m-bad-stroke: #c9544b;
+
   --text: rgba(255, 255, 255, 0.81);
   --muted: rgba(255, 255, 255, 0.46);
   --border: rgba(255, 255, 255, 0.13);
@@ -184,12 +198,6 @@ body.vscode-dark .markdown-preview.markdown-preview {
   --m-line: rgba(55, 53, 47, 0.45);
   --m-text: #37352f;
   --m-bg: #ffffff;
-  --m-warn-fill: #fdf3dc;
-  --m-warn-stroke: #d9a441;
-  --m-ok-fill: #e7f4ec;
-  --m-ok-stroke: #4caf78;
-  --m-bad-fill: #fbe9e7;
-  --m-bad-stroke: #e5645a;
   --m-code-fill: #eaf2ff;   --m-code-stroke: #5b8bd6;
   --m-llm-fill: #fdf1e3;    --m-llm-stroke: #d69a4a;
   --m-human-fill: #e9f6ec;  --m-human-stroke: #4f9d62;
@@ -204,12 +212,6 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
   --m-line: rgba(255, 255, 255, 0.35);
   --m-text: rgba(255, 255, 255, 0.81);
   --m-bg: #191919;
-  --m-warn-fill: #2c2412;
-  --m-warn-stroke: #b8863a;
-  --m-ok-fill: #12261b;
-  --m-ok-stroke: #3f9a68;
-  --m-bad-fill: #2d1a18;
-  --m-bad-stroke: #c9544b;
   --m-code-fill: #101b33;   --m-code-stroke: #4a78c2;
   --m-llm-fill: #2a1d0c;    --m-llm-stroke: #b8863a;
   --m-human-fill: #12261b;  --m-human-stroke: #3f9a68;
@@ -344,4 +346,64 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
     stroke-width: 1.5px !important;
   }
   marker, marker path, .arrowheadPath { fill: var(--m-line) !important; stroke: var(--m-line) !important; }
+}
+
+/* Visual Markdown: Stand-Band und steps */
+.markdown-preview.markdown-preview {
+  .vm-band, .vm-error {
+    display: flex;
+    gap: 12px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--m-ok-fill);
+    border-left: 4px solid var(--m-ok-stroke);
+    margin-bottom: 24px;
+  }
+  .vm-band.vm-stale {
+    background: var(--m-warn-fill);
+    border-left-color: var(--m-warn-stroke);
+  }
+  .vm-band-status { font-weight: 600; }
+  .vm-steps {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 16px 0;
+  }
+  .vm-steps-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .vm-progress {
+    display: inline-block;
+    width: 160px;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    span { display: block; height: 100%; background: var(--m-ok-stroke); }
+  }
+  .vm-steps-list { list-style: none; padding: 0; margin: 8px 0 0; }
+  .vm-step {
+    display: grid;
+    grid-template-columns: 20px 1fr auto auto;
+    gap: 12px;
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+    &:first-child { border-top: 0; }
+  }
+  .vm-label, .vm-who, .vm-note { min-width: 0; overflow-wrap: anywhere; }
+  .vm-who, .vm-note { font-size: 14px; color: var(--muted); }
+  .vm-note { text-align: right; }
+  .vm-done .vm-icon { color: var(--m-ok-stroke); }
+  .vm-done .vm-label { color: var(--muted); }
+  .vm-waiting .vm-icon, .vm-waiting .vm-note { color: var(--m-warn-stroke); }
+  .vm-can-start .vm-note { font-weight: 600; color: var(--m-ok-stroke); }
+  .vm-now, .vm-waves { font-size: 14px; margin-top: 8px; }
+  .vm-error { background: var(--m-bad-fill); border-left-color: var(--m-bad-stroke); }
 }

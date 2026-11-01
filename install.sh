@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verlinkt style.less und config.js in das Crossnote-Verzeichnis von
+# Verlinkt style.less, config.js und parser.js in das Crossnote-Verzeichnis von
 # Markdown Preview Enhanced. Bestehende Dateien werden als .bak gesichert.
 set -euo pipefail
 
@@ -7,7 +7,7 @@ SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEST="${CROSSNOTE_DIR:-$HOME/.local/state/crossnote}"
 
 mkdir -p "$DEST"
-for f in style.less config.js; do
+for f in style.less config.js parser.js; do
   if [ -e "$DEST/$f" ] && [ ! -L "$DEST/$f" ]; then
     mv "$DEST/$f" "$DEST/$f.bak"
     echo "Backup: $DEST/$f.bak"
