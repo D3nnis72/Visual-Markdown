@@ -1,27 +1,19 @@
 import { escapeHtml } from './html.js';
 import { t } from './labels.js';
-export const STALE_DAYS = 7;
-const months = {
-  de: ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'],
-  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-};
+import { copyButton } from './meta.js';
+import { STALE_DAYS, parseDate, formatDate, isStale } from './dates.js';
+
 export function renderBand(visual, today, lang) {
-  if (!visual?.stand && !visual?.status) return '';
-  const language = lang === 'en' ? 'en' : 'de';
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(visual.stand ?? '');
-  let date = visual.stand;
-  let stale = false;
-  if (match) {
-    const [, year, month, day] = match.map(Number);
-    const timestamp = Date.UTC(year, month - 1, day);
-    const parsed = new Date(timestamp);
-    if (parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day) {
-      date = `${day}${language === 'de' ? '.' : ''} ${months[language][month - 1]} ${year}`;
-      stale = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) - timestamp > STALE_DAYS * 86400000;
-    }
-  }
+  const asOf = visual?.['as-of'] ?? visual?.stand;
+  const created = visual?.created;
+  if (!asOf && !visual?.status && !created) return '';
+  const asOfDate = parseDate(asOf);
+  const createdDate = parseDate(created);
+  const stale = Boolean(asOfDate && isStale(asOfDate, today));
   const status = visual.status ? `<span class="vm-band-status">${escapeHtml(visual.status)}</span>` : '';
-  const stand = visual.stand ? `<span>${escapeHtml(t(lang, 'stand', { date }))}</span>` : '';
+  const stand = asOf ? `<span>${escapeHtml(t(lang, 'stand', { date: asOfDate ? formatDate(asOfDate, lang) : asOf }))}</span>` : '';
+  const since = created ? `<span class="vm-band-created">${escapeHtml(t(lang, 'created', { date: createdDate ? formatDate(createdDate, lang) : created }))}</span>` : '';
   const warning = stale ? `<span>${escapeHtml(t(lang, 'stale', { days: STALE_DAYS }))}</span>` : '';
-  return `<div class="vm-band${stale ? ' vm-stale' : ''}">${status}${stand}${warning}</div>`;
+  const copy = copyButton({ lang, className: 'vm-copy-document', label: t(lang, 'copyDocument') });
+  return `<div class="vm-band${stale ? ' vm-stale' : ''}">${status}${stand}${since}${warning}${copy}</div>`;
 }

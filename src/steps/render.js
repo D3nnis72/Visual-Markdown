@@ -1,27 +1,76 @@
 import { escapeHtml, inline } from '../html.js';
 import { t } from '../labels.js';
+import { svg, AGENT_ICON, PERSON_ICON, THREAD_ICON, SINCE_ICON, CAPTION_ICONS, DEPENDENCY_ICON, SECTION_ICON, CHEVRON_ICON } from '../icons.js';
+import { badge, idBadge, updatedBadge, copyButton } from '../meta.js';
 
-export function renderSteps(steps, computed, lang) {
+const ICON_SHAPES = {
+  ready: '<circle cx="8" cy="8" r="6.25"/><path d="M6.75 5.75v4.5L10.25 8z" fill="currentColor"/>',
+  running: '<circle cx="8" cy="8" r="6.25"/><path d="M8 4.25a3.75 3.75 0 0 1 0 7.5z" fill="currentColor" stroke="none"/>',
+  later: '<circle cx="8" cy="8" r="6.25" stroke-dasharray="2.5 2.4"/>',
+  waiting: '<circle cx="8" cy="8" r="6.25"/><path d="M8 5v3.25l2.1 1.3"/>',
+  done: '<circle cx="8" cy="8" r="6.25"/><path d="m5.4 8.15 1.75 1.75 3.45-3.6"/>',
+};
+const icon = (key, className = 'vm-group-icon') => svg(`${className} vm-icon-${key}`, 16, ICON_SHAPES[key]);
+
+// T3 Code thread mentions look like "[Thread: title; ref=…]"; other references only show the label.
+const threadLabel = (reference, lang) => /^\[Thread:\s*([^;\]]+)/.exec(reference)?.[1].trim() || t(lang, 'thread');
+
+/**
+ * One compact row per step, like an issue list: status icon, id tag, title and a one-line
+ * description. Everything else opens in native details, so the overview stays scannable.
+ */
+export function renderSteps(steps, computed, lang, { idPrefix = 'vm-steps', today = new Date(), sections = new Set() } = {}) {
   const byId = new Map(steps.map(step => [step.id, step]));
-  const labels = ids => ids.map(id => byId.get(id).label).join(', ');
-  const icons = { done: '●', running: '◐', waiting: '⏸', open: '○' };
-  const rows = steps.map(step => {
-    const canStart = computed.now.includes(step.id);
-    let note;
-    if (step.state === 'done' || step.state === 'running') note = t(lang, step.state);
-    else if (step.waitingFor) note = t(lang, 'waitingFor', { what: step.waitingFor });
-    else if (step.state === 'waiting') note = t(lang, 'waiting');
-    else if (canStart) note = t(lang, 'canStart');
-    else note = t(lang, 'after', { list: labels(step.after.filter(id => byId.get(id).state !== 'done')) });
-    if (step.since) note += ` (${t(lang, 'since', { when: step.since })})`;
-    const title = step.doneWhen ? ` title="${escapeHtml(step.doneWhen)}"` : '';
-    return `<li class="vm-step vm-${step.state}${canStart ? ' vm-can-start' : ''}"${title}><span class="vm-icon">${icons[step.state]}</span><span class="vm-label">${inline(step.label)}</span><span class="vm-who">${inline(step.who ?? '')}</span><span class="vm-note">${inline(note)}</span></li>`;
-  }).join('');
+  const stateOf = step => step.state === 'open' && step.waitingFor ? 'waiting' : step.state;
+  const groupOf = step => {
+    const state = stateOf(step);
+    if (state !== 'open') return state;
+    return computed.now.includes(step.id) ? 'ready' : 'later';
+  };
+  const groups = ['ready', 'running', 'later', 'waiting', 'done']
+    .map(key => ({ key, steps: steps.filter(step => groupOf(step) === key) }))
+    .filter(group => group.steps.length);
+  const target = id => `${idPrefix}-${id}`;
+  // A dependency takes the color of the step it points to.
+  const dependency = id => `<a href="#${target(id)}" class="vm-dep vm-ref-${groupOf(byId.get(id)) === 'ready' ? 'can-start' : groupOf(byId.get(id)) === 'later' ? 'open' : groupOf(byId.get(id))}" title="${escapeHtml(byId.get(id).label)}">${DEPENDENCY_ICON}${escapeHtml(id)}</a>`;
+  const field = (kind, label, content) => `<div class="vm-field vm-field-${kind}"><div class="vm-caption">${CAPTION_ICONS[kind]}${escapeHtml(t(lang, label))}</div><div class="vm-field-text">${content}</div></div>`;
+
+  const renderRow = step => {
+    const group = groupOf(step);
+    const state = stateOf(step);
+    const pending = step.after.filter(id => byId.get(id).state !== 'done');
+    const since = step.since ? inline(t(lang, 'since', { when: step.since })) : '';
+    const showNeed = state === 'waiting' && step.waitingFor;
+    const need = showNeed ? `<div class="vm-need">${CAPTION_ICONS.needs}${inline(step.waitingFor)}${since ? `, ${since}` : ''}</div>` : '';
+    const summary = step.description ? `<div class="vm-summary">${inline(step.description)}</div>` : '';
+    const owner = step.who && (/^agent\b/i.test(step.who)
+      ? badge('vm-owner vm-agent', AGENT_ICON, inline(step.who))
+      : badge('vm-owner', PERSON_ICON, inline(step.who)));
+    const meta = [
+      ...pending.map(dependency),
+      owner,
+      step.thread ? badge('vm-thread', THREAD_ICON, escapeHtml(threadLabel(step.thread, lang)), step.thread) : '',
+      step.since && !showNeed ? badge('vm-since', SINCE_ICON, inline(step.since), t(lang, 'since', { when: step.since })) : '',
+      updatedBadge(step.updated, lang, today),
+    ].join('');
+    const body = [
+      step.description ? field('description', 'description', inline(step.description)) : '',
+      step.next && (state === 'running' || group === 'ready') ? field('next', 'lineNext', inline(step.next)) : '',
+      step.doneWhen && state !== 'done' ? field('goal', 'goal', inline(step.doneWhen)) : '',
+      sections.has(step.id) ? `<a class="vm-section-link" href="#vm-section-${escapeHtml(step.id)}">${SECTION_ICON}${escapeHtml(t(lang, 'sectionLink'))}</a>` : '',
+    ].join('');
+    const copy = copyButton({ id: step.id, thread: step.thread, lang, label: t(lang, 'copyStep', { id: step.id }) });
+    const head = `${icon(group, 'vm-status-icon')}<div class="vm-row-main">${idBadge(step.id, lang)}<div class="vm-label">${inline(step.label)}</div>${summary}${need}</div><div class="vm-row-end"><div class="vm-meta">${meta}</div>${copy}`;
+    const row = body
+      ? `<details class="vm-row-details"><summary class="vm-row">${head}<span class="vm-chevron">${CHEVRON_ICON}</span></div></summary><div class="vm-row-body">${body}</div></details>`
+      : `<div class="vm-row">${head}<span class="vm-chevron"></span></div></div>`;
+    return `<li id="${target(step.id)}" class="vm-step vm-${state}${group === 'ready' ? ' vm-can-start' : ''}">${row}</li>`;
+  };
+  const rows = groups.map(group =>
+    `<section class="vm-group vm-group-${group.key}"><h3 class="vm-group-title">${icon(group.key)}${escapeHtml(t(lang, `group_${group.key}`))}<span class="vm-group-count">${group.steps.length}</span></h3><ul class="vm-steps-list">${group.steps.map(renderRow).join('')}</ul></section>`).join('');
   const percent = computed.total ? Math.round(100 * computed.done / computed.total) : 0;
   const head = `<div class="vm-steps-head"><span>${escapeHtml(t(lang, 'progress', computed))}</span><span class="vm-progress"><span style="width:${percent}%"></span></span></div>`;
-  const now = `<div class="vm-now">${escapeHtml(t(lang, 'now'))}: ${inline(computed.now.length ? labels(computed.now) : t(lang, 'nothingNow'))}</div>`;
-  const waves = computed.waves.length < 2 ? '' : `<div class="vm-waves">${escapeHtml(t(lang, 'waves'))}: ${computed.waves.map((wave, i) => `${i + 1}: ${inline(labels(wave))}`).join(' · ')}</div>`;
-  return `<div class="vm-steps">${head}<ul class="vm-steps-list">${rows}</ul>${now}${waves}</div>`;
+  return `<div class="vm-steps">${head}${rows}</div>`;
 }
 
 export function renderError(errors, lang) {

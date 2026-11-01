@@ -1,4 +1,4 @@
-import { STATES, FIELDS } from './schema.js';
+import { STATES, FIELDS, LEGACY_FIELDS } from './schema.js';
 import { t } from '../labels.js';
 
 export function parseSteps(body, firstLine, lang) {
@@ -9,19 +9,26 @@ export function parseSteps(body, firstLine, lang) {
     const error = (key, vars) => errors.push({ line, message: t(lang, key, vars) });
     if (!text.trim()) return;
     if (/^\s+- \[/.test(text)) { error('errNested'); return; }
+    const previous = steps[steps.length - 1];
+    if (/^\s/.test(text) && previous) {
+      previous.description = previous.description ? `${previous.description} ${text.trim()}` : text.trim();
+      return;
+    }
     const [head, ...fields] = text.split(' | ');
     const match = /^- \[([x~! ])\] ([a-z0-9][a-z0-9-]*):\s+(.+)$/i.exec(head);
     if (!match || !Object.hasOwn(STATES, match[1])) { error('errMalformed'); return; }
     const step = {
       id: match[2], state: STATES[match[1]], label: match[3].trim(), after: [],
-      waitingFor: null, who: null, doneWhen: null, since: null, line,
+      waitingFor: null, who: null, doneWhen: null, since: null, next: null, description: null, thread: null, updated: null, line,
     };
     for (const field of fields) {
       const colon = field.indexOf(':');
       const name = (colon < 0 ? field : field.slice(0, colon)).trim();
-      if (colon < 0 || !Object.hasOwn(FIELDS, name)) { error('errField', { field: name }); continue; }
+      const property = Object.hasOwn(FIELDS, name) ? FIELDS[name]
+        : Object.hasOwn(LEGACY_FIELDS, name) ? LEGACY_FIELDS[name] : null;
+      if (colon < 0 || !property) { error('errField', { field: name }); continue; }
       const value = field.slice(colon + 1).trim();
-      step[FIELDS[name]] = name === 'nach' ? value.split(',').map(id => id.trim()).filter(Boolean) : value;
+      step[property] = property === 'after' ? value.split(',').map(id => id.trim()).filter(Boolean) : value;
     }
     steps.push(step);
   });

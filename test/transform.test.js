@@ -20,7 +20,7 @@ test('keeps steps inside a longer fence as code', () => {
   assert.equal(run(md), md);
 });
 test('shows an error box with the file line', () => {
-  const result = run('---\nid: x\n---\n# T\n\n```steps\n- [ ] a: A\n- [ ] b: B | nach: zz\n```\n');
+  const result = run('---\nid: x\n---\n# T\n\n```steps\n- [ ] a: A\n- [ ] b: B | after: zz\n```\n');
   assert.match(result, /vm-error/);
   assert.match(result, /Zeile 8/);
 });
@@ -39,4 +39,31 @@ test('escapes HTML and renders code in labels', () => assert.match(run(fence('- 
 test('rendered HTML contains no blank line', () => {
   const result = run(fence(block));
   assert.doesNotMatch(result.slice(result.indexOf('<div'), result.lastIndexOf('</div>') + 6), /\n\n/);
+});
+
+test('reads as-of as the English date field and prefers it to the legacy field', () => {
+  const html = run('---\nvisual:\n  as-of: 2026-11-01\n  stand: 2026-10-01\n---\n# T');
+  assert.match(html, /Stand 1. November 2026/);
+  assert.doesNotMatch(html, /vm-stale/);
+});
+test('shows the created date next to the stand and a document copy button', () => {
+  const html = run('---\nvisual:\n  created: 2026-10-20\n  as-of: 2026-11-01\n---\n# T');
+  assert.match(html, /Stand 1. November 2026<\/span><span[^>]*>erstellt 20. Oktober 2026<\/span>/);
+  assert.match(html, /<button type="button" class="vm-copy vm-copy-document" data-copied="Kopiert" title="Verweis kopieren" aria-label="Verweis auf dieses Dokument kopieren">/);
+  assert.doesNotMatch(html.match(/<div class="vm-band[\s\S]*?<\/div>/)[0], /data-copy-id/);
+});
+test('turns a section heading with an id into a clean heading with badges and a copy button', () => {
+  const lines = run('## Regeln für das Format {#format updated=2026-11-01}\nText darunter').split('\n');
+  assert.equal(lines[0], '## Regeln für das Format');
+  assert.match(lines[1], /^<div class="vm-section-meta" id="vm-section-format">/);
+  assert.match(lines[1], /<code class="vm-id"[^>]*>format<\/code>/);
+  assert.match(lines[1], /class="vm-badge vm-updated" title="aktualisiert 1. Nov."/);
+  assert.match(lines[1], /<button type="button" class="vm-copy vm-copy-section" data-copy-id="format"/);
+  assert.equal(lines[2], '');
+  assert.equal(lines[3], 'Text darunter');
+});
+test('flags a section id without date and leaves other headings alone', () => {
+  assert.match(run('### Offen {#offen}'), /vm-date-missing/);
+  assert.equal(run('## Normal\n\nText'), '## Normal\n\nText');
+  assert.equal(run('```\n## Code {#x updated=2026-11-01}\n```'), '```\n## Code {#x updated=2026-11-01}\n```');
 });

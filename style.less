@@ -51,7 +51,32 @@
     color: var(--link);
     text-decoration: none;
     border-bottom: 0.05em solid rgba(55, 53, 47, 0.4);
-    &:hover { background: rgba(55, 53, 47, 0.06); }
+  }
+  /* Links im Text als Badge mit Link-Icon. */
+  :where(p, li, td, blockquote, .vm-field-text) a:not(.vm-dep):not(.vm-section-link):not(:has(img)) {
+    padding: 1px 7px 1px 6px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--vm-subtle);
+    color: var(--text);
+    font-size: 0.9em;
+    white-space: nowrap;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    &::before {
+      content: "";
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 4px;
+      vertical-align: -1px;
+      background: var(--vm-muted);
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M6.5 9.5l3-3M7.25 4.25l.9-.9a2.6 2.6 0 0 1 3.7 3.7l-.9.9M8.75 11.75l-.9.9a2.6 2.6 0 0 1-3.7-3.7l.9-.9'/%3E%3C/svg%3E") center / contain no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M6.5 9.5l3-3M7.25 4.25l.9-.9a2.6 2.6 0 0 1 3.7 3.7l-.9.9M8.75 11.75l-.9.9a2.6 2.6 0 0 1-3.7-3.7l.9-.9'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
+    &:hover { background: var(--vm-border); }
   }
 
   strong { font-weight: 600; }
@@ -108,24 +133,39 @@
     }
   }
 
-  /* Tabellen */
+  /* Tabellen als Karte wie die Schrittliste: Fläche, runde Ecken, nur Zeilenlinien. */
   table {
-    border-collapse: collapse;
-    margin: 0.8em 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 16px 0;
     width: 100%;
     display: table;
-    font-size: 0.95em;
+    overflow: hidden;
+    font-size: 14px;
+    background: var(--vm-surface);
+    border: 1px solid var(--vm-border);
+    border-radius: 12px;
+    box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.05);
   }
   th, td {
-    border: 1px solid var(--border);
-    padding: 6px 10px;
+    border: 0;
+    border-top: 1px solid var(--vm-border);
+    padding: 14px 16px;
     text-align: left;
+    vertical-align: middle;
+    line-height: 1.45;
   }
+  td { background: var(--vm-table-body); }
   th {
-    background: #f7f6f3;
+    border-top: 0;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    background: var(--vm-subtle);
+    font-size: 12px;
     font-weight: 500;
-    color: var(--muted);
+    color: var(--vm-muted);
   }
+  td:first-child { font-weight: 500; }
   tr:nth-child(even) { background: transparent; }
 
   /* Bilder */
@@ -179,9 +219,8 @@ body.vscode-dark .markdown-preview.markdown-preview {
   --link: rgba(255, 255, 255, 0.81);
   background: #191919;
   pre { background: #202020; }
-  th { background: #202020; }
   kbd { background: #202020; }
-  a { border-bottom-color: rgba(255, 255, 255, 0.4); &:hover { background: rgba(255,255,255,0.08); } }
+  a { border-bottom-color: rgba(255, 255, 255, 0.4); }
 }
 
 /* Schmale Fenster */
@@ -348,62 +387,251 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
   marker, marker path, .arrowheadPath { fill: var(--m-line) !important; stroke: var(--m-line) !important; }
 }
 
-/* Visual Markdown: Stand-Band und steps */
+/* Visual Markdown: Stand-Band und steps. Flächen und Statusfarben an LioCare angelehnt. */
 .markdown-preview.markdown-preview {
+  --vm-surface: #f7f7f8;
+  --vm-border: #e5e5e8;
+  --vm-subtle: #ededf0;
+  --vm-muted: #6b6b74;
+  --vm-success: #26734d;
+  --vm-running: #3b4bd8;
+  --vm-warning: #91621b;
+  --vm-band-fill: #e8f2ed;
+  --vm-band-stroke: #76a88e;
+  --vm-warn-fill: #fcf1db;
+  --vm-error-fill: #faeae7;
+  --vm-error-stroke: #c35c51;
+  --vm-table-body: #ffffff;
+
   .vm-band, .vm-error {
     display: flex;
-    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
     padding: 6px 12px;
     border-radius: 6px;
     font-size: 14px;
-    background: var(--m-ok-fill);
-    border-left: 4px solid var(--m-ok-stroke);
+    background: var(--vm-band-fill);
+    border-left: 4px solid var(--vm-band-stroke);
     margin-bottom: 24px;
   }
   .vm-band.vm-stale {
-    background: var(--m-warn-fill);
-    border-left-color: var(--m-warn-stroke);
+    background: var(--vm-warn-fill);
+    border-left-color: var(--vm-warning);
   }
   .vm-band-status { font-weight: 600; }
   .vm-steps {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 16px;
+    overflow: hidden;
+    background: var(--vm-surface);
+    border: 1px solid var(--vm-border);
+    border-radius: 12px;
+    padding: 0;
+    box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.05);
     margin: 16px 0;
   }
   .vm-steps-head {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 16px;
     font-size: 14px;
-    color: var(--muted);
+    color: var(--vm-muted);
   }
   .vm-progress {
-    display: inline-block;
-    width: 160px;
+    display: block;
+    width: 100%;
     height: 6px;
-    background: var(--border);
+    background: var(--vm-border);
     border-radius: 3px;
     overflow: hidden;
-    span { display: block; height: 100%; background: var(--m-ok-stroke); }
+    span { display: block; height: 100%; background: var(--vm-success); }
   }
-  .vm-steps-list { list-style: none; padding: 0; margin: 8px 0 0; }
+  /* Liste wie in Linear: Gruppenleiste, darunter eine Zeile pro Schritt. */
+  .vm-group-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 8px 16px;
+    border-top: 1px solid var(--vm-border);
+    background: var(--vm-subtle);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--vm-muted);
+  }
+  .vm-group-count { margin-left: 2px; font-weight: 400; color: var(--vm-muted); }
+  .vm-group-icon { flex: none; width: 16px; height: 16px; }
+  .vm-group-done .vm-group-icon { color: var(--vm-success); }
+  .vm-group-ready .vm-group-title { color: var(--vm-success); }
+  .vm-group-running .vm-group-title { color: var(--vm-running); }
+  .vm-group-waiting .vm-group-title { color: var(--vm-warning); }
+  .vm-steps-list { list-style: none; padding: 0; margin: 0; }
   .vm-step {
-    display: grid;
-    grid-template-columns: 20px 1fr auto auto;
-    gap: 12px;
-    padding: 8px 0;
-    border-top: 1px solid var(--border);
-    &:first-child { border-top: 0; }
+    position: relative;
+    margin: 0;
+    border-top: 1px solid var(--vm-border);
+    background: var(--vm-table-body);
+    scroll-margin-top: 24px;
+    &:target { box-shadow: inset 3px 0 0 var(--vm-running); }
   }
-  .vm-label, .vm-who, .vm-note { min-width: 0; overflow-wrap: anywhere; }
-  .vm-who, .vm-note { font-size: 14px; color: var(--muted); }
-  .vm-note { text-align: right; }
-  .vm-done .vm-icon { color: var(--m-ok-stroke); }
-  .vm-done .vm-label { color: var(--muted); }
-  .vm-waiting .vm-icon, .vm-waiting .vm-note { color: var(--m-warn-stroke); }
-  .vm-can-start .vm-note { font-weight: 600; color: var(--m-ok-stroke); }
-  .vm-now, .vm-waves { font-size: 14px; margin-top: 8px; }
-  .vm-error { background: var(--m-bad-fill); border-left-color: var(--m-bad-stroke); }
+  .vm-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    padding: 10px 16px;
+    list-style: none;
+    cursor: default;
+    &::-webkit-details-marker { display: none; }
+  }
+  summary.vm-row { cursor: pointer; &:hover { background: var(--vm-surface); } }
+  summary.vm-row:focus-visible { outline: 2px solid var(--vm-running); outline-offset: -2px; }
+  .vm-status-icon { flex: none; align-self: flex-start; margin-top: 26px; color: var(--vm-muted); }
+  .vm-can-start .vm-status-icon, .vm-done .vm-status-icon { color: var(--vm-success); }
+  .vm-running .vm-status-icon { color: var(--vm-running); }
+  .vm-waiting .vm-status-icon { color: var(--vm-warning); }
+  .vm-row-main { flex: 1 1 260px; min-width: 0; }
+  .vm-row-main .vm-id-badge { margin-bottom: 4px; }
+  .vm-label { font-weight: 500; overflow-wrap: anywhere; }
+  .vm-summary { overflow: hidden; margin-top: 1px; font-size: 13px; color: var(--vm-muted); white-space: nowrap; text-overflow: ellipsis; }
+  .vm-need { display: flex; align-items: center; gap: 5px; margin-top: 3px; font-size: 13px; color: var(--vm-warning); svg { flex: none; } }
+  .vm-chevron { flex: none; width: 14px; color: var(--vm-muted); transition: transform 0.15s; }
+  details[open] > summary .vm-chevron { transform: rotate(90deg); }
+  .vm-row-body { padding: 0 52px 14px 44px; }
+  .vm-row-body .vm-field:first-child { margin-top: 0; }
+  a.vm-section-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 10px;
+    padding: 1px 7px 1px 6px;
+    border-radius: 999px;
+    background: var(--vm-subtle);
+    color: var(--text);
+    font-size: 12px;
+    &::before { display: none; }
+  }
+  a.vm-dep {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 6px;
+    border: 1px solid var(--vm-border);
+    border-radius: 6px;
+    background: transparent;
+    font-family: var(--vm-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 11px;
+    line-height: 18px;
+    white-space: nowrap;
+    &::before { display: none; }
+    &.vm-ref-done, &.vm-ref-can-start { color: var(--vm-success); }
+    &.vm-ref-running { color: var(--vm-running); }
+    &.vm-ref-waiting { color: var(--vm-warning); }
+    &.vm-ref-open { color: var(--vm-muted); }
+    &:hover { border-color: currentColor; }
+  }
+  .vm-row-end { display: flex; align-items: center; gap: 8px; margin-left: auto; min-width: 0; }
+  .vm-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+  /* Kurze Badges mit Icon statt Wörtern: Zuständig, Kennung, Thread, seit, aktualisiert. */
+  .vm-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 1px 7px 1px 6px;
+    border-radius: 999px;
+    background: var(--vm-subtle);
+    color: var(--vm-muted);
+    font-size: 12px;
+    line-height: 18px;
+    white-space: nowrap;
+    svg { flex: none; }
+  }
+  .vm-badge.vm-date-stale, .vm-badge.vm-date-missing { background: var(--vm-warn-fill); color: var(--vm-warning); }
+  code.vm-id { padding: 0; background: none; color: inherit; font-size: 11px; cursor: text; user-select: all; -webkit-user-select: all; }
+  /* Beschreibung, Braucht, Als Nächstes, Dependencies und Ziel: kleine gedämpfte
+     Überschrift mit Icon, darunter der Text. */
+  .vm-field { margin-top: 8px; max-width: 68ch; }
+  .vm-caption { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; line-height: 1.4; color: var(--vm-muted); }
+  .vm-caption-icon { flex: none; }
+  .vm-field-text { margin-top: 1px; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; }
+  .vm-done .vm-field-text { color: var(--vm-muted); }
+  .vm-section-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: -6px 0 14px; }
+  .vm-section-meta .vm-copy { position: static; width: 24px; height: 24px; }
+  /* Der Kopierknopf erscheint nur, wenn visual-markdown.js im Preview läuft. */
+  .vm-copy {
+    display: none;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--vm-muted);
+    cursor: pointer;
+    &:hover { background: var(--vm-subtle); color: var(--text); }
+    &:focus-visible { outline: 2px solid var(--vm-running); outline-offset: 2px; }
+    &.vm-copied { color: var(--vm-success); }
+  }
+  .vm-copy-done { display: none; }
+  .vm-copied .vm-copy-idle { display: none; }
+  .vm-copied .vm-copy-done { display: inline; }
+  .vm-band .vm-copy { position: static; width: 24px; height: 24px; margin: -2px -6px -2px auto; }
+  html.vm-scripts & .vm-copy { display: inline-flex; }
+
+  .vm-done .vm-label { color: var(--vm-muted); }
+  .vm-error { background: var(--vm-error-fill); border-left-color: var(--vm-error-stroke); }
+}
+
+body.vscode-dark .markdown-preview.markdown-preview {
+  --vm-surface: #222222;
+  --vm-border: #303030;
+  --vm-subtle: #2a2a2a;
+  --vm-muted: #9a9a9a;
+  --vm-success: #7be0a0;
+  --vm-running: #aeb8ff;
+  --vm-warning: #f2d06b;
+  --vm-band-fill: #14331f;
+  --vm-band-stroke: #2fb463;
+  --vm-warn-fill: #3a3110;
+  --vm-error-fill: #3f1717;
+  --vm-error-stroke: #e5484d;
+  --vm-table-body: #1e1e1e;
+}
+
+/* Chrome soll die Komponentenfarben auch ohne Hintergrundgrafiken drucken. */
+.markdown-preview.markdown-preview {
+  .vm-band, .vm-band *, .vm-steps, .vm-steps *, .vm-section-meta, .vm-section-meta *, .vm-error, .vm-error * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* PDF: Seitenrand nur einmal setzen, statt zusätzlich das Preview einzurücken. */
+@page { margin: 14mm; }
+@media print {
+  html, body { margin: 0 !important; padding: 0 !important; }
+  .markdown-preview.markdown-preview {
+    max-width: none;
+    width: auto;
+    margin: 0 !important;
+    padding: 0 !important;
+
+    line-height: 1.5;
+    > h1:first-child { margin-top: 0; }
+    h2 { margin-top: 1em; }
+    /* Druckrenderer stellen weiche Schatten teils als graue Rechtecke dar. */
+    .vm-steps { box-shadow: none; }
+    .vm-step { break-inside: avoid; }
+    .vm-row-details::details-content { content-visibility: visible; }
+    .vm-row-details:not([open]) .vm-row-body { display: block; }
+    .vm-chevron { display: none; }
+    .vm-group-title { break-after: avoid; }
+    .vm-copy { display: none !important; }
+  }
 }

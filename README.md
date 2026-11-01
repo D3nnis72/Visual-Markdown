@@ -7,9 +7,13 @@ Notion-Look für die **Markdown Preview Enhanced** Vorschau in VS Code, inklusiv
 | Datei | Zweck |
 | --- | --- |
 | `style.less` | Das Theme: zentrierte Spalte (max. 900px), Notion-Typografie, Code, Tabellen, Zitate, Hell und Dunkel (folgt VS Code) und das Styling aller Mermaid-Diagramme |
+| `parser.js` | Bausteine für das Preview, erzeugt aus `src/`, nicht von Hand ändern |
+| `src/` | Kern zum Einlesen, Prüfen und Rendern sowie der Adapter für MPE |
 | `config.js` | Crossnote-Config mit der Mermaid-Konfiguration: klassischer Look, Schrift, Abstände, gerade Linien |
 | `skills/mermaid-theme` | Agent-Skill: Diagramme nutzen nur die Theme-Klassen und definieren keine Farben |
-| `install.sh` | Verlinkt beide Dateien in `~/.local/state/crossnote/` (Backup der alten Dateien als `.bak`) |
+| `visual-markdown.js` | Kopierknöpfe im Preview, wird von `install.sh` ins MPE-Verzeichnis kopiert |
+| `examples/bausteine.md` | Testseite mit allen Bausteinen, nach Änderungen im MPE-Preview öffnen |
+| `install.sh` | Verlinkt `style.less`, `config.js` und `parser.js` in `~/.local/state/crossnote/` (Backup der alten Dateien als `.bak`), kopiert `visual-markdown.js` und trägt es in `head.html` ein |
 
 ## Einrichten auf einem neuen Gerät
 
@@ -28,6 +32,67 @@ Die Preview überschreibt standardmäßig `margin` mit `0`. Eine gezielte Regel 
 
 - Änderungen an `style.less`: Vorschau neu laden.
 - Änderungen an `config.js` (Mermaid-Optionen): Window neu laden, sonst greifen sie nicht.
+- Danach `examples/bausteine.md` im Preview öffnen. Die Seite zeigt jeden Baustein und sagt, worauf man achten soll.
+
+## Bausteine
+
+Das Stand-Band zeigt den Stand, das Erstellungsdatum und den optionalen Status aus `visual:` im Frontmatter, also `as-of`, `created` und `status`. Beide Daten stehen im Format `JJJJ-MM-TT`. Wer das Dokument ändert, setzt `as-of` neu. Ein Stand, der älter als sieben Tage ist, bekommt eine Warnfarbe. Rechts im Band kopiert ein Knopf den Pfad des Dokuments, damit man mit einem Agent über die ganze Datei sprechen kann. Ein `steps`-Block zeigt Fortschritt und eine nummerierte Arbeitsübersicht mit Zuständen und Zuständigen. Fehler im Block erscheinen mit der Zeilennummer. Das Datum steht unter `visual.as-of`. Die ergänzten Texte sind auf Deutsch, mit `visual.lang: en` auf Englisch.
+
+Das Format steht unter [steps](#steps). Die Bausteine haben eigene Flächen und Statusfarben, angelehnt an [LioCare](https://www.figma.com/design/wc58qYYenP6PLzQ7yuARzW/LioCare?node-id=12-2). Sie sind vom Seitenhintergrund abgesetzt. Normale Tabellen erscheinen im selben Kartenstil wie die Schrittliste, mit runden Ecken und nur waagerechten Linien. Links im Text werden zu Badges mit Link-Icon. Chrome erhält ihre Farben auch beim PDF-Export ohne aktivierte Hintergrundgrafiken. Im PDF entfallen Kartenschatten und der zusätzliche Preview-Einzug. Der Seitenrand beträgt 14 mm. Der Zehn-Sekunden-Test und die abschließende Entscheidung zum Prototyp stehen noch aus.
+
+```bash
+npm install && npm test
+./install.sh
+```
+
+Für den Kopierknopf braucht MPE in den VS-Code-Einstellungen `"markdown-preview-enhanced.enablePreviewScripts": true` und einen vertrauenswürdigen Workspace. `install.sh` kopiert dafür `visual-markdown.js` ins MPE-Verzeichnis und trägt es in `head.html` ein. Kopiert statt verlinkt, weil MPE Links auflöst und Skripte nur aus seinem eigenen Verzeichnis lädt. Nach Änderungen an `visual-markdown.js` deshalb `./install.sh` erneut ausführen. Ohne die Einstellung bleibt der Knopf verborgen, alles andere funktioniert gleich.
+
+`npm test` baut `parser.js` aus `src/` und führt die Tests aus. Das Build-Ergebnis wird mitcommittet, damit die Installation ohne Node funktioniert. `install.sh` verlinkt auch `parser.js` und sichert vorhandene Dateien als `.bak`. Nach Änderungen am Parser in VS Code `Developer: Reload Window` ausführen.
+
+## steps
+
+Die Feldnamen sind Englisch. Ältere deutsche Feldnamen und `visual.stand` bleiben zum Lesen bestehender Dateien unterstützt. Ein `steps`-Block bleibt in der Datei eine lesbare Checkliste. Die Zustände sind `[x]` fertig, `[~]` läuft, `[!]` wartet und `[ ]` offen. Jeder Schritt hat ein festes Kürzel. Optionale Angaben folgen nach ` | `. Eingerückter Text unter der Zeile ist die Beschreibung des Schritts:
+
+| Feld | Bedeutung |
+| --- | --- |
+| `after` | Kürzel der vorher nötigen Schritte, durch Kommas getrennt |
+| `waiting-for` | Externe Rückmeldung oder Bedingung |
+| `owner` | Zuständige Person, Team oder `Agent`, als Badge mit Personen- oder Agent-Icon |
+| `done-when` | Abschlussbedingung, erscheint als „Ziel“, bei fertigen Schritten ausgeblendet |
+| `since` | Zeitpunkt, seit dem der Zustand gilt, bei wartenden Schritten hinter dem Wartegrund |
+| `next` | Konkrete nächste Handlung bei laufender oder startbereiter Arbeit |
+| `updated` | Pflichtfeld: Datum der letzten Änderung am Schritt, Format `JJJJ-MM-TT` |
+| `thread` | T3-Code-Thread, in dem ein Agent an dem Schritt arbeitet, als Erwähnung im Format `[Thread: Titel; ref=…]` |
+
+```steps
+- [x] prep: Daten vorbereiten | owner: Team | updated: 2026-11-01
+- [~] run: Verarbeitung ausführen | next: Stichprobe prüfen | after: prep | done-when: alle Eingaben verarbeitet und Fehler geprüft | owner: Team | updated: 2026-11-01
+  Wir ergänzen fehlende Angaben in den ausgelesenen Positionen. Erst danach lassen sich die Preise verschiedener Lieferanten vergleichen.
+- [ ] review: Ergebnisse prüfen | after: run | updated: 2026-11-01
+- [!] approve: Freigabe einholen | waiting-for: Rückmeldung | updated: 2026-11-01
+- [ ] publish: Ergebnisse übernehmen | after: review, approve | updated: 2026-11-01
+- [ ] docs: Dokumentation vorbereiten | updated: 2026-11-01
+```
+
+Der Titel sagt das Ergebnis des Schritts. Die Beschreibung sagt in ein bis drei Sätzen, was passiert und warum es wichtig ist, und der erste Satz muss allein verständlich sein, weil er in der Übersicht als Zeile steht. Interne Kürzel brauchen eine Erklärung. Mehrere eingerückte Zeilen werden zu einem Absatz zusammengefasst. Ausführliches gehört in einen Abschnitt mit derselben Kennung wie der Schritt, also `## Badges {#badges updated=…}` zum Schritt `badges`. Der Schritt verlinkt dann von selbst darauf.
+
+Die Liste sieht aus wie eine Aufgabenliste in Linear. Sie ist nach Zustand gruppiert, in „Kann starten“, „Läuft“, „Geplant“, „Wartet“ und „Fertig“, jede Gruppe mit Icon und Anzahl. Leere Gruppen entfallen, innerhalb einer Gruppe bleibt die Dateireihenfolge. Jeder Schritt ist eine Zeile: Status-Icon, die feste Kennung klein über dem Titel, darunter die Beschreibung gekürzt auf eine Zeile. Bei wartenden Schritten steht dort zusätzlich der Wartegrund mit „seit“. Rechts stehen die offenen Dependencies mit ihrer Kennung, Zuständige als Person oder Agent, Thread, gegebenenfalls „seit“, das Datum der letzten Änderung, der Kopierknopf und ein Pfeil. Ein Klick auf die Zeile klappt die volle Beschreibung, „Als Nächstes“, „Ziel“ aus `done-when` und den Link zum Abschnitt auf. Im PDF ist alles aufgeklappt. Ein Klick auf den Kopierknopf kopiert nur und klappt nichts auf. „Kann starten“ enthält offene Schritte ohne ausstehende Vorgänger und ohne Wartegrund, „Geplant“ die Schritte, deren Vorgänger noch nicht fertig sind, „Wartet“ Schritte mit Wartegrund oder `[!]`. Die feste Kennung lässt sich zum Kopieren als Ganzes markieren.
+
+Positionsnummern gibt es nicht, weil sie sich bei jedem Zustandswechsel verschieben würden. Wie in Linear ist die feste Kennung der Name eines Schritts. Dependencies zeigen deshalb die Kennung, verlinken auf den Schritt und haben seine Farbe, also gelb, wenn er wartet. Erfüllte Voraussetzungen verschwinden. Der Thread erscheint als Badge mit seinem Titel. Der Kopierknopf kopiert einen Verweis wie `/pfad/zur/datei.md#enrich` und hängt den Thread an, falls `thread` gesetzt ist. Den Verweis fügt man in den Chat mit einem Agent ein, damit klar ist, über welchen Schritt man spricht.
+
+Der Agent pflegt Zustände, Wartegründe, Abschlussbedingungen und Daten in der Datei. Bei jeder Änderung an einem Schritt setzt er dessen `updated` und das `as-of` des Dokuments auf den aktuellen Tag. Der Renderer berechnet daraus die Übersicht, erkennt aber keinen Arbeitsfortschritt außerhalb der Datei. Unterpunkte werden noch nicht unterstützt. Unbekannte Felder, doppelte Kürzel, fehlende Vorgänger und Zyklen erscheinen als Fehler mit Zeilennummer.
+
+## Abschnitte
+
+Ein Abschnitt bekommt eine feste Kennung und das Datum seiner letzten Änderung direkt in die Überschrift:
+
+```markdown
+## Regeln für das Format {#format updated=2026-11-01}
+```
+
+Im Preview verschwinden die geschweiften Klammern. Unter der Überschrift stehen dann Badges für Kennung und Datum und ein Kopierknopf für `pfad.md#format`. Ein altes oder fehlendes Datum erscheint wie bei Schritten in Warnfarbe. Überschriften ohne Klammern bleiben unverändert. Auf GitHub sind die Klammern als Text sichtbar.
+
+Die Kennungen sind die Übersicht für Agents. `grep -n '^## ' datei.md` zeigt pro Abschnitt eine Zeile mit Kennung, Datum und Titel, ohne dass die ganze Datei gelesen werden muss. Bevor ein Agent etwas ergänzt, liest er diese Liste, schreibt in den zuständigen Abschnitt und setzt dessen `updated` auf heute. Einen neuen Abschnitt legt er nur für ein Thema an, das noch keiner abdeckt.
 
 ## Mermaid-Diagramme
 

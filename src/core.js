@@ -3,6 +3,7 @@ import { renderBand } from './band.js';
 import { parseSteps } from './steps/parse.js';
 import { validateSteps, computeSteps } from './steps/compute.js';
 import { renderSteps, renderError } from './steps/render.js';
+import { renderSection, sectionIds } from './sections.js';
 
 export function transform(markdown, { today = new Date() } = {}) {
   const { visual, endLine } = readVisual(markdown);
@@ -11,9 +12,11 @@ export function transform(markdown, { today = new Date() } = {}) {
   const lines = markdown.split(/\r?\n/);
   const firstContent = lines.findIndex((line, i) => i > endLine && line.trim());
   const bandAfter = firstContent >= 0 && /^# /.test(lines[firstContent]) ? firstContent : endLine;
+  const sections = sectionIds(lines);
   const output = [];
   let changed = Boolean(band);
   let fence = null;
+  let section = null;
   const insertBand = () => output.push('', band, '');
   if (band && bandAfter === -1) insertBand();
   for (let i = 0; i < lines.length; i++) {
@@ -37,13 +40,16 @@ export function transform(markdown, { today = new Date() } = {}) {
         try {
           const { steps, errors } = parseSteps(lines.slice(i + 1, end).join('\n'), i + 2, lang);
           errors.push(...validateSteps(steps, lang));
-          html = errors.length ? renderError(errors, lang) : renderSteps(steps, computeSteps(steps), lang);
+          html = errors.length ? renderError(errors, lang) : renderSteps(steps, computeSteps(steps), lang, { idPrefix: `vm-steps-${i + 1}`, today, sections });
         } catch (error) {
           html = renderError([{ line: i + 2, message: String(error.message ?? error) }], lang);
         }
         output.push('', html, '');
         changed = true;
         i = end;
+      } else if (!open && (section = renderSection(line, lang, today))) {
+        output.push(...section);
+        changed = true;
       } else {
         output.push(line);
         if (open) fence = { char: open[1][0], length: open[1].length };
