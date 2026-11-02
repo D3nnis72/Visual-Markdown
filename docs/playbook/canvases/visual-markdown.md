@@ -84,6 +84,7 @@ visual:
 ## Später
 
 - Bei `steps`: Graph-Ansicht als Mermaid-Diagramm, die längste Kette bis zum Ziel, die Prüfung, ob parallele Schritte dieselben Dateien schreiben, und Fortschritt aus Unterpunkten.
+- Das Check-Skript prüft relative Links in Blöcken. Die Linkprüfung in DocDriven-Projekten überspringt Codeblöcke und sieht Links in `steps` deshalb nicht.
 - Verweise auf IDs und Begriffe in anderen Dateien. Dafür bräuchte es einen vorher gebauten Index, weil der Parser keine Dateien lesen kann.
 - Weitere Chart-Typen wie Boxplot oder Flächendiagramm bei Bedarf. Anteile, Heatmap, Wasserfall, Pareto, Streudiagramm, Fortschritt und Kennzahlen gibt es seit dem 2. November.
 

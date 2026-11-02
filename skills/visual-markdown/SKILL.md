@@ -7,6 +7,8 @@ description: Use when writing, converting or updating a document people look at 
 
 Visual Markdown is plain `.md` that the MPE parser and theme from this repo render as status band, work list, cards and charts. The file holds content and state; the renderer adds all visuals. **The [README](../../README.md) owns the format**, every field of every block. Read the parts you need before writing. [examples/bausteine.md](../../examples/bausteine.md) shows every block once.
 
+These paths are relative to the repo root. The skill directory is usually a symlink, so find the root with `git -C <this skill's directory> rev-parse --show-toplevel` instead of resolving `../..` by hand.
+
 Not for knowledge docs that mainly agents read: those stay plain Markdown.
 
 ## Pick the block by the content
@@ -15,7 +17,7 @@ Not for knowledge docs that mainly agents read: those stay plain Markdown.
 | --- | --- |
 | Status, as-of date, creation date | `visual:` front matter, shown as the band |
 | Work with owners, states and dependencies | `steps` |
-| Decision, question, risk, idea | `> [!card icon color] Title`, with the ID first when it has one (`E51: …`, `Frage 6: …`), so the ID links to the card everywhere else in the file |
+| Decision, question, risk, idea | `> [!card icon color] Title`, with the ID first when it has one (`E51: …`, `Frage 6: …`), so the ID links to the card everywhere else in the file. Only the file that owns the ID makes the card, other files link to it |
 | Abbreviations and domain terms a reader may not know | `glossary` block, one `Term: explanation` per line |
 | Numbers worth seeing | Table, then `chart` directly below it. Pick the `type` by what the reader must do with the numbers (README, Diagramme) and put the link to the analysis in `source` |
 | A few headline numbers | Table, then `chart` with `type: kpi` |
@@ -52,7 +54,7 @@ Everything else stays normal Markdown, flows stay Mermaid (skill `mermaid-theme`
 ## Check before you finish
 
 ```bash
-node <this skill's directory>/../../scripts/check.mjs --strict path/to/file.md
+node "$(git -C <this skill's directory> rev-parse --show-toplevel)/scripts/check.mjs" --strict path/to/file.md
 ```
 
 Errors are blocks that render as an error box. Warnings are missing dates, missing descriptions on open steps, a chart without `source`, an `as-of` older than the newest `updated`, or a customer page without `share: intern`. Fix all of them, or say in your reply why one stays.
