@@ -430,7 +430,7 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
   }
   .vm-watermark { display: none; }
 
-  .vm-chart {
+  .vm-chart, .vm-scale, .vm-gallery {
     margin: 24px 0;
     padding: 16px 20px 14px;
     background: var(--vm-table-body);
@@ -456,6 +456,72 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
   .vm-kpi-label { font-size: 12px; color: var(--vm-muted); }
   .vm-kpi-value { margin-top: 4px; font-size: 26px; font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; }
   .vm-kpi-note { margin-top: 2px; font-size: 12px; color: var(--vm-muted); }
+
+  /* scale: ein Band über den ganzen Bereich, Teile getönt wie die Pillen, Grenzen darunter, Markierungen darüber. */
+  .vm-scale-track { position: relative; margin-top: 4px; }
+  .vm-scale-has-markers .vm-scale-track { margin-top: 30px; }
+  .vm-scale-two-rows .vm-scale-track { margin-top: 50px; }
+  .vm-scale-marker-up .vm-scale-marker-label { bottom: calc(100% + 24px); }
+  .vm-scale-marker-up::before { content: ""; position: absolute; bottom: 100%; left: -2px; height: 20px; border-left: 2px solid var(--text); opacity: 0.35; }
+  .vm-scale-parts { display: flex; gap: 2px; height: 34px; }
+  .vm-scale-part {
+    display: flex; align-items: center; justify-content: center; min-width: 0; padding: 0 8px;
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+    &:first-child { border-radius: 8px 0 0 8px; }
+    &:last-child { border-radius: 0 8px 8px 0; }
+    &:only-child { border-radius: 8px; }
+    span { overflow: hidden; text-overflow: ellipsis; }
+    &.vm-scale-narrow { padding: 0 3px; font-size: 11px; }
+  }
+  .vm-scale-ok { background: var(--vm-band-fill); color: var(--vm-success); }
+  .vm-scale-warn { background: var(--vm-warn-fill); color: var(--vm-warning); }
+  .vm-scale-bad { background: var(--vm-error-fill); color: var(--vm-bad-text); }
+  .vm-scale-info { background: var(--vm-info-fill); color: var(--vm-running); }
+  .vm-scale-muted { background: var(--vm-subtle); color: var(--vm-muted); }
+  .vm-scale-marker {
+    position: absolute; z-index: 1; top: -6px; bottom: -6px; width: 0;
+    border-left: 2px solid var(--text);
+    transform: translateX(-1px);
+  }
+  .vm-scale-marker-label {
+    position: absolute; bottom: calc(100% + 4px); left: 0; transform: translateX(-50%);
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+  }
+  .vm-scale-ticks { position: relative; height: 18px; margin-top: 6px; font-size: 12px; color: var(--vm-muted); }
+  .vm-scale-tick { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+  .vm-scale-tick-start { transform: none; }
+  .vm-scale-tick-end { transform: translateX(-100%); }
+
+  /* gallery: Bilder im Raster, jede Bildunterschrift darunter. */
+  .vm-gallery-grid { display: grid; grid-template-columns: repeat(var(--vm-gallery-columns, 2), minmax(0, 1fr)); gap: 16px; align-items: start; }
+  .vm-gallery-item {
+    margin: 0;
+    p { margin: 0; }
+    img { display: block; width: 100%; height: auto; margin: 0; border: 1px solid var(--vm-border); border-radius: 8px; }
+    figcaption { margin-top: 8px; font-size: 12px; color: var(--vm-muted); }
+  }
+
+  /* compare: Optionen als Spalten nebeneinander, die Empfehlung grün umrandet. Keine Karte um die Karten. */
+  .vm-compare { margin: 24px 0; break-inside: avoid; }
+  .vm-compare-says { font-weight: 600; margin-bottom: 10px; }
+  .vm-compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; align-items: stretch; }
+  .vm-compare-option {
+    padding: 14px 16px;
+    background: var(--vm-surface);
+    border: 1px solid var(--vm-border);
+    border-radius: 12px;
+  }
+  .vm-compare-recommended { border-color: var(--vm-band-stroke); box-shadow: inset 0 0 0 1px var(--vm-band-stroke); }
+  .vm-compare-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
+  .vm-compare-title { font-weight: 600; overflow-wrap: anywhere; }
+  .vm-compare-text { margin-top: 6px; font-size: 13px; line-height: 1.5; color: var(--vm-muted); }
+  .vm-compare-list {
+    margin: 10px 0 0; padding: 0; list-style: none; font-size: 14px; line-height: 1.45;
+    li { display: flex; gap: 7px; margin: 4px 0 0; }
+    svg { flex: none; margin-top: 3px; }
+  }
+  .vm-compare-pros svg { color: var(--vm-success); }
+  .vm-compare-cons svg { color: var(--vm-bad-text); }
   .vm-steps {
     overflow: hidden;
     background: var(--vm-surface);
@@ -710,7 +776,7 @@ body.vscode-dark .markdown-preview.markdown-preview .vm-chart {
 
 /* Chrome soll die Komponentenfarben auch ohne Hintergrundgrafiken drucken. */
 .markdown-preview.markdown-preview {
-  .vm-band, .vm-band *, .vm-chart, .vm-chart *, .vm-watermark, .vm-watermark *, .vm-steps, .vm-steps *, .vm-section-meta, .vm-section-meta *, .vm-error, .vm-error * {
+  .vm-band, .vm-band *, .vm-chart, .vm-chart *, .vm-scale, .vm-scale *, .vm-compare, .vm-compare *, .vm-watermark, .vm-watermark *, .vm-steps, .vm-steps *, .vm-section-meta, .vm-section-meta *, .vm-error, .vm-error * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

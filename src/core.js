@@ -4,7 +4,7 @@ import { parseSteps } from './steps/parse.js';
 import { validateSteps, computeSteps } from './steps/compute.js';
 import { renderSteps } from './steps/render.js';
 import { renderError } from './meta.js';
-import { transformChart } from './chart/render.js';
+import { BLOCKS } from './blocks/index.js';
 import { renderSection, sectionIds } from './sections.js';
 import { parseBadges, isTableSeparator, isTableRow, renderTableRow } from './badges.js';
 import { renderCard } from './cards.js';
@@ -37,16 +37,16 @@ export function transform(markdown, { today = new Date() } = {}) {
     } else {
       const open = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line);
       const kind = open && !line.startsWith(' ') ? open[2].trim() : null;
-      if (kind === 'steps' || kind === 'chart') {
+      if (kind === 'steps' || BLOCKS[kind]) {
         let end = i + 1;
         while (end < lines.length) {
           const close = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(lines[end]);
           if (close && close[1][0] === open[1][0] && close[1].length >= open[1].length) break;
           end++;
         }
-        if (kind === 'chart') {
-          const chart = transformChart(lines, i, end, lang);
-          output.push(...(chart.errors ? ['', renderError(chart.errors, lang, 'chart'), ''] : ['', ...chart.output]));
+        if (BLOCKS[kind]) {
+          const block = BLOCKS[kind](lines, i, end, lang);
+          output.push(...(block.errors ? ['', renderError(block.errors, lang, kind), ''] : ['', ...block.output]));
           changed = true;
           i = end;
           continue;

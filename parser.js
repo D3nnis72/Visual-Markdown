@@ -132,6 +132,19 @@ var __visualMarkdown = (() => {
       checkBadge: "Badge-Farbe `{color}` gibt es nicht, erlaubt sind {list}",
       checkAsOfOld: "`as-of` ist \xE4lter als das neueste `updated` ({date})",
       checkChartSource: "Diagramm ohne `source`: Wo liegt die Auswertung?",
+      errScaleLine: "Bereiche sehen so aus: \u201E- 0\u201340: Kritisch | bad\u201C",
+      errScaleBounds: "Bereich {from}\u2013{to} muss aufsteigen",
+      errScaleGap: "Bereich ab {from} schlie\xDFt nicht an {to} an",
+      errScaleEmpty: "Es fehlt mindestens ein Bereich wie \u201E- 0\u201340: Kritisch | bad\u201C",
+      errScaleMarker: "Markierung {value} liegt au\xDFerhalb von {min} bis {max}",
+      errGalleryLine: "Jede Zeile ist ein Bild: \u201E![Text](pfad.png) Bildunterschrift\u201C",
+      errGalleryEmpty: "Es fehlt mindestens ein Bild",
+      errCompareLine: "Unter \u201E- Option\u201C stehen einger\xFCckt \u201E+ Vorteil\u201C, \u201E- Nachteil\u201C oder Text",
+      errCompareCount: "Zwei bis vier Optionen, gefunden: {count}",
+      errCompareRecommended: "Nur eine Option kann empfohlen sein",
+      compareRecommended: "Empfehlung",
+      comparePros: "Vorteile",
+      compareCons: "Nachteile",
       errRequired: "Pflichtfeld \u201E{field}\u201C fehlt",
       errValue: "\u201E{value}\u201C geht nicht f\xFCr {field}, erlaubt sind {list}",
       errNoTable: "keine Tabelle direkt \xFCber dem Block",
@@ -206,6 +219,19 @@ var __visualMarkdown = (() => {
       checkBadge: "badge color `{color}` does not exist, use {list}",
       checkAsOfOld: "`as-of` is older than the newest `updated` ({date})",
       checkChartSource: "Chart without `source`: where does the analysis live?",
+      errScaleLine: 'Ranges look like "- 0\u201340: Critical | bad"',
+      errScaleBounds: "range {from}\u2013{to} must go up",
+      errScaleGap: "range from {from} does not continue at {to}",
+      errScaleEmpty: 'add at least one range like "- 0\u201340: Critical | bad"',
+      errScaleMarker: "marker {value} is outside {min} to {max}",
+      errGalleryLine: 'every line is an image: "![Text](path.png) Caption"',
+      errGalleryEmpty: "add at least one image",
+      errCompareLine: 'under "- Option" go indented "+ pro", "- con" or text',
+      errCompareCount: "two to four options, found {count}",
+      errCompareRecommended: "only one option can be recommended",
+      compareRecommended: "Recommended",
+      comparePros: "Pros",
+      compareCons: "Cons",
       errRequired: 'required field "{field}" is missing',
       errValue: '"{value}" is not allowed for {field}, use {list}',
       errNoTable: "no table directly above the block",
@@ -900,6 +926,31 @@ var __visualMarkdown = (() => {
   }
   var chartSpec = (fields, data, lang) => BUILDERS[fields.type](fields, data, lang);
 
+  // src/blocks/common.js
+  var FIELD = /^([a-z-]+):\s*(.*?)\s*$/i;
+  function readBlock(body, firstLine, allowed, lang) {
+    const fields = {};
+    const items = [];
+    const errors = [];
+    body.split(/\r?\n/).forEach((text, index) => {
+      if (!text.trim()) return;
+      const line = firstLine + index;
+      const field = /^\S/.test(text) && !/^[-+!~]/.test(text) ? FIELD.exec(text) : null;
+      if (field && allowed.includes(field[1])) fields[field[1]] = field[2];
+      else if (field) errors.push({ line, message: t(lang, "errField", { field: field[1] }) });
+      else items.push({ text, line });
+    });
+    return { fields, items, errors };
+  }
+  function renderFoot(fields, lang) {
+    const rows = [
+      fields.basis ? `<div class="vm-chart-basis">${escapeHtml(t(lang, "chartBasis"))}: ${inline(fields.basis)}</div>` : "",
+      fields.source ? `<div class="vm-chart-source">${escapeHtml(t(lang, "chartSource"))}: ${inline(fields.source)}</div>` : ""
+    ].join("");
+    return rows ? `<div class="vm-chart-foot">${rows}</div>` : "";
+  }
+  var renderSays = (says, className) => says ? `<div class="${className}">${inline(says)}</div>` : "";
+
   // src/chart/render.js
   function parseChart(body, firstLine, lang) {
     const fields = {};
@@ -993,11 +1044,7 @@ var __visualMarkdown = (() => {
     return `<div class="vm-chart-legend">${title}${items.join("")}</div>`;
   }
   function renderChart(fields, data, lang) {
-    const foot = [
-      `<div class="vm-chart-foot"><div class="vm-chart-basis">${escapeHtml(t(lang, "chartBasis"))}: ${inline(fields.basis)}</div>`,
-      fields.source ? `<div class="vm-chart-source">${escapeHtml(t(lang, "chartSource"))}: ${inline(fields.source)}</div>` : "",
-      "</div></div>"
-    ].join("");
+    const foot = `${renderFoot(fields, lang)}</div>`;
     const head = `<div class="vm-chart vm-chart-${fields.type}"><div class="vm-chart-says">${inline(fields.says)}</div>`;
     if (fields.type === "kpi") return [`${head}${renderKpis(data.rows)}${foot}`, ""];
     return [`${head}${renderLegend(chartLegend(fields, data, lang))}`, "", "```vega-lite", JSON.stringify(chartSpec(fields, data, lang)), "```", "", foot, ""];
@@ -1009,6 +1056,167 @@ var __visualMarkdown = (() => {
     if (data.errors.length) return { errors: data.errors };
     return { output: renderChart(fields, data, lang) };
   }
+
+  // src/blocks/scale.js
+  var SCALE_FIELDS = ["says", "unit", "marker", "basis", "source"];
+  var RANGE = /^-\s+(-?[\d.,]+\s*%?)\s*(?:–|—|-|\.\.|bis|to)\s*(-?[\d.,]+\s*%?)\s*:\s*(.+)$/i;
+  function parseScale(body, firstLine, lang) {
+    const { fields, items, errors } = readBlock(body, firstLine, SCALE_FIELDS, lang);
+    const markers = [];
+    const ranges = [];
+    body.split(/\r?\n/).forEach((text, index) => {
+      const match = /^marker:\s*(.+?)\s*$/i.exec(text);
+      if (!match) return;
+      const [raw, label = ""] = match[1].split("|").map((part) => part.trim());
+      const value = parseNumber(raw, lang);
+      if (!Number.isFinite(value)) errors.push({ line: firstLine + index, message: t(lang, "errNumber", { value: raw, column: "marker" }) });
+      else markers.push({ value, label, line: firstLine + index });
+    });
+    for (const { text, line } of items) {
+      const match = RANGE.exec(text.trim());
+      if (!match) {
+        errors.push({ line, message: t(lang, "errScaleLine") });
+        continue;
+      }
+      const [name, color = "muted"] = match[3].split("|").map((part) => part.trim());
+      const from = parseNumber(match[1], lang);
+      const to = parseNumber(match[2], lang);
+      if (!BADGE_COLORS.includes(color)) errors.push({ line, message: t(lang, "errValue", { field: "color", value: color, list: BADGE_COLORS.join(", ") }) });
+      else if (!(from < to)) errors.push({ line, message: t(lang, "errScaleBounds", { from: match[1], to: match[2] }) });
+      else if (ranges.length && from !== ranges[ranges.length - 1].to) {
+        errors.push({ line, message: t(lang, "errScaleGap", { from: match[1], to: formatNumber(ranges[ranges.length - 1].to, lang) }) });
+      } else ranges.push({ from, to, name, color, line });
+    }
+    if (!ranges.length && !errors.length) errors.push({ line: firstLine, message: t(lang, "errScaleEmpty") });
+    const min = ranges[0]?.from;
+    const max = ranges[ranges.length - 1]?.to;
+    for (const marker of markers) {
+      if (ranges.length && (marker.value < min || marker.value > max)) {
+        errors.push({ line: marker.line, message: t(lang, "errScaleMarker", { value: formatNumber(marker.value, lang), min: formatNumber(min, lang), max: formatNumber(max, lang) }) });
+      }
+    }
+    return { fields, ranges, markers, errors };
+  }
+  function renderScale({ fields, ranges, markers }, lang) {
+    const min = ranges[0].from;
+    const span = ranges[ranges.length - 1].to - min;
+    const at = (value) => `${((value - min) / span * 100).toFixed(3)}%`;
+    const unit = fields.unit ? ` ${escapeHtml(fields.unit)}` : "";
+    const segments = ranges.map((range) => `<div class="vm-scale-part vm-scale-${range.color}${(range.to - range.from) / span < 0.15 ? " vm-scale-narrow" : ""}" style="flex: ${range.to - range.from} 1 0" title="${escapeHtml(`${formatNumber(range.from, lang)}\u2013${formatNumber(range.to, lang)}${fields.unit ? ` ${fields.unit}` : ""}: ${range.name}`)}"><span>${inline(range.name)}</span></div>`);
+    const bounds = [min, ...ranges.map((range) => range.to)];
+    const ticks = bounds.map((value, index) => {
+      const edge = index === 0 ? " vm-scale-tick-start" : index === bounds.length - 1 ? " vm-scale-tick-end" : "";
+      return `<span class="vm-scale-tick${edge}" style="left: ${at(value)}">${escapeHtml(formatNumber(value, lang))}${index === bounds.length - 1 ? unit : ""}</span>`;
+    });
+    const text = (marker) => `${formatNumber(marker.value, lang)}${marker.label ? ` \xB7 ${marker.label}` : ""}`;
+    let previous = null;
+    const rows = [...markers].sort((a, b) => a.value - b.value).map((marker) => {
+      const close = Boolean(previous && !previous.close && (marker.value - previous.value) / span * 600 < (text(previous).length + text(marker).length) / 2 * 7 + 12);
+      previous = { ...marker, close };
+      return previous;
+    });
+    const marks = rows.map((marker) => `<div class="vm-scale-marker${marker.close ? " vm-scale-marker-up" : ""}" style="left: ${at(marker.value)}"><span class="vm-scale-marker-label">${escapeHtml(formatNumber(marker.value, lang))}${marker.label ? ` \xB7 ${inline(marker.label)}` : ""}</span></div>`);
+    return [
+      `<div class="vm-scale${markers.length ? " vm-scale-has-markers" : ""}${rows.some((marker) => marker.close) ? " vm-scale-two-rows" : ""}">`,
+      renderSays(fields.says, "vm-chart-says"),
+      `<div class="vm-scale-track">${marks.join("")}<div class="vm-scale-parts">${segments.join("")}</div></div>`,
+      `<div class="vm-scale-ticks">${ticks.join("")}</div>`,
+      renderFoot(fields, lang),
+      "</div>"
+    ].join("");
+  }
+  function transformScale(lines, start, end, lang) {
+    const scale = parseScale(lines.slice(start + 1, end).join("\n"), start + 2, lang);
+    return scale.errors.length ? { errors: scale.errors } : { output: [renderScale(scale, lang), ""] };
+  }
+
+  // src/blocks/gallery.js
+  var GALLERY_FIELDS = ["says", "columns"];
+  var GALLERY_COLUMNS = ["1", "2", "3", "4"];
+  var IMAGE = /^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)\s*(.*)$/;
+  function parseGallery(body, firstLine, lang) {
+    const { fields, items, errors } = readBlock(body, firstLine, GALLERY_FIELDS, lang);
+    if (fields.columns && !GALLERY_COLUMNS.includes(fields.columns)) {
+      errors.push({ line: firstLine, message: t(lang, "errValue", { field: "columns", value: fields.columns, list: GALLERY_COLUMNS.join(", ") }) });
+    }
+    const images = [];
+    for (const { text, line } of items) {
+      const match = IMAGE.exec(text.trim());
+      if (!match) errors.push({ line, message: t(lang, "errGalleryLine") });
+      else images.push({ alt: match[1], src: match[2], caption: match[3] || match[1] });
+    }
+    if (!images.length && !errors.length) errors.push({ line: firstLine, message: t(lang, "errGalleryEmpty") });
+    return { fields, images, errors };
+  }
+  function renderGallery({ fields, images }) {
+    const columns = fields.columns ?? String(Math.min(images.length, 3));
+    const output = [`<div class="vm-gallery" style="--vm-gallery-columns: ${columns}">${renderSays(fields.says, "vm-chart-says")}<div class="vm-gallery-grid">`, ""];
+    for (const image of images) {
+      output.push(`<figure class="vm-gallery-item">`, "", `![${image.alt.replace(/[[\]]/g, "")}](${image.src})`, "");
+      output.push(`${image.caption ? `<figcaption>${inline(image.caption)}</figcaption>` : ""}</figure>`, "");
+    }
+    output.push("</div></div>", "");
+    return output;
+  }
+  function transformGallery(lines, start, end, lang) {
+    const gallery = parseGallery(lines.slice(start + 1, end).join("\n"), start + 2, lang);
+    return gallery.errors.length ? { errors: gallery.errors } : { output: renderGallery(gallery) };
+  }
+
+  // src/blocks/compare.js
+  var COMPARE_FIELDS = ["says"];
+  var COMPARE_RECOMMENDED = ["recommended", "empfohlen"];
+  var OPTION = /^-\s+(.+)$/;
+  var PLUS_ICON = svg("vm-compare-icon", 13, '<path d="M8 3.5v9M3.5 8h9"/>');
+  var MINUS_ICON = svg("vm-compare-icon", 13, '<path d="M3.5 8h9"/>');
+  function parseCompare(body, firstLine, lang) {
+    const { fields, items, errors } = readBlock(body, firstLine, COMPARE_FIELDS, lang);
+    const options = [];
+    for (const { text, line } of items) {
+      const option = /^\S/.test(text) ? OPTION.exec(text) : null;
+      if (option) {
+        const [title, ...flags] = option[1].split("|").map((part) => part.trim());
+        for (const flag of flags) {
+          if (!COMPARE_RECOMMENDED.includes(flag.toLowerCase())) errors.push({ line, message: t(lang, "errValue", { field: "option", value: flag, list: COMPARE_RECOMMENDED.join(", ") }) });
+        }
+        options.push({ title, recommended: flags.some((flag) => COMPARE_RECOMMENDED.includes(flag.toLowerCase())), text: [], pros: [], cons: [], line });
+        continue;
+      }
+      const current = options[options.length - 1];
+      const entry = text.trim();
+      if (!current || !/^\s/.test(text)) {
+        errors.push({ line, message: t(lang, "errCompareLine") });
+        continue;
+      }
+      if (/^\+\s/.test(entry)) current.pros.push(entry.slice(2).trim());
+      else if (/^-\s/.test(entry)) current.cons.push(entry.slice(2).trim());
+      else current.text.push(entry);
+    }
+    if (!errors.length && (options.length < 2 || options.length > 4)) errors.push({ line: firstLine, message: t(lang, "errCompareCount", { count: options.length }) });
+    if (options.filter((option) => option.recommended).length > 1) errors.push({ line: options.filter((option) => option.recommended)[1].line, message: t(lang, "errCompareRecommended") });
+    return { fields, options, errors };
+  }
+  var list = (entries, kind, icon2, label) => entries.length ? `<ul class="vm-compare-list vm-compare-${kind}" aria-label="${escapeHtml(label)}">${entries.map((entry) => `<li>${icon2}<span>${inline(entry)}</span></li>`).join("")}</ul>` : "";
+  function renderCompare({ fields, options }, lang) {
+    const columns = options.map((option) => [
+      `<div class="vm-compare-option${option.recommended ? " vm-compare-recommended" : ""}">`,
+      `<div class="vm-compare-head"><span class="vm-compare-title">${inline(option.title)}</span>`,
+      option.recommended ? `<span class="vm-pill vm-pill-ok">${escapeHtml(t(lang, "compareRecommended"))}</span>` : "",
+      "</div>",
+      option.text.length ? `<div class="vm-compare-text">${inline(option.text.join(" "))}</div>` : "",
+      list(option.pros, "pros", PLUS_ICON, t(lang, "comparePros")),
+      list(option.cons, "cons", MINUS_ICON, t(lang, "compareCons")),
+      "</div>"
+    ].join(""));
+    return [`<div class="vm-compare">${renderSays(fields.says, "vm-compare-says")}<div class="vm-compare-grid">${columns.join("")}</div></div>`, ""];
+  }
+  function transformCompare(lines, start, end, lang) {
+    const compare = parseCompare(lines.slice(start + 1, end).join("\n"), start + 2, lang);
+    return compare.errors.length ? { errors: compare.errors } : { output: renderCompare(compare, lang) };
+  }
+
+  // src/blocks/index.js
+  var BLOCKS = { chart: transformChart, scale: transformScale, gallery: transformGallery, compare: transformCompare };
 
   // src/sections.js
   var HEADING = /^(#{2,6})\s+(.*?)\s+\{#([a-z0-9][a-z0-9-]*)((?:\s+[a-z][a-z-]*=[^\s}]+)*)\s*\}\s*$/i;
@@ -1110,16 +1318,16 @@ var __visualMarkdown = (() => {
       } else {
         const open = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line);
         const kind = open && !line.startsWith(" ") ? open[2].trim() : null;
-        if (kind === "steps" || kind === "chart") {
+        if (kind === "steps" || BLOCKS[kind]) {
           let end = i + 1;
           while (end < lines.length) {
             const close = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(lines[end]);
             if (close && close[1][0] === open[1][0] && close[1].length >= open[1].length) break;
             end++;
           }
-          if (kind === "chart") {
-            const chart = transformChart(lines, i, end, lang);
-            output.push(...chart.errors ? ["", renderError(chart.errors, lang, "chart"), ""] : ["", ...chart.output]);
+          if (BLOCKS[kind]) {
+            const block = BLOCKS[kind](lines, i, end, lang);
+            output.push(...block.errors ? ["", renderError(block.errors, lang, kind), ""] : ["", ...block.output]);
             changed = true;
             i = end;
             continue;

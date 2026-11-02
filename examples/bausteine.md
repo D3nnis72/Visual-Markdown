@@ -386,6 +386,62 @@ basis: Arbeitsstand, ausgedachte Zahlen
 source: [Arbeitsliste](bausteine.md#schritte)
 ```
 
+## Skalen {#skalen updated=2026-11-02}
+
+`scale` zeigt Schwellen und Bereiche als ein Band. Jede Zeile ist ein Bereich mit Grenzen, Name und einer Farbe aus `ok`, `warn`, `bad`, `info` und `muted`. `marker` setzt Werte darauf, auch mehrmals.
+
+```scale
+says: Ab 70 Punkten gilt ein Kunde als gesund, Kunde B rutscht gerade ab.
+unit: Punkte
+- 0–40: Kritisch | bad
+- 40–70: Gefährdet | warn
+- 70–100: Gesund | ok
+marker: 82 | Kunde A
+marker: 64 | Kunde B
+basis: Health Score, ausgedachte Werte
+source: [Bewertungsregeln](bausteine.md#skalen)
+```
+
+Ohne Markierungen und mit ungleich breiten Bereichen:
+
+```scale
+says: Nur Abweichungen über 5 % gehen an den Einkauf.
+unit: %
+- 0–2: im Rahmen | ok
+- 2–5: beobachten | info
+- 5–20: an den Einkauf | warn
+```
+
+## Galerie {#galerie updated=2026-11-02}
+
+`gallery` stellt Bilder nebeneinander. Jede Zeile ist ein normales Markdown-Bild, der Text dahinter wird zur Bildunterschrift. Ohne `columns` stehen bis zu drei Bilder in einer Reihe.
+
+```gallery
+says: Der Anteilsbalken hell und dunkel.
+![Anteile hell](bilder/anteile-hell.png) Helles Theme
+![Anteile dunkel](bilder/anteile-dunkel.png) Dunkles Theme
+```
+
+## Vergleich {#vergleich updated=2026-11-02}
+
+`compare` stellt zwei bis vier Ansätze nebeneinander. Eine Option beginnt mit `- Titel`, darunter stehen eingerückt Text, `+ Vorteil` und `- Nachteil`. `| empfohlen` markiert die Empfehlung.
+
+```compare
+says: Der Parser-Hook reicht, eine eigene Extension lohnt sich erst mit eigenem Viewer.
+- Parser-Hook in MPE | empfohlen
+  Unser Kern läuft vor dem Markdown-Rendering.
+  + läuft auch im PDF-Export
+  + Kollegen brauchen nur das Repo
+  - kein `Intl`, Zahlen werden von Hand formatiert
+- Eigene VS-Code-Extension
+  + volle Kontrolle über das Preview
+  - jeder muss sie installieren
+  - PDF-Export müssten wir selbst bauen
+- Eigener Viewer
+  + unabhängig von VS Code
+  - am meisten Arbeit
+```
+
 ## Mermaid {#mermaid updated=2026-11-01}
 
 ```mermaid
@@ -414,6 +470,6 @@ sequenceDiagram
     A-->>D: Stand und nächste Handlung
 ```
 
-## Noch nicht gebaut {#offen updated=2026-11-01}
+## Noch nicht gebaut {#offen updated=2026-11-02}
 
-Die erste Runde ist vollständig. Die zweite Runde mit Links und Erklärungen für IDs, `scale`, `gallery` und `compare` ist noch nicht begonnen.
+Die erste Runde ist vollständig, aus der zweiten gibt es `scale`, `gallery` und `compare`. Es fehlen noch Links und Erklärungen für IDs wie E47.

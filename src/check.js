@@ -3,7 +3,7 @@ import { t } from './labels.js';
 import { STALE_DAYS, parseDate, formatDate, isStale } from './dates.js';
 import { parseSteps } from './steps/parse.js';
 import { validateSteps } from './steps/compute.js';
-import { transformChart } from './chart/render.js';
+import { BLOCKS } from './blocks/index.js';
 import { HEADING } from './sections.js';
 import { CARD_START, CARD_COLORS, CARD_ICONS } from './cards.js';
 import { BADGE_COLORS } from './badges.js';
@@ -59,11 +59,11 @@ export function checkMarkdown(markdown, { path = '', today = new Date() } = {}) 
           else checkDate(step.updated, step.line, `\`${step.id}\``, step.state !== 'done');
           if (step.state !== 'done' && !step.description) add('warning', step.line, 'checkStepDescription', { id: step.id });
         }
-      } else if (kind === 'chart') {
+      } else if (BLOCKS[kind]) {
         uses = true;
-        const chart = transformChart(lines, i, end, lang);
-        for (const error of chart.errors ?? []) findings.push({ level: 'error', line: error.line, message: error.message });
-        if (!lines.slice(i + 1, end).some(text => /^source:\s*\S/.test(text))) add('warning', i + 1, 'checkChartSource');
+        const block = BLOCKS[kind](lines, i, end, lang);
+        for (const error of block.errors ?? []) findings.push({ level: 'error', line: error.line, message: error.message });
+        if (kind === 'chart' && !lines.slice(i + 1, end).some(text => /^source:\s*\S/.test(text))) add('warning', i + 1, 'checkChartSource');
       }
       i = end;
       continue;

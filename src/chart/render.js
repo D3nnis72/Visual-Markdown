@@ -3,6 +3,7 @@ import { t } from '../labels.js';
 import { CHART_TYPES, CHART_FIELDS, CHART_REQUIRED, CHART_VALUES, CHART_NEEDS, TOTAL_LABEL } from './schema.js';
 import { tableAbove, parseNumber } from './table.js';
 import { chartSpec, chartLegend } from './specs.js';
+import { renderFoot } from '../blocks/common.js';
 
 /** Reads `key: value` lines. Returns the fields and errors with file line numbers. */
 export function parseChart(body, firstLine, lang) {
@@ -101,11 +102,7 @@ function renderLegend(legend) {
 }
 
 export function renderChart(fields, data, lang) {
-  const foot = [
-    `<div class="vm-chart-foot"><div class="vm-chart-basis">${escapeHtml(t(lang, 'chartBasis'))}: ${inline(fields.basis)}</div>`,
-    fields.source ? `<div class="vm-chart-source">${escapeHtml(t(lang, 'chartSource'))}: ${inline(fields.source)}</div>` : '',
-    '</div></div>',
-  ].join('');
+  const foot = `${renderFoot(fields, lang)}</div>`;
   const head = `<div class="vm-chart vm-chart-${fields.type}"><div class="vm-chart-says">${inline(fields.says)}</div>`;
   if (fields.type === 'kpi') return [`${head}${renderKpis(data.rows)}${foot}`, ''];
   return [`${head}${renderLegend(chartLegend(fields, data, lang))}`, '', '```vega-lite', JSON.stringify(chartSpec(fields, data, lang)), '```', '', foot, ''];

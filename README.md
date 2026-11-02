@@ -14,7 +14,7 @@ Ein Markdown-Format, das in der Vorschau von **Markdown Preview Enhanced** (MPE)
 | `skills/mermaid-theme` | Agent-Skill: Diagramme nutzen nur die Theme-Klassen und definieren keine Farben |
 | `scripts/check.mjs` | Check-Skript mit denselben Parsern wie der Renderer, `npm run check -- datei.md` |
 | `visual-markdown.js` | Kopierknöpfe im Preview, wird von `install.sh` ins MPE-Verzeichnis kopiert |
-| `examples/bausteine.md` | Testseite mit allen Bausteinen, nach Änderungen im MPE-Preview öffnen |
+| `examples/bausteine.md` | Testseite mit allen Bausteinen, nach Änderungen im MPE-Preview öffnen. Die Bilder für `gallery` liegen in `examples/bilder/` |
 | `install.sh` | Verlinkt `style.less`, `config.js` und `parser.js` in `~/.local/state/crossnote/` (Backup der alten Dateien als `.bak`), kopiert `visual-markdown.js` und trägt es in `head.html` ein, verlinkt die Skills nach `~/.agents/skills/` und `~/.claude/skills/` |
 
 ## Einrichten auf einem neuen Gerät
@@ -168,6 +168,56 @@ Den Typ wählt man danach, was der Leser mit den Zahlen tun soll:
 Zeilen, die „Gesamt“, „Summe“ oder „Total“ heißen, lässt jedes Diagramm weg, damit die Summe nicht als eigener Balken erscheint. Nur der Wasserfall nutzt sie als Zwischenstand. Torten- und Ringdiagramme gibt es bewusst nicht, weil Balken Anteile genauer vergleichbar machen. Für ein Ganzes in wenigen Teilen ist `share` gedacht.
 
 Zahlen dürfen deutsch oder englisch geschrieben sein, mit Prozentzeichen oder Währung. Leere Zellen und Striche werden übersprungen. Eine einzelne Reihe zeigt ihre Werte an den Balken, Anteile, Heatmap und Wasserfall beschriften jede Fläche. Linien über ISO-Daten oder reine Zahlen bekommen eine echte Zeitachse beziehungsweise Zahlenachse. Der Parser übersetzt Tabelle und Block in einen `vega-lite`-Block, den MPE selbst zu SVG zeichnet, in der Vorschau wie im PDF. Die Farben kommen aus der geprüften Palette des Skills `dataviz` und wechseln im Dunkelmodus auf ihre dunklen Stufen. Fehlt ein Pflichtfeld, eine Spalte oder die Tabelle, steht statt des Diagramms ein Fehlerkasten mit der Zeile. Für Sonderfälle bleibt ein roher `vega-lite`-Block.
+
+## Skalen, Galerien und Vergleiche
+
+Drei kleinere Blöcke für Inhalte, die sonst als Tabelle oder Aufzählung enden. Alle haben optional `says` als Überschrift und zeigen bei Fehlern einen Fehlerkasten mit Zeile.
+
+`scale` zeigt Schwellen und Bereiche als ein Band, etwa Health States oder Toleranzen:
+
+````markdown
+```scale
+says: Ab 70 Punkten gilt ein Kunde als gesund.
+unit: Punkte
+- 0–40: Kritisch | bad
+- 40–70: Gefährdet | warn
+- 70–100: Gesund | ok
+marker: 64 | Kunde B
+basis: Health Score
+```
+````
+
+Jede Zeile `- von–bis: Name | Farbe` ist ein Bereich. Statt `–` gehen auch `-`, `..`, `bis` und `to`. Die Bereiche steigen auf und schließen lückenlos aneinander an. Farben sind die Badge-Farben `ok`, `warn`, `bad`, `info` und `muted`, ohne Angabe `muted`. `marker: Wert | Text` setzt eine Markierung über das Band und darf mehrmals vorkommen. Liegen zwei Markierungen dicht beieinander, rückt die zweite eine Zeile höher. `unit` steht hinter der letzten Grenze, `basis` und `source` darunter wie bei Diagrammen.
+
+`gallery` stellt Bilder nebeneinander, etwa Screenshots oder hell und dunkel:
+
+````markdown
+```gallery
+says: Der Anteilsbalken hell und dunkel.
+columns: 2
+![Anteile hell](bilder/anteile-hell.png) Helles Theme
+![Anteile dunkel](bilder/anteile-dunkel.png) Dunkles Theme
+```
+````
+
+Jede Zeile ist ein normales Markdown-Bild, der Text dahinter die Bildunterschrift. Ohne Text gilt der Alternativtext. `columns` ist 1 bis 4, ohne Angabe stehen bis zu drei Bilder in einer Reihe. Die Bilder bleiben Markdown, deshalb löst MPE relative Pfade in Vorschau und PDF auf wie bei jedem anderen Bild. Auf GitHub erscheint der Block als Codeblock mit den Bildpfaden.
+
+`compare` stellt zwei bis vier Ansätze nebeneinander:
+
+````markdown
+```compare
+says: Der Parser-Hook reicht vorerst.
+- Parser-Hook in MPE | empfohlen
+  Unser Kern läuft vor dem Markdown-Rendering.
+  + läuft auch im PDF-Export
+  - kein `Intl`
+- Eigene VS-Code-Extension
+  + volle Kontrolle über das Preview
+  - jeder muss sie installieren
+```
+````
+
+Eine Option beginnt mit `- Titel`. Darunter stehen eingerückt Fließtext, `+ Vorteil` und `- Nachteil`. `| empfohlen` oder `| recommended` markiert höchstens eine Option, sie bekommt einen grünen Rahmen und das Badge „Empfehlung“. Die Spalten brechen bei schmalen Fenstern um. Eine Begründung gehört in `says` oder in den Text darunter.
 
 ## Wasserzeichen
 

@@ -1,6 +1,6 @@
 ---
 name: visual-markdown
-description: Use when writing, converting or updating a document people look at in Markdown Preview Enhanced, such as a canvas, project status page, decision or question list or report, and when a Markdown file has a `visual:` front matter key, a `steps` or `chart` code block, headings like `## Title {#id updated=…}` or `> [!card …]` callouts.
+description: Use when writing, converting or updating a document people look at in Markdown Preview Enhanced, such as a canvas, project status page, decision or question list or report, and when a Markdown file has a `visual:` front matter key, a `steps`, `chart`, `scale`, `gallery` or `compare` code block, headings like `## Title {#id updated=…}` or `> [!card …]` callouts.
 ---
 
 # Visual Markdown
@@ -18,6 +18,9 @@ Not for knowledge docs that mainly agents read: those stay plain Markdown.
 | Decision, question, risk, idea | `> [!card icon color] Title` |
 | Numbers worth seeing | Table, then `chart` directly below it. Pick the `type` by what the reader must do with the numbers (README, Diagramme) and put the link to the analysis in `source` |
 | A few headline numbers | Table, then `chart` with `type: kpi` |
+| Thresholds and ranges, such as health states or tolerances | `scale` |
+| Screenshots side by side, before and after, light and dark | `gallery` |
+| Two to four approaches with pros and cons | `compare`, at most one `| empfohlen` |
 | States in table cells | `badges:` in the front matter |
 | A topic someone will point at | `## Title {#id updated=YYYY-MM-DD}` |
 | Page with customer data (path under `Customers/`) | `share: intern` in the front matter |
