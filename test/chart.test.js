@@ -4,7 +4,7 @@ import { transform } from '../src/core.js';
 import { parseNumber } from '../src/chart/table.js';
 const today = new Date('2026-11-01T12:00:00');
 const run = markdown => transform(markdown, { today });
-const table = '| Lieferant | Spend | Quelle |\n| --- | ---: | --- |\n| A | 1.200 | SAP |\n| B | 450,5 | SAP |\n| C | 80 | Cameron |\n';
+const table = '| Lieferant | Spend | Quelle |\n| --- | ---: | --- |\n| A | 1.200 | SAP |\n| B | 450,5 | SAP |\n| C | 80 | Altsystem |\n';
 const chart = body => '```chart\n' + body + '\n```\n';
 const base = 'type: bar\nx: Lieferant\ny: Spend\nsays: A trägt den größten Teil.\nbasis: Rechnungen 2025';
 const spec = markdown => JSON.parse(/```vega-lite\n(.*)\n```/.exec(run(markdown))[1]);
@@ -33,7 +33,7 @@ test('stacks bars by the color column and normalizes with percent', () => {
   const s = spec(table + chart(base + '\ncolor: Quelle\npercent: yes'));
   assert.equal(s.encoding.y.stack, 'normalize');
   assert.equal(s.encoding.color.field, 'series');
-  assert.deepEqual(s.data.values.map(row => row.series), ['SAP', 'SAP', 'Cameron']);
+  assert.deepEqual(s.data.values.map(row => row.series), ['SAP', 'SAP', 'Altsystem']);
 });
 test('folds several y columns into series and draws lines over ordered weeks', () => {
   const weeks = '| Woche | Offen | Fertig |\n| --- | --- | --- |\n| KW 40 | 10 | 2 |\n| KW 41 | 7 | 6 |\n';

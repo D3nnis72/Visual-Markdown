@@ -161,11 +161,11 @@ Mit `color` stapeln sich die Balken, `percent: yes` rechnet jede Säule auf 100 
 | Werk | Quelle | Positionen |
 | --- | --- | ---: |
 | Nord | SAP | 320 |
-| Nord | Cameron | 80 |
+| Nord | Altsystem | 80 |
 | Süd | SAP | 150 |
-| Süd | Cameron | 210 |
+| Süd | Altsystem | 210 |
 | West | SAP | 90 |
-| West | Cameron | 40 |
+| West | Altsystem | 40 |
 
 ```chart
 type: bar
@@ -173,7 +173,7 @@ x: Werk
 y: Positionen
 color: Quelle
 percent: yes
-says: Im Werk Süd kommt mehr als die Hälfte der Positionen aus Cameron.
+says: Im Werk Süd kommt mehr als die Hälfte der Positionen aus dem Altsystem.
 basis: Bestellpositionen 2025, ausgedachte Zahlen
 ```
 

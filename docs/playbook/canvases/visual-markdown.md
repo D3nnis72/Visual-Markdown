@@ -52,7 +52,7 @@ Der Gewinn ist explizite Struktur, die der Renderer zeigen und verlinken kann. T
 | Callouts | Beispielfälle, Annahmen, Grenzen, Hinweise | `> [!NOTE]` und die übrigen vier GitHub-Arten, eigene Arten wie **Annahme:** fett am Anfang | Kasten je Art, MPE zeichnet ihn schon selbst, fertig | 1 |
 | Badges | Data Status in LioCare, Prüfergebnisse in Findings, Zustände wie offen und entschieden | Eine Zeile im Frontmatter ordnet feste Wörter Farben zu | Getönte Pillen in Tabellenzellen, fertig | 1 |
 | Wasserzeichen | Seiten mit Kundendaten | `share: intern` im Frontmatter | Badge im Band, schräges Wasserzeichen auf jeder PDF-Seite, fertig | 1 |
-| IDs und Glossar | E47, D14, ER4, Frage 6 und Fachbegriffe im Fließtext | Wie heute | Link und Erklärung beim Hovern, braucht einen vorher gebauten Index | 2 |
+| IDs und Glossar | Entscheidungs-IDs wie E47, Frage 6 und Fachbegriffe im Fließtext | Wie heute | Link und Erklärung beim Hovern, braucht einen vorher gebauten Index | 2 |
 | `scale` | Schwellen und Bereiche, etwa die Health States in LioCare | Codeblock | Farbiges Band über den ganzen Bereich mit den Grenzen darauf | 2 |
 | `gallery` | Screenshots, Referenzbilder, vorher und nachher, Dark und Light in LioCare | Codeblock | Bilder nebeneinander mit Bildunterschrift | 2 |
 | `compare` | Zwei bis drei Ansätze mit Vor- und Nachteilen beim Brainstorming | Codeblock | Spalten nebeneinander, Empfehlung markiert | 2 |

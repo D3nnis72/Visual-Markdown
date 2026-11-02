@@ -5,8 +5,8 @@ import { validateSteps, computeSteps } from '../src/steps/compute.js';
 const parse = body => parseSteps(body, 1, 'de').steps;
 
 test('parses state, id, label and fields', () => {
-  assert.deepEqual(parseSteps('- [!] sa: Startauswahl klären | waiting-for: Rückmeldung | owner: Accenture | since: 30. Oktober', 5, 'de'), {
-    steps: [{ id: 'sa', state: 'waiting', label: 'Startauswahl klären', after: [], waitingFor: 'Rückmeldung', who: 'Accenture', doneWhen: null, since: '30. Oktober', next: null, description: null, thread: null, updated: null, line: 5 }], errors: [],
+  assert.deepEqual(parseSteps('- [!] sa: Startauswahl klären | waiting-for: Rückmeldung | owner: Kunde | since: 30. Oktober', 5, 'de'), {
+    steps: [{ id: 'sa', state: 'waiting', label: 'Startauswahl klären', after: [], waitingFor: 'Rückmeldung', who: 'Kunde', doneWhen: null, since: '30. Oktober', next: null, description: null, thread: null, updated: null, line: 5 }], errors: [],
   });
 });
 test('splits after into ids', () => assert.deepEqual(parse('- [ ] c: C | after: a, b')[0].after, ['a', 'b']));
@@ -46,7 +46,7 @@ test('reads indented text below a step as its description', () => {
 });
 test('reports indented text before the first step', () => assert.equal(parseSteps('  Beschreibung ohne Schritt\n- [ ] a: A', 4, 'de').errors[0].line, 4));
 test('keeps the thread reference verbatim', () => {
-  const result = parseSteps('- [~] a: A | owner: Agent | thread: [Thread: ER4 ausführen; ref=thread_abc-123]', 1, 'de');
+  const result = parseSteps('- [~] a: A | owner: Agent | thread: [Thread: Anreicherung ausführen; ref=thread_abc-123]', 1, 'de');
   assert.deepEqual(result.errors, []);
-  assert.equal(result.steps[0].thread, '[Thread: ER4 ausführen; ref=thread_abc-123]');
+  assert.equal(result.steps[0].thread, '[Thread: Anreicherung ausführen; ref=thread_abc-123]');
 });
