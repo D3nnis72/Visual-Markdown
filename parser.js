@@ -110,6 +110,14 @@ var __visualMarkdown = (() => {
       shareInternal: "Intern",
       watermarkNote: "nicht weitergeben",
       chartBasis: "Grundlage",
+      chartSource: "Quelle",
+      chartOther: "Sonstige",
+      chartTotal: "Summe",
+      chartUp: "Zunahme",
+      chartDown: "Abnahme",
+      chartShare: "Anteil",
+      chartCumulative: "kumuliert",
+      errSeries: "ein Streudiagramm zeigt h\xF6chstens {max} Farben",
       checkNoVisual: "kein `visual:` im Frontmatter",
       checkMissing: "`{field}` fehlt unter `visual:`",
       checkBadDate: "\u201E{value}\u201C ist kein Datum im Format JJJJ-MM-TT",
@@ -175,6 +183,14 @@ var __visualMarkdown = (() => {
       shareInternal: "Internal",
       watermarkNote: "do not share",
       chartBasis: "Based on",
+      chartSource: "Source",
+      chartOther: "Other",
+      chartTotal: "Total",
+      chartUp: "Increase",
+      chartDown: "Decrease",
+      chartShare: "Share",
+      chartCumulative: "cumulative",
+      errSeries: "a scatter chart shows at most {max} colors",
       checkNoVisual: "no `visual:` in the front matter",
       checkMissing: "`{field}` is missing under `visual:`",
       checkBadDate: '"{value}" is not a date in the form YYYY-MM-DD',
@@ -481,11 +497,17 @@ var __visualMarkdown = (() => {
   }
 
   // src/chart/schema.js
-  var CHART_TYPES = ["bar", "line", "histogram"];
-  var CHART_FIELDS = ["type", "x", "y", "color", "percent", "orientation", "says", "basis"];
+  var CHART_TYPES = ["bar", "line", "histogram", "share", "heatmap", "waterfall", "pareto", "scatter", "progress", "kpi"];
+  var CHART_FIELDS = ["type", "x", "y", "color", "percent", "grouped", "orientation", "target", "label", "note", "says", "basis", "source"];
   var CHART_REQUIRED = ["type", "x", "y", "says", "basis"];
-  var CHART_VALUES = { percent: ["yes", "no"], orientation: ["vertical", "horizontal"] };
+  var CHART_VALUES = { percent: ["yes", "no"], grouped: ["yes", "no"], orientation: ["vertical", "horizontal"] };
+  var CHART_NEEDS = { progress: ["target"] };
+  var TOTAL_LABEL = /^(gesamt|summe|insgesamt|total|sum)$/i;
+  var SHARE_MAX_PARTS = 6;
   var PALETTE = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"];
+  var RAMP = ["#cde2fb", "#184f95"];
+  var NEUTRAL = "#8a8a93";
+  var TRACK = "#d6e6fb";
 
   // src/badges.js
   var BADGE_COLORS = ["ok", "warn", "bad", "info", "muted"];
@@ -536,14 +558,297 @@ var __visualMarkdown = (() => {
     return /^[+-]?(\d+(\.\d*)?|\.\d+)$/.test(text) ? Number(text) : NaN;
   }
 
-  // src/chart/render.js
+  // src/chart/format.js
+  var SEPARATORS = { de: { decimal: ",", thousands: "." }, en: { decimal: ".", thousands: "," } };
+  function formatNumber(value, lang, decimals = 2) {
+    const { decimal, thousands } = SEPARATORS[lang] ?? SEPARATORS.de;
+    const fixed = Math.abs(value).toFixed(decimals).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+    const [whole, fraction] = fixed.split(".");
+    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, thousands);
+    return `${value < 0 ? "\u2212" : ""}${grouped}${fraction ? decimal + fraction : ""}`;
+  }
+  var formatPercent = (share, lang, decimals = 1) => `${formatNumber(share * 100, lang, decimals)}${lang === "en" ? "%" : " %"}`;
+  var formatSigned = (value, lang) => `${value > 0 ? "+" : ""}${formatNumber(value, lang)}`;
+
+  // src/chart/specs.js
   var FONT = 'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif';
   var WIDTH = 640;
+  var MUTED = "#6b6b74";
+  var INK = "#52514e";
+  var DARK_INK = "#0b0b0b";
   var ISO_DATE = /^\d{4}-\d{2}(-\d{2})?$/;
   var LOCALES = {
-    de: { decimal: ",", thousands: ".", grouping: [3], currency: ["", " \u20AC"] },
+    de: { decimal: ",", thousands: ".", grouping: [3], currency: ["", " \u20AC"], percent: " %" },
     en: { decimal: ".", thousands: ",", grouping: [3], currency: ["$", ""] }
   };
+  var unique = (values) => [...new Set(values)];
+  var inkOn = (color) => color === PALETTE[3] ? DARK_INK : "#ffffff";
+  function base(fields, values, lang) {
+    return {
+      $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+      description: fields.says,
+      background: "transparent",
+      data: { values },
+      config: {
+        font: FONT,
+        locale: { number: LOCALES[lang] },
+        view: { stroke: null },
+        range: { category: PALETTE },
+        axis: {
+          labelFontSize: 12,
+          titleFontSize: 12,
+          titleFontWeight: 500,
+          titlePadding: 10,
+          labelColor: MUTED,
+          titleColor: MUTED,
+          gridColor: "#ededf0",
+          domain: false,
+          ticks: false,
+          labelPadding: 6,
+          labelLimit: 320
+        },
+        axisX: { grid: false },
+        legend: { orient: "top", labelLimit: 280, labelFontSize: 12, titleFontSize: 12, titleFontWeight: 500, labelColor: MUTED, titleColor: MUTED, symbolType: "circle", symbolSize: 90 },
+        mark: { color: PALETTE[0] },
+        text: { fontSize: 12, color: INK }
+      }
+    };
+  }
+  var seriesOrder = (rows) => unique(rows.map((row) => row.series));
+  var colorBy = (data, rows) => ({ field: "series", type: "nominal", title: data.seriesTitle, sort: seriesOrder(rows) });
+  function barSpec(fields, data, lang) {
+    const series = data.rows.some((row) => row.series !== null);
+    const values = data.rows.map((row) => ({ x: row.x, y: row.y, ...series ? { series: row.series } : {} }));
+    const percent = fields.percent === "yes";
+    const grouped = series && fields.grouped === "yes";
+    const order = unique(values.map((row) => row.x));
+    const horizontal = fields.type === "bar" && (fields.orientation ? fields.orientation === "horizontal" : order.some((x) => String(x).length > 12) || order.length > 8);
+    const histogram = fields.type === "histogram";
+    const category = {
+      field: "x",
+      type: "ordinal",
+      sort: order,
+      title: horizontal ? null : data.xTitle,
+      scale: { paddingInner: histogram ? 0.04 : grouped ? 0.2 : 0.25, paddingOuter: histogram ? 0 : 0.15 },
+      ...horizontal ? {} : { axis: { labelAngle: 0 } }
+    };
+    const measure = {
+      field: "y",
+      type: "quantitative",
+      title: percent ? null : data.yTitle,
+      ...series && !grouped ? { stack: percent ? "normalize" : "zero" } : {},
+      ...percent ? { axis: { format: "%" } } : {}
+    };
+    const offset = grouped ? { [horizontal ? "yOffset" : "xOffset"]: { field: "series", sort: seriesOrder(data.rows), scale: { paddingInner: 0.08 } } } : {};
+    const encoding = {
+      [horizontal ? "y" : "x"]: category,
+      [horizontal ? "x" : "y"]: measure,
+      ...series ? { color: colorBy(data, data.rows) } : {},
+      ...offset
+    };
+    const size = horizontal ? { width: WIDTH - 140, height: { step: grouped ? 18 * seriesOrder(data.rows).length + 10 : 28 } } : { width: WIDTH, height: 260 };
+    const bar = { type: "bar", ...series && !grouped ? { cornerRadius: 2, stroke: "#ffffff", strokeWidth: 1.5 } : { cornerRadiusEnd: 4 } };
+    if (series) return { ...base(fields, values, lang), ...size, mark: bar, encoding };
+    const label = {
+      mark: { type: "text", ...horizontal ? { align: "left", dx: 6 } : { baseline: "bottom", dy: -4 } },
+      encoding: { x: encoding.x, y: encoding.y, text: { field: "y", type: "quantitative", format: ",~r" } }
+    };
+    return { ...base(fields, values, lang), ...size, layer: [{ mark: bar, encoding }, ...order.length <= 16 ? [label] : []] };
+  }
+  function lineSpec(fields, data, lang) {
+    const series = data.rows.some((row) => row.series !== null);
+    const xs = data.rows.map((row) => row.x);
+    const temporal = xs.every((value) => ISO_DATE.test(value));
+    const numeric = !temporal && xs.every((value) => Number.isFinite(parseNumber(value, lang)));
+    const values = data.rows.map((row) => ({ x: numeric ? parseNumber(row.x, lang) : row.x, y: row.y, ...series ? { series: row.series } : {} }));
+    const x = { field: "x", type: temporal ? "temporal" : numeric ? "quantitative" : "ordinal", title: data.xTitle, axis: { labelAngle: 0 }, ...temporal || numeric ? {} : { sort: unique(xs) } };
+    return {
+      ...base(fields, values, lang),
+      width: WIDTH,
+      height: 260,
+      mark: { type: "line", strokeWidth: 2, point: { filled: true, size: 50 } },
+      encoding: { x, y: { field: "y", type: "quantitative", title: data.yTitle }, ...series ? { color: colorBy(data, data.rows) } : {} }
+    };
+  }
+  function shareSpec(fields, data, lang) {
+    let parts = data.rows.map((row) => ({ x: row.x, y: row.y }));
+    if (parts.length > SHARE_MAX_PARTS) {
+      const kept = [...parts].sort((a, b) => b.y - a.y).slice(0, SHARE_MAX_PARTS - 1);
+      const rest = parts.filter((part) => !kept.includes(part)).reduce((sum, part) => sum + part.y, 0);
+      parts = [...parts.filter((part) => kept.includes(part)), { x: t(lang, "chartOther"), y: rest }];
+    }
+    const total = parts.reduce((sum, part) => sum + part.y, 0) || 1;
+    let start = 0;
+    const values = parts.map((part, index) => {
+      const share = part.y / total;
+      const value = { x: part.x, start, end: start + share, label: share >= 0.07 ? formatPercent(share, lang, share < 0.1 ? 1 : 0) : "", ink: inkOn(PALETTE[index % PALETTE.length]) };
+      start += share;
+      return value;
+    });
+    if (values.length) values[values.length - 1].end = 1;
+    const order = values.map((value) => value.x);
+    const scaleX = { domain: [0, 1] };
+    return {
+      ...base(fields, values, lang),
+      width: WIDTH,
+      height: 28,
+      encoding: { y: { value: 14 } },
+      layer: [
+        {
+          mark: { type: "bar", height: 28, cornerRadius: 4, stroke: "#ffffff", strokeWidth: 2 },
+          encoding: {
+            x: { field: "start", type: "quantitative", scale: scaleX, axis: null },
+            x2: { field: "end" },
+            color: { field: "x", type: "nominal", sort: order, title: null }
+          }
+        },
+        {
+          mark: { type: "text", align: "left", dx: 8, fontWeight: 600 },
+          encoding: { x: { field: "start", type: "quantitative", scale: scaleX, axis: null }, text: { field: "label" }, color: { field: "ink", type: "nominal", scale: null } }
+        }
+      ]
+    };
+  }
+  function heatmapSpec(fields, data, lang) {
+    const values = data.rows.map((row) => ({ x: row.x, series: row.series, y: row.y, label: formatNumber(row.y, lang) }));
+    const max = Math.max(...values.map((value) => value.y), 0);
+    const columns = seriesOrder(data.rows);
+    return {
+      ...base(fields, values, lang),
+      width: Math.min(WIDTH - 160, columns.length * 120),
+      height: { step: 36 },
+      encoding: {
+        x: { field: "series", type: "ordinal", sort: columns, title: null, axis: { orient: "top", labelAngle: 0 } },
+        y: { field: "x", type: "ordinal", sort: unique(data.rows.map((row) => row.x)), title: null }
+      },
+      layer: [
+        {
+          mark: { type: "rect", cornerRadius: 4, stroke: "#ffffff", strokeWidth: 2 },
+          encoding: { color: { field: "y", type: "quantitative", scale: { range: RAMP, domain: [0, max || 1] }, legend: null } }
+        },
+        {
+          mark: { type: "text", fontWeight: 500 },
+          encoding: {
+            text: { field: "label" },
+            color: { condition: { test: `datum.y > ${max * 0.55}`, value: "#ffffff" }, value: DARK_INK }
+          }
+        }
+      ]
+    };
+  }
+  function waterfallSpec(fields, data, lang) {
+    let running = 0;
+    const values = data.rows.map((row, index) => {
+      if (index === 0 || row.total || row.y === null) {
+        if (index === 0) running = row.y ?? 0;
+        return { x: row.x, start: 0, end: running, kind: "total", label: formatNumber(running, lang) };
+      }
+      const start = running;
+      running += row.y;
+      return { x: row.x, start, end: running, kind: row.y >= 0 ? "up" : "down", label: formatSigned(row.y, lang) };
+    });
+    const order = values.map((value) => value.x);
+    const x = { field: "x", type: "ordinal", sort: order, title: null, axis: { labelAngle: order.some((name) => name.length > 14) ? -30 : 0 }, scale: { paddingInner: 0.3 } };
+    const kinds = [t(lang, "chartTotal"), t(lang, "chartUp"), t(lang, "chartDown")];
+    const named = values.map((value) => ({ ...value, kind: kinds[["total", "up", "down"].indexOf(value.kind)] }));
+    return {
+      ...base(fields, named, lang),
+      width: WIDTH,
+      height: 260,
+      encoding: { x },
+      layer: [
+        {
+          mark: { type: "bar", cornerRadius: 3 },
+          encoding: {
+            y: { field: "start", type: "quantitative", title: data.yTitle },
+            y2: { field: "end" },
+            color: { field: "kind", type: "nominal", scale: { domain: kinds, range: [NEUTRAL, PALETTE[0], PALETTE[7]] }, title: null }
+          }
+        },
+        {
+          mark: { type: "text", baseline: "bottom", dy: -4 },
+          encoding: { y: { field: "top", type: "quantitative" }, text: { field: "label" } },
+          transform: [{ calculate: "max(datum.start, datum.end)", as: "top" }]
+        }
+      ]
+    };
+  }
+  function paretoSpec(fields, data, lang) {
+    const sorted = [...data.rows].sort((a, b) => b.y - a.y);
+    const total = sorted.reduce((sum, row) => sum + row.y, 0) || 1;
+    let cumulative = 0;
+    const values = sorted.map((row) => {
+      cumulative += row.y;
+      return { x: row.x, share: row.y / total, cumulative: cumulative / total, label: formatPercent(row.y / total, lang, 0) };
+    });
+    const names = [t(lang, "chartShare"), t(lang, "chartCumulative")];
+    const x = { field: "x", type: "ordinal", sort: values.map((value) => value.x), title: data.xTitle, axis: { labelAngle: values.some((v) => v.x.length > 10) ? -30 : 0 }, scale: { paddingInner: 0.25 } };
+    const y = (field) => ({ field, type: "quantitative", title: null, scale: { domain: [0, 1] }, axis: { format: "%" } });
+    return {
+      ...base(fields, values, lang),
+      width: WIDTH,
+      height: 260,
+      encoding: { x },
+      layer: [
+        { mark: { type: "bar", cornerRadiusEnd: 4 }, encoding: { y: y("share"), color: { datum: names[0], scale: { domain: names, range: [PALETTE[0], PALETTE[1]] }, title: null } } },
+        ...values.length <= 12 ? [{ mark: { type: "text", baseline: "bottom", dy: -4 }, encoding: { y: y("share"), text: { field: "label" } } }] : [],
+        { mark: { type: "line", strokeWidth: 2, point: { filled: true, size: 50 } }, encoding: { y: y("cumulative"), color: { datum: names[1] } } },
+        { data: { values: [{}] }, mark: { type: "rule", strokeDash: [4, 4], color: MUTED }, encoding: { x: { value: 0 }, x2: { value: "width" }, y: y("mark"), text: null }, transform: [{ calculate: "0.8", as: "mark" }] }
+      ]
+    };
+  }
+  function scatterSpec(fields, data, lang) {
+    const series = data.rows.some((row) => row.series !== null);
+    const values = data.rows.map((row) => ({ x: row.xNumber, y: row.y, ...series ? { series: row.series } : {}, ...row.label ? { label: row.label } : {} }));
+    const encoding = {
+      x: { field: "x", type: "quantitative", title: data.xTitle, scale: { zero: false, nice: true }, axis: { grid: true } },
+      y: { field: "y", type: "quantitative", title: data.yTitle, scale: { zero: false, nice: true } }
+    };
+    const labels2 = values.some((value) => value.label) && values.length <= 20;
+    return {
+      ...base(fields, values, lang),
+      width: WIDTH,
+      height: 300,
+      encoding,
+      layer: [
+        { mark: { type: "point", filled: true, size: 70, opacity: 1, stroke: "#ffffff", strokeWidth: 1.5 }, encoding: series ? { color: colorBy(data, data.rows) } : {} },
+        ...labels2 ? [{ mark: { type: "text", align: "left", dx: 8 }, encoding: { text: { field: "label" } } }] : []
+      ]
+    };
+  }
+  function progressSpec(fields, data, lang) {
+    const values = data.rows.map((row) => {
+      const share = row.target ? row.y / row.target : 0;
+      return { x: row.x, share: Math.min(share, 1), label: `${formatPercent(share, lang, 0)} \xB7 ${formatNumber(row.y, lang)} / ${formatNumber(row.target, lang)}` };
+    });
+    const y = { field: "x", type: "ordinal", sort: values.map((value) => value.x), title: null };
+    const x = (field) => ({ field, type: "quantitative", scale: { domain: [0, 1] }, axis: null });
+    return {
+      ...base(fields, values, lang),
+      width: WIDTH - 320,
+      height: { step: 30 },
+      encoding: { y },
+      layer: [
+        { mark: { type: "bar", height: 10, cornerRadius: 5, color: TRACK }, encoding: { x: { datum: 1, type: "quantitative", scale: { domain: [0, 1] }, axis: null } } },
+        { mark: { type: "bar", height: 10, cornerRadius: 5, color: PALETTE[0] }, encoding: { x: x("share") } },
+        { mark: { type: "text", align: "left", dx: 10 }, encoding: { x: { datum: 1, type: "quantitative", scale: { domain: [0, 1] }, axis: null }, text: { field: "label" } } }
+      ]
+    };
+  }
+  var BUILDERS = {
+    bar: barSpec,
+    histogram: barSpec,
+    line: lineSpec,
+    share: shareSpec,
+    heatmap: heatmapSpec,
+    waterfall: waterfallSpec,
+    pareto: paretoSpec,
+    scatter: scatterSpec,
+    progress: progressSpec
+  };
+  var chartSpec = (fields, data, lang) => BUILDERS[fields.type](fields, data, lang);
+
+  // src/chart/render.js
   function parseChart(body, firstLine, lang) {
     const fields = {};
     const errors = [];
@@ -563,6 +868,9 @@ var __visualMarkdown = (() => {
     if (fields.type && !CHART_TYPES.includes(fields.type)) {
       errors.push({ line: firstLine, message: t(lang, "errValue", { field: "type", value: fields.type, list: CHART_TYPES.join(", ") }) });
     }
+    for (const field of CHART_NEEDS[fields.type] ?? []) {
+      if (!fields[field]) errors.push({ line: firstLine, message: t(lang, "errRequired", { field }) });
+    }
     for (const [field, allowed] of Object.entries(CHART_VALUES)) {
       if (fields[field] && !allowed.includes(fields[field])) {
         errors.push({ line: firstLine, message: t(lang, "errValue", { field, value: fields[field], list: allowed.join(", ") }) });
@@ -578,23 +886,43 @@ var __visualMarkdown = (() => {
       if (index < 0) errors.push({ line: firstLine, message: t(lang, "errColumn", { column: name }) });
       return index;
     };
+    const optional = (name) => fields[name] ? column(fields[name]) : -1;
     const yNames = fields.y.split(",").map((name) => name.trim()).filter(Boolean);
     const x = column(fields.x);
     const ys = yNames.map(column);
-    const color = fields.color ? column(fields.color) : -1;
+    const color = optional("color");
+    const target = optional("target");
+    const label = optional("label");
+    const note = optional("note");
     if (fields.color && yNames.length > 1) errors.push({ line: firstLine, message: t(lang, "errColorMulti") });
     if (errors.length) return { errors };
+    const number = (row, index) => {
+      const value = parseNumber(row.values[index], lang);
+      if (Number.isNaN(value)) errors.push({ line: row.line, message: t(lang, "errNumber", { value: row.values[index], column: table.header[index] }) });
+      return Number.isNaN(value) ? null : value;
+    };
     const rows = [];
     for (const row of table.rows) {
-      ys.forEach((index, n) => {
-        const value = parseNumber(row.values[index], lang);
-        if (Number.isNaN(value)) {
-          errors.push({ line: row.line, message: t(lang, "errNumber", { value: row.values[index], column: table.header[index] }) });
-        } else if (value !== null) {
-          rows.push({ x: row.values[x] ?? "", y: value, series: color >= 0 ? row.values[color] ?? "" : yNames.length > 1 ? table.header[index] : null });
+      const xValue = row.values[x] ?? "";
+      const total = TOTAL_LABEL.test(xValue);
+      if (total && fields.type !== "waterfall" && fields.type !== "kpi") continue;
+      for (const index of ys) {
+        const series = color >= 0 ? row.values[color] ?? "" : yNames.length > 1 ? table.header[index] : null;
+        if (fields.type === "kpi") {
+          rows.push({ x: xValue, y: row.values[index] ?? "", note: note >= 0 ? row.values[note] ?? "" : null });
+          continue;
         }
-      });
+        const value = number(row, index);
+        if (value === null && !(fields.type === "waterfall" && total)) continue;
+        const record = { x: xValue, y: value, series, total };
+        if (target >= 0) record.target = number(row, target);
+        if (label >= 0) record.label = row.values[label] ?? "";
+        if (fields.type === "scatter") record.xNumber = number(row, x);
+        rows.push(record);
+      }
     }
+    const seriesCount = new Set(rows.map((row) => row.series)).size;
+    if (fields.type === "scatter" && seriesCount > 3) errors.push({ line: firstLine, message: t(lang, "errSeries", { max: 3 }) });
     return {
       errors,
       rows,
@@ -603,103 +931,25 @@ var __visualMarkdown = (() => {
       seriesTitle: color >= 0 ? table.header[color] : null
     };
   }
-  function xScale(fields, rows, lang) {
-    const xs = rows.map((row) => row.x);
-    if (fields.type === "line" && xs.every((value) => ISO_DATE.test(value))) return { type: "temporal" };
-    if (fields.type === "line" && xs.every((value) => Number.isFinite(parseNumber(value, lang)))) return { type: "quantitative", numeric: true };
-    return { type: "ordinal", sort: null };
+  function renderKpis(rows) {
+    return `<div class="vm-kpis">${rows.map((row) => `<div class="vm-kpi"><div class="vm-kpi-label">${inline(row.x)}</div><div class="vm-kpi-value">${inline(row.y)}</div>${row.note ? `<div class="vm-kpi-note">${inline(row.note)}</div>` : ""}</div>`).join("")}</div>`;
   }
-  function chartSpec(fields, data, lang) {
-    const series = data.rows.some((row) => row.series !== null);
-    const scale = xScale(fields, data.rows, lang);
-    const values = data.rows.map((row) => ({
-      x: scale.numeric ? parseNumber(row.x, lang) : row.x,
-      y: row.y,
-      ...series ? { series: row.series } : {}
-    }));
-    const percent = fields.percent === "yes";
-    const categories = new Set(values.map((row) => row.x)).size;
-    const longLabels = values.some((row) => String(row.x).length > 12);
-    const horizontal = fields.type === "bar" && (fields.orientation ? fields.orientation === "horizontal" : longLabels || categories > 8);
-    const order = [...new Set(values.map((row) => row.x))];
-    const category = { field: "x", type: scale.type, title: data.xTitle, ...scale.sort === null ? { sort: order } : {} };
-    const measure = {
-      field: "y",
-      type: "quantitative",
-      title: percent ? null : data.yTitle,
-      ...series && fields.type !== "line" ? { stack: percent ? "normalize" : "zero" } : {},
-      ...percent ? { axis: { format: "%" } } : {}
-    };
-    const colorEncoding = series ? { color: { field: "series", type: "nominal", title: data.seriesTitle, sort: [...new Set(values.map((row) => row.series))] } } : {};
-    const spec = {
-      $schema: "https://vega.github.io/schema/vega-lite/v5.json",
-      description: fields.says,
-      background: "transparent",
-      data: { values },
-      config: {
-        font: FONT,
-        locale: { number: LOCALES[lang] },
-        view: { stroke: null },
-        range: { category: PALETTE },
-        axis: {
-          labelFontSize: 12,
-          titleFontSize: 12,
-          titleFontWeight: 500,
-          titlePadding: 10,
-          labelColor: "#6b6b74",
-          titleColor: "#6b6b74",
-          gridColor: "#ededf0",
-          domain: false,
-          ticks: false,
-          labelPadding: 6
-        },
-        axisX: { grid: false },
-        legend: { orient: "top", labelFontSize: 12, titleFontSize: 12, titleFontWeight: 500, labelColor: "#6b6b74", titleColor: "#6b6b74", symbolType: "circle", symbolSize: 90 },
-        mark: { color: PALETTE[0] }
-      }
-    };
-    if (fields.type === "line") {
-      return {
-        ...spec,
-        width: WIDTH,
-        height: 260,
-        mark: { type: "line", strokeWidth: 2, point: { filled: true, size: 50 } },
-        encoding: { x: { ...category, axis: { labelAngle: 0 } }, y: measure, ...colorEncoding }
-      };
-    }
-    const histogram = fields.type === "histogram";
-    const bar = {
-      type: "bar",
-      ...series ? { cornerRadius: 2, stroke: "#ffffff", strokeWidth: 1.5 } : { cornerRadiusEnd: 4 }
-    };
-    const band = { scale: { paddingInner: histogram ? 0.04 : 0.25, paddingOuter: histogram ? 0 : 0.15 } };
-    const encoding = horizontal ? { y: { ...category, ...band, title: null }, x: { ...measure, title: percent ? null : data.yTitle }, ...colorEncoding } : { x: { ...category, ...band, axis: { labelAngle: 0 } }, y: measure, ...colorEncoding };
-    const size = horizontal ? { width: WIDTH - 140, height: { step: 28 } } : { width: WIDTH, height: 260 };
-    if (series) return { ...spec, ...size, mark: bar, encoding };
-    const label = {
-      mark: { type: "text", fontSize: 12, color: "#52514e", ...horizontal ? { align: "left", dx: 6 } : { baseline: "bottom", dy: -4 } },
-      encoding: { ...horizontal ? { y: encoding.y, x: encoding.x } : { x: encoding.x, y: encoding.y }, text: { field: "y", type: "quantitative", format: ",~r" } }
-    };
-    return { ...spec, ...size, layer: [{ mark: bar, encoding }, ...categories <= 16 ? [label] : []] };
-  }
-  function renderChart(fields, spec, lang) {
-    return [
-      `<div class="vm-chart"><div class="vm-chart-says">${inline(fields.says)}</div>`,
-      "",
-      "```vega-lite",
-      JSON.stringify(spec),
-      "```",
-      "",
-      `<div class="vm-chart-basis">${escapeHtml(t(lang, "chartBasis"))}: ${inline(fields.basis)}</div></div>`,
-      ""
-    ];
+  function renderChart(fields, data, lang) {
+    const foot = [
+      `<div class="vm-chart-foot"><div class="vm-chart-basis">${escapeHtml(t(lang, "chartBasis"))}: ${inline(fields.basis)}</div>`,
+      fields.source ? `<div class="vm-chart-source">${escapeHtml(t(lang, "chartSource"))}: ${inline(fields.source)}</div>` : "",
+      "</div></div>"
+    ].join("");
+    const head = `<div class="vm-chart vm-chart-${fields.type}"><div class="vm-chart-says">${inline(fields.says)}</div>`;
+    if (fields.type === "kpi") return [`${head}${renderKpis(data.rows)}${foot}`, ""];
+    return [head, "", "```vega-lite", JSON.stringify(chartSpec(fields, data, lang)), "```", "", foot, ""];
   }
   function transformChart(lines, start, end, lang) {
     const { fields, errors } = parseChart(lines.slice(start + 1, end).join("\n"), start + 2, lang);
     if (errors.length) return { errors };
     const data = chartData(fields, tableAbove(lines, start), start + 2, lang);
     if (data.errors.length) return { errors: data.errors };
-    return { output: renderChart(fields, chartSpec(fields, data, lang), lang) };
+    return { output: renderChart(fields, data, lang) };
   }
 
   // src/sections.js

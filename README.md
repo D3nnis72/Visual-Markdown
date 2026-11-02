@@ -136,16 +136,38 @@ basis: Rechnungen 2025
 
 | Feld | Bedeutung |
 | --- | --- |
-| `type` | Pflicht. `bar` für Balken, `line` für Linien, `histogram` für eine schon ausgezählte Verteilung |
-| `x` | Pflicht. Spalte mit den Kategorien, Wochen oder Klassen. Die Reihenfolge kommt aus der Tabelle |
+| `type` | Pflicht. Der Diagrammtyp aus der Tabelle darunter |
+| `x` | Pflicht. Spalte mit den Kategorien, Wochen, Klassen oder Namen. Die Reihenfolge kommt aus der Tabelle |
 | `y` | Pflicht. Spalte mit den Zahlen. Mehrere Spalten mit Komma ergeben mehrere Reihen |
 | `says` | Pflicht. Die Aussage in einem Satz, steht fett über dem Diagramm |
-| `basis` | Pflicht. Worauf die Zahlen beruhen, steht klein darunter |
-| `color` | Spalte, nach der Balken gestapelt oder Linien getrennt werden |
+| `basis` | Pflicht. Worauf die Zahlen beruhen, steht klein darunter als „Grundlage:“ |
+| `source` | Wo die Auswertung liegt, am besten als Link. Steht unter der Grundlage als „Quelle:“ |
+| `color` | Spalte, nach der Balken gestapelt oder Linien und Punkte getrennt werden |
 | `percent` | `yes` rechnet gestapelte Balken auf 100 % |
+| `grouped` | `yes` stellt mehrere Reihen nebeneinander statt gestapelt |
 | `orientation` | `horizontal` oder `vertical`. Ohne Angabe liegen Balken quer, wenn ein Name länger als zwölf Zeichen ist oder es mehr als acht Balken sind |
+| `target` | Bei `progress` Pflicht: Spalte mit dem Zielwert jeder Zeile |
+| `label` | Bei `scatter`: Spalte mit dem Namen, der an jedem Punkt steht |
+| `note` | Bei `kpi`: Spalte mit dem kleinen Hinweis unter dem Wert |
 
-Zahlen dürfen deutsch oder englisch geschrieben sein, mit Prozentzeichen oder Währung. Leere Zellen und Striche werden übersprungen. Eine einzelne Reihe zeigt ihre Werte an den Balken. Linien über ISO-Daten oder reine Zahlen bekommen eine echte Zeitachse beziehungsweise Zahlenachse. Der Parser übersetzt Tabelle und Block in einen `vega-lite`-Block, den MPE selbst zu SVG zeichnet, in der Vorschau wie im PDF. Die Farben kommen aus der geprüften Palette des Skills `dataviz` und wechseln im Dunkelmodus auf ihre dunklen Stufen. Fehlt ein Pflichtfeld, eine Spalte oder die Tabelle, steht statt des Diagramms ein Fehlerkasten mit der Zeile. Für Sonderfälle bleibt ein roher `vega-lite`-Block.
+Den Typ wählt man danach, was der Leser mit den Zahlen tun soll:
+
+| `type` | Wofür | Tabelle |
+| --- | --- | --- |
+| `bar` | Größen vergleichen, mit `color` gestapelt, mit `grouped: yes` nebeneinander | Kategorie und eine oder mehrere Zahlenspalten |
+| `line` | Verlauf über Zeit | Wochen, Monate oder ISO-Daten und Zahlen |
+| `histogram` | Verteilung, schon ausgezählt | Klassen und Anzahl |
+| `share` | Ein Ganzes in höchstens sechs Teile, mehr fasst „Sonstige“ zusammen | Teil und Betrag |
+| `heatmap` | Matrix, etwa Typ mal Bereich, jede Zelle mit Wert | Zeilen in `x`, Spalten in `y` |
+| `waterfall` | Brücke vom Startwert über Zu- und Abgänge zum Ergebnis | Erste Zeile Start, danach Änderungen, Zeile „Gesamt“ für den Zwischenstand |
+| `pareto` | Wenige große Teile tragen das meiste, mit kumuliertem Anteil und 80-%-Linie | Teil und Betrag, Reihenfolge egal |
+| `scatter` | Zusammenhang zweier Zahlen, höchstens drei Farben | Zwei Zahlenspalten, optional `label` und `color` |
+| `progress` | Stand gegen Ziel | Name, erledigt, Ziel |
+| `kpi` | Wenige Kennzahlen als Kacheln, der Wert steht wie in der Tabelle | Name, Wert, optional Hinweis |
+
+Zeilen, die „Gesamt“, „Summe“ oder „Total“ heißen, lässt jedes Diagramm weg, damit die Summe nicht als eigener Balken erscheint. Nur der Wasserfall nutzt sie als Zwischenstand. Torten- und Ringdiagramme gibt es bewusst nicht, weil Balken Anteile genauer vergleichbar machen. Für ein Ganzes in wenigen Teilen ist `share` gedacht.
+
+Zahlen dürfen deutsch oder englisch geschrieben sein, mit Prozentzeichen oder Währung. Leere Zellen und Striche werden übersprungen. Eine einzelne Reihe zeigt ihre Werte an den Balken, Anteile, Heatmap und Wasserfall beschriften jede Fläche. Linien über ISO-Daten oder reine Zahlen bekommen eine echte Zeitachse beziehungsweise Zahlenachse. Der Parser übersetzt Tabelle und Block in einen `vega-lite`-Block, den MPE selbst zu SVG zeichnet, in der Vorschau wie im PDF. Die Farben kommen aus der geprüften Palette des Skills `dataviz` und wechseln im Dunkelmodus auf ihre dunklen Stufen. Fehlt ein Pflichtfeld, eine Spalte oder die Tabelle, steht statt des Diagramms ein Fehlerkasten mit der Zeile. Für Sonderfälle bleibt ein roher `vega-lite`-Block.
 
 ## Wasserzeichen
 

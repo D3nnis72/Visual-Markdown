@@ -139,7 +139,7 @@ Formeln laufen über KaTeX: $\text{Fortschritt} = \frac{\text{fertig}}{\text{ges
 
 ## Diagramme {#diagramme updated=2026-11-02}
 
-Ein `chart`-Block steht direkt unter der Tabelle mit den Zahlen und sagt nur, welche Spalten wohin gehören. `says` ist die Aussage in einem Satz und steht über dem Diagramm, `basis` steht klein darunter. Eine einzelne Reihe zeigt ihre Werte an den Balken, lange Namen legen die Balken quer.
+Ein `chart`-Block steht direkt unter der Tabelle mit den Zahlen und sagt nur, welche Spalten wohin gehören. `says` ist die Aussage in einem Satz und steht über dem Diagramm, `basis` steht klein darunter und `source` mit dem Link zur Auswertung darunter. Zeilen wie „Gesamt“ oder „Summe“ lässt jedes Diagramm weg, nur der Wasserfall nutzt sie. Eine einzelne Reihe zeigt ihre Werte an den Balken, lange Namen legen die Balken quer.
 
 | Lieferant | Spend in T€ |
 | --- | ---: |
@@ -154,6 +154,7 @@ x: Lieferant
 y: Spend in T€
 says: Zwei Lieferanten machen drei Viertel des Spends aus.
 basis: Rechnungen 2025, ausgedachte Zahlen
+source: [Auswertung im Datenbefund](bausteine.md#diagramme)
 ```
 
 Mit `color` stapeln sich die Balken, `percent: yes` rechnet jede Säule auf 100 %.
@@ -211,6 +212,167 @@ x: Textlänge
 y: Positionen
 says: Viele Texte enden bei genau 40 Zeichen, dort schneidet das Altsystem ab.
 basis: Positionstexte 2025, ausgedachte Zahlen
+```
+
+### Kennzahlen {#kennzahlen updated=2026-11-02}
+
+`kpi` zeigt Kennzahlen als Kacheln. Der Wert steht so in der Kachel, wie er in der Tabelle steht, also auch mit Einheit.
+
+| Kennzahl | Wert | Hinweis |
+| --- | --- | --- |
+| Spend 2025 | 1,84 Mrd. € | alle gelieferten Zeilen |
+| Datensätze | 1.204.330 | davon 14.210 ohne Betrag |
+| Bestellnummern | 402.118 | nicht jede Zeile hat eine |
+| Lieferanten | 6.912 | nach Bereinigung |
+
+```chart
+type: kpi
+x: Kennzahl
+y: Wert
+note: Hinweis
+says: Der Datenstand auf einen Blick.
+basis: Bestelldaten 2025, ausgedachte Zahlen
+```
+
+### Anteile {#anteile updated=2026-11-02}
+
+`share` teilt ein Ganzes in höchstens sechs Teile, der Rest landet unter „Sonstige“. Die Zeile „Gesamt“ bleibt in der Tabelle und fehlt im Balken.
+
+| Bereich | Spend in Mio. € |
+| --- | ---: |
+| Feldausrüstung | 742,1 |
+| Fertigung | 524,9 |
+| Indirekter Einkauf | 377,0 |
+| Chemie | 196,0 |
+| **Gesamt** | **1.840,0** |
+
+```chart
+type: share
+x: Bereich
+y: Spend in Mio. €
+says: Feldausrüstung und Fertigung machen zusammen fast 70 % des Spends aus.
+basis: Bestelldaten 2025, ausgedachte Zahlen
+```
+
+### Gruppierte Balken {#gruppiert updated=2026-11-02}
+
+Mehrere Spalten in `y` mit `grouped: yes` stehen nebeneinander statt gestapelt. Das passt, wenn man die Reihen untereinander vergleichen will.
+
+| Typ | Feldausrüstung | Indirekter Einkauf |
+| --- | ---: | ---: |
+| Produkte | 482,3 | 30,8 |
+| Services | 124,6 | 336,9 |
+| Miete | 135,2 | 9,3 |
+
+```chart
+type: bar
+x: Typ
+y: Feldausrüstung, Indirekter Einkauf
+grouped: yes
+says: Im indirekten Einkauf sind fast neun von zehn Euro Services.
+basis: Bestelldaten 2025 nach Typ, ausgedachte Zahlen
+```
+
+### Heatmap {#heatmap updated=2026-11-02}
+
+`heatmap` zeigt eine Matrix: Zeilen aus `x`, Spalten aus den Spalten in `y`. Jede Zelle trägt ihren Wert, je dunkler, desto mehr.
+
+| Typ | Feldausrüstung | Fertigung | Indirekter Einkauf | Chemie |
+| --- | ---: | ---: | ---: | ---: |
+| Produkte | 482,3 | 425,7 | 30,8 | 182,4 |
+| Services | 124,6 | 88,1 | 336,9 | 9,8 |
+| Miete | 135,2 | 11,1 | 9,3 | 3,8 |
+
+```chart
+type: heatmap
+x: Typ
+y: Feldausrüstung, Fertigung, Indirekter Einkauf, Chemie
+says: Produkte dominieren überall außer im indirekten Einkauf.
+basis: Bestelldaten 2025 nach Typ und Bereich, Mio. €, ausgedachte Zahlen
+```
+
+### Wasserfall {#wasserfall updated=2026-11-02}
+
+`waterfall` beginnt mit dem Wert der ersten Zeile und addiert die folgenden. Eine Zeile „Gesamt“ zeigt den laufenden Stand, ihr Wert in der Tabelle darf leer sein.
+
+| Schritt | Zeilen in Tsd. |
+| --- | ---: |
+| Gelieferte Zeilen | 1.204 |
+| Ohne Betrag | -14 |
+| Dubletten | -38 |
+| Außerhalb des Scopes | -210 |
+| Nachlieferung | 22 |
+| Gesamt | |
+
+```chart
+type: waterfall
+x: Schritt
+y: Zeilen in Tsd.
+says: Von 1,2 Mio. gelieferten Zeilen bleiben knapp 1 Mio. für die Analyse.
+basis: Bereinigungsschritte der Bestelldaten, ausgedachte Zahlen
+```
+
+### Pareto {#pareto updated=2026-11-02}
+
+`pareto` sortiert die Teile absteigend und zeigt den kumulierten Anteil. Die gestrichelte Linie liegt bei 80 %.
+
+| Lieferant | Spend in Mio. € |
+| --- | ---: |
+| Lieferant A | 310 |
+| Lieferant B | 240 |
+| Lieferant C | 180 |
+| Lieferant D | 95 |
+| Lieferant E | 60 |
+| Lieferant F | 40 |
+| Lieferant G | 25 |
+| Lieferant H | 15 |
+
+```chart
+type: pareto
+x: Lieferant
+y: Spend in Mio. €
+says: Vier Lieferanten machen 85 % des Spends aus.
+basis: Spend 2025 der acht größten Lieferanten, ausgedachte Zahlen
+```
+
+### Streudiagramm {#streudiagramm updated=2026-11-02}
+
+`scatter` setzt zwei Zahlenspalten gegeneinander. `label` schreibt einen Namen an jeden Punkt, bei höchstens 20 Punkten.
+
+| Lieferant | Bestellungen | Preisabweichung in % |
+| --- | ---: | ---: |
+| Lieferant A | 1.240 | 2,1 |
+| Lieferant B | 860 | 4,8 |
+| Lieferant C | 410 | 11,5 |
+| Lieferant D | 120 | 18,2 |
+| Lieferant E | 640 | 6,3 |
+
+```chart
+type: scatter
+x: Bestellungen
+y: Preisabweichung in %
+label: Lieferant
+says: Wer selten bestellt wird, weicht im Preis stärker ab.
+basis: Bestellungen und Preise 2025, ausgedachte Zahlen
+```
+
+### Fortschritt {#fortschritt updated=2026-11-02}
+
+`progress` misst jede Zeile an ihrem Ziel aus der Spalte in `target`.
+
+| Arbeitspaket | Erledigt | Ziel |
+| --- | ---: | ---: |
+| Positionen angereichert | 6.200 | 8.000 |
+| Stichprobe geprüft | 35 | 50 |
+| Lieferanten angefragt | 12 | 40 |
+
+```chart
+type: progress
+x: Arbeitspaket
+y: Erledigt
+target: Ziel
+says: Die Anreicherung ist fast durch, die Anfragen haben gerade erst begonnen.
+basis: Arbeitsstand, ausgedachte Zahlen
 ```
 
 ## Mermaid {#mermaid updated=2026-11-01}

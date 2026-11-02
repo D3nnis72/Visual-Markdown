@@ -48,7 +48,7 @@ Der Gewinn ist explizite Struktur, die der Renderer zeigen und verlinken kann. T
 | Abschnitte | Canvasse und Statusseiten | `## Titel {#id updated=…}`, Format in der [README](../../../README.md#abschnitte) | Badges mit Kennung und Datum, Kopierknopf | 1 |
 | `steps` | Schritt-Tabellen in Canvassen, „Nächste Entscheidungen“ auf Statusseiten, Checkboxen und Prosa | Codeblock mit erweiterter Checkliste | Nummerierte Liste mit Zustand, Zuständigen und kurzen Abhängigkeitsverweisen | 1 |
 | Karten | Entscheidungen mit E-IDs, Fragensammlungen, Hinweise mit Status | `> [!card Icon Farbe] Titel`, darunter normales Markdown | Karte mit Icon und Farbe aus festen Listen, auf GitHub ein lesbares Zitat, fertig | 1 |
-| `chart` | Heute fast nur Zahlentabellen: Anteile und Spend je Lieferant, KPI-Werte über Wochen, Gewichte in LioCare | Codeblock direkt unter der Tabelle mit den Zahlen | Balken, gestapelte Balken, Linien und Histogramme über Vega-Lite, im PDF als SVG, fertig | 1 |
+| `chart` | Heute fast nur Zahlentabellen: Anteile und Spend je Lieferant, KPI-Werte über Wochen, Gewichte in LioCare | Codeblock direkt unter der Tabelle mit den Zahlen | Balken, Linien, Histogramme, Anteile, Heatmap, Wasserfall, Pareto, Streudiagramm, Fortschritt und Kennzahlen, im PDF als SVG, fertig | 1 |
 | Callouts | Beispielfälle, Annahmen, Grenzen, Hinweise | `> [!NOTE]` und die übrigen vier GitHub-Arten, eigene Arten wie **Annahme:** fett am Anfang | Kasten je Art, MPE zeichnet ihn schon selbst, fertig | 1 |
 | Badges | Data Status in LioCare, Prüfergebnisse in Findings, Zustände wie offen und entschieden | Eine Zeile im Frontmatter ordnet feste Wörter Farben zu | Getönte Pillen in Tabellenzellen, fertig | 1 |
 | Wasserzeichen | Seiten mit Kundendaten | `share: intern` im Frontmatter | Badge im Band, schräges Wasserzeichen auf jeder PDF-Seite, fertig | 1 |
@@ -84,7 +84,7 @@ visual:
 ## Später
 
 - Bei `steps`: Graph-Ansicht als Mermaid-Diagramm, die längste Kette bis zum Ziel, die Prüfung, ob parallele Schritte dieselben Dateien schreiben, und Fortschritt aus Unterpunkten.
-- Weitere Chart-Typen wie Boxplot, Streudiagramm und Heatmap bei Bedarf.
+- Weitere Chart-Typen wie Boxplot oder Flächendiagramm bei Bedarf. Anteile, Heatmap, Wasserfall, Pareto, Streudiagramm, Fortschritt und Kennzahlen gibt es seit dem 2. November.
 
 ## Zuhause, Verteilung, Export
 

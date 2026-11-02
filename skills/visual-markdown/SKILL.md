@@ -16,7 +16,8 @@ Not for knowledge docs that mainly agents read: those stay plain Markdown.
 | Status, as-of date, creation date | `visual:` front matter, shown as the band |
 | Work with owners, states and dependencies | `steps` |
 | Decision, question, risk, idea | `> [!card icon color] Title` |
-| Numbers worth seeing | Table, then `chart` directly below it |
+| Numbers worth seeing | Table, then `chart` directly below it. Pick the `type` by what the reader must do with the numbers (README, Diagramme) and put the link to the analysis in `source` |
+| A few headline numbers | Table, then `chart` with `type: kpi` |
 | States in table cells | `badges:` in the front matter |
 | A topic someone will point at | `## Title {#id updated=YYYY-MM-DD}` |
 | Page with customer data (path under `Customers/`) | `share: intern` in the front matter |
