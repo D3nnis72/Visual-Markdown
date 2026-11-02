@@ -22,14 +22,14 @@ Ein Markdown-Format, das im Preview von Markdown Preview Enhanced (MPE) für Men
 
 ## Leitidee
 
-Die Datei beschreibt Inhalt und Zustand, der Renderer die Darstellung. Alles Visuelle steckt in `style.less` und `parser.js`, die ein lesender Agent nicht mitlädt. Bestehende Markdown-Muster bleiben erhalten. Eigene Codeblöcke gibt es nur, wo Markdown keine Form hat: Schritte mit Abhängigkeiten, Diagramme, Skalen, Bildreihen und Vergleiche.
+Die Datei beschreibt Inhalt und Zustand, der Renderer die Darstellung. Alles Visuelle steckt in `style.less` und `parser.js`, die ein lesender Agent nicht mitlädt. Bestehende Markdown-Muster bleiben erhalten. Eigene Codeblöcke gibt es nur, wo Markdown keine Form hat: Schritte mit Abhängigkeiten, Diagramme, Skalen, Bildreihen, Vergleiche und Begriffslisten.
 
 Der Gewinn ist explizite Struktur, die der Renderer zeigen und verlinken kann. Tokens sparen vor allem Standardtexte, die der Renderer ergänzt, und eingebundene statt kopierte Inhalte.
 
 ## Regeln für das Format
 
 - Dateien bleiben `.md`. Ein Schlüssel `visual:` im Frontmatter markiert sie und hält Status, Stand, Sprache, Badges und `share:`.
-- Es gibt fünf eigene Codeblöcke: `steps`, `chart`, `scale`, `gallery` und `compare`. Alles andere sind Muster, die man ohne Renderer genauso schreiben würde: Überschriften mit fetten Labels, Tabellen, Frontmatter und die Callout-Syntax von GitHub.
+- Es gibt sechs eigene Codeblöcke: `steps`, `chart`, `scale`, `gallery`, `compare` und `glossary`. Alles andere sind Muster, die man ohne Renderer genauso schreiben würde: Überschriften mit fetten Labels, Tabellen, Frontmatter und die Callout-Syntax von GitHub.
 - Jeder Block und jedes Muster ist ohne Renderer verständlich. Namen und Felder sprechen für sich, damit ein lesendes LLM keinen Skill braucht. Auf GitHub erscheinen Blöcke als lesbarer Codeblock.
 - Jeder Baustein hat ein Schema mit seinen Feldern, Typen, erlaubten Werten und Pflichtfeldern. Renderer, Check-Skript und die Referenz im Skill lesen alle daraus, damit Beschreibung und Verhalten nicht auseinanderlaufen.
 - Viele Zeilen mit kurzen Feldern bleiben eine normale Tabelle, weil YAML die Feldnamen bei jedem Eintrag wiederholt. Fließtext bleibt normales Markdown, Flussdiagramme Mermaid, Formeln KaTeX.
@@ -52,7 +52,7 @@ Der Gewinn ist explizite Struktur, die der Renderer zeigen und verlinken kann. T
 | Callouts | Beispielfälle, Annahmen, Grenzen, Hinweise | `> [!NOTE]` und die übrigen vier GitHub-Arten, eigene Arten wie **Annahme:** fett am Anfang | Kasten je Art, MPE zeichnet ihn schon selbst, fertig | 1 |
 | Badges | Data Status in LioCare, Prüfergebnisse in Findings, Zustände wie offen und entschieden | Eine Zeile im Frontmatter ordnet feste Wörter Farben zu | Getönte Pillen in Tabellenzellen, fertig | 1 |
 | Wasserzeichen | Seiten mit Kundendaten | `share: intern` im Frontmatter | Badge im Band, schräges Wasserzeichen auf jeder PDF-Seite, fertig | 1 |
-| IDs und Glossar | Entscheidungs-IDs wie E47, Frage 6 und Fachbegriffe im Fließtext | Wie heute | Link und Erklärung beim Hovern, braucht einen vorher gebauten Index | 2 |
+| IDs und Glossar | Entscheidungs-IDs wie E47, Frage 6 und Fachbegriffe im Fließtext | Karte mit der ID vorne im Titel, Begriffe im Codeblock `glossary` | Link auf Karte oder Begriff mit Erklärung beim Hovern, innerhalb derselben Datei, fertig | 2 |
 | `scale` | Schwellen und Bereiche, etwa die Health States in LioCare | Codeblock mit einer Zeile je Bereich, Format in der [README](../../../README.md#skalen-galerien-und-vergleiche) | Getöntes Band über den ganzen Bereich, Grenzen darunter, Markierungen darüber, fertig | 2 |
 | `gallery` | Screenshots, Referenzbilder, vorher und nachher, Dark und Light in LioCare | Codeblock mit normalen Markdown-Bildern | Bilder im Raster mit bis zu sechs Spalten und Bildunterschrift, auch im PDF, fertig | 2 |
 | `compare` | Zwei bis vier Ansätze mit Vor- und Nachteilen beim Brainstorming | Codeblock mit `- Option`, darunter `+` und `-` | Spalten nebeneinander, Empfehlung mit Badge, fertig | 2 |
@@ -84,6 +84,7 @@ visual:
 ## Später
 
 - Bei `steps`: Graph-Ansicht als Mermaid-Diagramm, die längste Kette bis zum Ziel, die Prüfung, ob parallele Schritte dieselben Dateien schreiben, und Fortschritt aus Unterpunkten.
+- Verweise auf IDs und Begriffe in anderen Dateien. Dafür bräuchte es einen vorher gebauten Index, weil der Parser keine Dateien lesen kann.
 - Weitere Chart-Typen wie Boxplot oder Flächendiagramm bei Bedarf. Anteile, Heatmap, Wasserfall, Pareto, Streudiagramm, Fortschritt und Kennzahlen gibt es seit dem 2. November.
 
 ## Zuhause, Verteilung, Export
@@ -96,7 +97,7 @@ visual:
 
 ## Roadmap {#roadmap updated=2026-11-02}
 
-Der Prototyp mit Stand-Band, Abschnitten und `steps` ist gebaut und am 1. November an einer echten Statusseite getestet, den Stand besitzt die [README](../../../README.md). Das Token-Ziel misst nur den Formataufwand, neuer Inhalt wie Beschreibungen zählt nicht mit. Badges in Tabellenzellen, generische Karten, das Wasserzeichen und `chart` sind ebenfalls gebaut, damit ist die erste Runde vollständig. MPE zeichnet `vega-lite` schon vor dem Druck zu SVG, und unser Parser läuft auch im HTML- und PDF-Export. Das Wasserzeichen schützt gegen Versehen, nicht gegen Absicht, deshalb meldet das Check-Skript Kundenseiten ohne `share: intern`. Das Format steht jeweils in der [README](../../../README.md#badges). Callouts zeichnet MPE schon selbst, Tabellen und Links haben den Kartenstil. Aus der zweiten Runde sind `scale`, `gallery` und `compare` seit dem 2. November gebaut, es fehlen noch Links und Erklärungen für IDs.
+Der Prototyp mit Stand-Band, Abschnitten und `steps` ist gebaut und am 1. November an einer echten Statusseite getestet, den Stand besitzt die [README](../../../README.md). Das Token-Ziel misst nur den Formataufwand, neuer Inhalt wie Beschreibungen zählt nicht mit. Badges in Tabellenzellen, generische Karten, das Wasserzeichen und `chart` sind ebenfalls gebaut, damit ist die erste Runde vollständig. MPE zeichnet `vega-lite` schon vor dem Druck zu SVG, und unser Parser läuft auch im HTML- und PDF-Export. Das Wasserzeichen schützt gegen Versehen, nicht gegen Absicht, deshalb meldet das Check-Skript Kundenseiten ohne `share: intern`. Das Format steht jeweils in der [README](../../../README.md#badges). Callouts zeichnet MPE schon selbst, Tabellen und Links haben den Kartenstil. Die zweite Runde mit `scale`, `gallery`, `compare` sowie Verweisen auf IDs und Begriffe ist seit dem 2. November ebenfalls gebaut.
 
 ```steps
 - [x] skill: Agent-Skill und Check-Skript | owner: Agent | updated: 2026-11-02

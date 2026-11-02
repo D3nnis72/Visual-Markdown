@@ -1,6 +1,6 @@
 ---
 name: visual-markdown
-description: Use when writing, converting or updating a document people look at in Markdown Preview Enhanced, such as a canvas, project status page, decision or question list or report, and when a Markdown file has a `visual:` front matter key, a `steps`, `chart`, `scale`, `gallery` or `compare` code block, headings like `## Title {#id updated=…}` or `> [!card …]` callouts.
+description: Use when writing, converting or updating a document people look at in Markdown Preview Enhanced, such as a canvas, project status page, decision or question list or report, and when a Markdown file has a `visual:` front matter key, a `steps`, `chart`, `scale`, `gallery`, `compare` or `glossary` code block, headings like `## Title {#id updated=…}` or `> [!card …]` callouts.
 ---
 
 # Visual Markdown
@@ -15,7 +15,8 @@ Not for knowledge docs that mainly agents read: those stay plain Markdown.
 | --- | --- |
 | Status, as-of date, creation date | `visual:` front matter, shown as the band |
 | Work with owners, states and dependencies | `steps` |
-| Decision, question, risk, idea | `> [!card icon color] Title` |
+| Decision, question, risk, idea | `> [!card icon color] Title`, with the ID first when it has one (`E51: …`, `Frage 6: …`), so the ID links to the card everywhere else in the file |
+| Abbreviations and domain terms a reader may not know | `glossary` block, one `Term: explanation` per line |
 | Numbers worth seeing | Table, then `chart` directly below it. Pick the `type` by what the reader must do with the numbers (README, Diagramme) and put the link to the analysis in `source` |
 | A few headline numbers | Table, then `chart` with `type: kpi` |
 | Thresholds and ranges, such as health states or tolerances | `scale` |

@@ -20,11 +20,16 @@ const ICON_SHAPES = {
   note: '<path d="M4 2.25h5.5L12.75 5.5v8.25H4z"/><path d="M6.25 8.5h4M6.25 11h4"/>',
 };
 
+// A card whose title starts with an ID defines it, so the ID elsewhere in the text links here: "E51: Pro Werk
+// anfragen", "Frage 6: Anhänge?", "ER-4: …".
+export const ID_TITLE = /^(\p{Lu}[\p{L}]*[ -]?\d+)\s*:\s+(.+)$/u;
+export const idAnchor = id => `vm-id-${id.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-')}`;
+
 export const CARD_COLORS = Object.keys(COLORS);
 export const CARD_ICONS = Object.keys(ICON_SHAPES);
 
 /** Renders the card that starts at lines[start]; returns the output lines and the last consumed index. */
-export function renderCard(lines, start) {
+export function renderCard(lines, start, link = null) {
   const match = CARD_START.exec(lines[start]);
   if (!match) return null;
   const tokens = match[1].trim().toLowerCase().split(/\s+/).filter(Boolean);
@@ -33,9 +38,11 @@ export function renderCard(lines, start) {
   let end = start;
   const body = [];
   while (end + 1 < lines.length && /^>/.test(lines[end + 1])) body.push(lines[++end].replace(/^>\s?/, ''));
+  if (link) body.splice(0, body.length, ...body.map(line => link(line)));
   while (body.length && !body[body.length - 1].trim()) body.pop();
   const icon = iconName ? `<span class="vm-card-icon">${svg(`vm-card-svg vm-card-svg-${iconName}`, 16, ICON_SHAPES[iconName])}</span>` : '';
-  const head = `<div class="vm-card vm-card-${color}"><div class="vm-card-head">${icon}<span class="vm-card-title">${inline(match[2].trim())}</span></div>`;
+  const id = ID_TITLE.exec(match[2].trim());
+  const head = `<div class="vm-card vm-card-${color}"${id ? ` id="${idAnchor(id[1])}"` : ''}><div class="vm-card-head">${icon}<span class="vm-card-title">${inline(match[2].trim())}</span></div>`;
   const output = body.length ? [`${head}<div class="vm-card-body">`, '', ...body, '', '</div></div>', ''] : [`${head}</div>`, ''];
   if (end + 1 < lines.length && !lines[end + 1].trim()) end++;
   return { output, end };

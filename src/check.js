@@ -8,6 +8,7 @@ import { HEADING } from './sections.js';
 import { CARD_START, CARD_COLORS, CARD_ICONS } from './cards.js';
 import { BADGE_COLORS } from './badges.js';
 import { SHARE_VALUES } from './share.js';
+import { collectReferences } from './references.js';
 
 const FENCE = /^ {0,3}(`{3,}|~{3,})(.*)$/;
 
@@ -86,6 +87,8 @@ export function checkMarkdown(markdown, { path = '', today = new Date() } = {}) 
       }
     }
   }
+
+  for (const { key, line } of collectReferences(lines, endLine + 1, lang).duplicates) add('warning', line, 'checkDuplicateRef', { key });
 
   if (!visual) {
     if (uses) add('warning', 1, 'checkNoVisual');

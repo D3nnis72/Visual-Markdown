@@ -219,6 +219,30 @@ says: Der Parser-Hook reicht vorerst.
 
 Eine Option beginnt mit `- Titel`. Darunter stehen eingerückt Fließtext, `+ Vorteil` und `- Nachteil`. `| empfohlen` oder `| recommended` markiert höchstens eine Option, sie bekommt das Badge „Empfehlung“. Die Spalten brechen bei schmalen Fenstern um. Eine Begründung gehört in `says` oder in den Text darunter.
 
+## Verweise und Begriffe
+
+Eine Karte, deren Titel mit einer ID beginnt, definiert diese ID. Das gilt für Kürzel mit Zahl wie `E51`, `ER-4` oder `Q12` und für Wort und Zahl wie `Frage 6`, jeweils gefolgt von einem Doppelpunkt:
+
+````markdown
+> [!card flag green] E51: Pro Werk anfragen
+> Wir fragen pro Werk an, weil die Preise je Standort verschieden sind.
+````
+
+Steht `E51` sonst irgendwo im Fließtext, in Listen, Tabellen oder Karten, wird es zum Link auf die Karte, und beim Hovern erscheint ihr Titel. IDs ohne Karte bleiben Text.
+
+Begriffe stehen in einem `glossary`-Block, eine Zeile je Begriff:
+
+````markdown
+```glossary
+PO: Bestellung im SAP, eine Nummer kann mehrere Positionen haben
+MPE: Markdown Preview Enhanced
+```
+````
+
+Der Block erscheint als Tabelle mit Begriff und Bedeutung. Im Text wird ein Begriff beim ersten Auftreten pro Abschnitt zum Link auf seine Zeile, beim Hovern steht die Erklärung. Groß- und Kleinschreibung zählen, und nur ganze Wörter werden erkannt, `PO` also nicht in `POS`. In Überschriften, Code, Links, HTML und in `steps`-Blöcken wird nichts verlinkt.
+
+Definitionen gelten nur in ihrer eigenen Datei, weil der Parser keine anderen Dateien lesen kann. Doppelte IDs oder Begriffe meldet das Check-Skript, verlinkt wird dann die erste Stelle.
+
 ## Wasserzeichen
 
 Seiten mit Kundendaten tragen `share: intern` unter `visual:` im Frontmatter, auf Englisch geht auch `internal`. Im Preview zeigt das Stand-Band dann ein rotes Badge „Intern“ mit Schloss, damit man es vor dem Export sieht. Im PDF steht auf jeder Seite schräg und blass „Intern“, darunter „nicht weitergeben“ und der Stand aus `as-of`. Mit `lang: en` heißt es „Internal“ und „do not share“. Andere Werte von `share` ändern nichts. Das Wasserzeichen schützt nicht gegen Absicht, sondern gegen Versehen. Dass das Feld auf Kundenseiten nicht fehlt, prüft das Check-Skript.
@@ -242,7 +266,7 @@ npm run check -- datei.md ordner/
 node scripts/check.mjs --strict datei.md
 ```
 
-Das Check-Skript nutzt dieselben Parser wie der Renderer und braucht keine Abhängigkeiten. Fehler sind Blöcke, die im Preview als Fehlerkasten erscheinen würden. Warnungen sind fehlende Daten, offene Schritte ohne Beschreibung, Diagramme ohne `source`, ein Stand älter als sieben Tage, ein `as-of` älter als das neueste `updated`, unbekannte Wörter in Karten und Badges und Dateien unter `Customers/` ohne `share: intern`. Der Exit-Code ist 1 bei Fehlern, mit `--strict` auch bei Warnungen. Agents lassen es nach dem Schreiben laufen, so steht es im Skill `visual-markdown`.
+Das Check-Skript nutzt dieselben Parser wie der Renderer und braucht keine Abhängigkeiten. Fehler sind Blöcke, die im Preview als Fehlerkasten erscheinen würden. Warnungen sind fehlende Daten, offene Schritte ohne Beschreibung, Diagramme ohne `source`, ein Stand älter als sieben Tage, ein `as-of` älter als das neueste `updated`, unbekannte Wörter in Karten und Badges, doppelt definierte IDs und Begriffe und Dateien unter `Customers/` ohne `share: intern`. Der Exit-Code ist 1 bei Fehlern, mit `--strict` auch bei Warnungen. Agents lassen es nach dem Schreiben laufen, so steht es im Skill `visual-markdown`.
 
 ## Mermaid-Diagramme
 

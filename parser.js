@@ -145,6 +145,11 @@ var __visualMarkdown = (() => {
       compareRecommended: "Empfehlung",
       comparePros: "Vorteile",
       compareCons: "Nachteile",
+      errGlossaryLine: "Jede Zeile sieht so aus: \u201EBegriff: Erkl\xE4rung\u201C",
+      errGlossaryEmpty: "Es fehlt mindestens ein Begriff",
+      glossaryTerm: "Begriff",
+      glossaryMeaning: "Bedeutung",
+      checkDuplicateRef: "`{key}` ist doppelt definiert, verlinkt wird die erste Stelle",
       errRequired: "Pflichtfeld \u201E{field}\u201C fehlt",
       errValue: "\u201E{value}\u201C geht nicht f\xFCr {field}, erlaubt sind {list}",
       errNoTable: "keine Tabelle direkt \xFCber dem Block",
@@ -232,6 +237,11 @@ var __visualMarkdown = (() => {
       compareRecommended: "Recommended",
       comparePros: "Pros",
       compareCons: "Cons",
+      errGlossaryLine: 'every line looks like "Term: explanation"',
+      errGlossaryEmpty: "add at least one term",
+      glossaryTerm: "Term",
+      glossaryMeaning: "Meaning",
+      checkDuplicateRef: "`{key}` is defined twice, links go to the first one",
       errRequired: 'required field "{field}" is missing',
       errValue: '"{value}" is not allowed for {field}, use {list}',
       errNoTable: "no table directly above the block",
@@ -1215,8 +1225,37 @@ var __visualMarkdown = (() => {
     return compare.errors.length ? { errors: compare.errors } : { output: renderCompare(compare, lang) };
   }
 
+  // src/blocks/glossary.js
+  var ENTRY = /^([^:]+?):\s+(.+)$/;
+  var termAnchor = (term) => `vm-term-${term.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "")}`;
+  function parseGlossary(body, firstLine, lang) {
+    const entries = [];
+    const errors = [];
+    body.split(/\r?\n/).forEach((text, index) => {
+      if (!text.trim()) return;
+      const match = ENTRY.exec(text.trim());
+      if (!match) errors.push({ line: firstLine + index, message: t(lang, "errGlossaryLine") });
+      else entries.push({ term: match[1].trim(), meaning: match[2].trim(), line: firstLine + index });
+    });
+    if (!entries.length && !errors.length) errors.push({ line: firstLine, message: t(lang, "errGlossaryEmpty") });
+    return { entries, errors };
+  }
+  function renderGlossary({ entries }, lang) {
+    const cell = (value) => value.replace(/\|/g, "\\|");
+    return [
+      `| ${t(lang, "glossaryTerm")} | ${t(lang, "glossaryMeaning")} |`,
+      "| --- | --- |",
+      ...entries.map((entry) => `| <span class="vm-term-def" id="${termAnchor(entry.term)}">${escapeHtml(entry.term)}</span> | ${cell(inline(entry.meaning))} |`),
+      ""
+    ];
+  }
+  function transformGlossary(lines, start, end, lang) {
+    const glossary = parseGlossary(lines.slice(start + 1, end).join("\n"), start + 2, lang);
+    return glossary.errors.length ? { errors: glossary.errors } : { output: renderGlossary(glossary, lang) };
+  }
+
   // src/blocks/index.js
-  var BLOCKS = { chart: transformChart, scale: transformScale, gallery: transformGallery, compare: transformCompare };
+  var BLOCKS = { chart: transformChart, scale: transformScale, gallery: transformGallery, compare: transformCompare, glossary: transformGlossary };
 
   // src/sections.js
   var HEADING = /^(#{2,6})\s+(.*?)\s+\{#([a-z0-9][a-z0-9-]*)((?:\s+[a-z][a-z-]*=[^\s}]+)*)\s*\}\s*$/i;
@@ -1270,9 +1309,11 @@ var __visualMarkdown = (() => {
     clock: '<circle cx="8" cy="8" r="6.25"/><path d="M8 5v3.25l2.1 1.3"/>',
     note: '<path d="M4 2.25h5.5L12.75 5.5v8.25H4z"/><path d="M6.25 8.5h4M6.25 11h4"/>'
   };
+  var ID_TITLE = /^(\p{Lu}[\p{L}]*[ -]?\d+)\s*:\s+(.+)$/u;
+  var idAnchor = (id) => `vm-id-${id.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-")}`;
   var CARD_COLORS = Object.keys(COLORS);
   var CARD_ICONS = Object.keys(ICON_SHAPES2);
-  function renderCard(lines, start) {
+  function renderCard(lines, start, link = null) {
     const match = CARD_START.exec(lines[start]);
     if (!match) return null;
     const tokens = match[1].trim().toLowerCase().split(/\s+/).filter(Boolean);
@@ -1281,12 +1322,71 @@ var __visualMarkdown = (() => {
     let end = start;
     const body = [];
     while (end + 1 < lines.length && /^>/.test(lines[end + 1])) body.push(lines[++end].replace(/^>\s?/, ""));
+    if (link) body.splice(0, body.length, ...body.map((line) => link(line)));
     while (body.length && !body[body.length - 1].trim()) body.pop();
     const icon2 = iconName ? `<span class="vm-card-icon">${svg(`vm-card-svg vm-card-svg-${iconName}`, 16, ICON_SHAPES2[iconName])}</span>` : "";
-    const head = `<div class="vm-card vm-card-${color}"><div class="vm-card-head">${icon2}<span class="vm-card-title">${inline(match[2].trim())}</span></div>`;
+    const id = ID_TITLE.exec(match[2].trim());
+    const head = `<div class="vm-card vm-card-${color}"${id ? ` id="${idAnchor(id[1])}"` : ""}><div class="vm-card-head">${icon2}<span class="vm-card-title">${inline(match[2].trim())}</span></div>`;
     const output = body.length ? [`${head}<div class="vm-card-body">`, "", ...body, "", "</div></div>", ""] : [`${head}</div>`, ""];
     if (end + 1 < lines.length && !lines[end + 1].trim()) end++;
     return { output, end };
+  }
+
+  // src/references.js
+  var FENCE = /^ {0,3}(`{3,}|~{3,})(.*)$/;
+  var plain = (text) => text.replace(/`([^`]*)`/g, "$1").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\*\*?|__?/g, "");
+  function collectReferences(lines, startLine = 0, lang = "de") {
+    const ids = /* @__PURE__ */ new Map();
+    const terms = /* @__PURE__ */ new Map();
+    const duplicates = [];
+    const add = (map, key, value) => map.has(key) ? duplicates.push({ key, line: value.line }) : map.set(key, value);
+    for (let i = startLine; i < lines.length; i++) {
+      const open = FENCE.exec(lines[i]);
+      if (open) {
+        let end = i + 1;
+        while (end < lines.length) {
+          const close = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(lines[end]);
+          if (close && close[1][0] === open[1][0] && close[1].length >= open[1].length) break;
+          end++;
+        }
+        if (open[2].trim() === "glossary" && !lines[i].startsWith(" ")) {
+          for (const entry of parseGlossary(lines.slice(i + 1, end).join("\n"), i + 2, lang).entries) add(terms, entry.term, entry);
+        }
+        i = end;
+        continue;
+      }
+      const card = CARD_START.exec(lines[i]);
+      const id = card && ID_TITLE.exec(card[2].trim());
+      if (id) add(ids, id[1], { title: plain(card[2].trim()), line: i + 1 });
+    }
+    return { ids, terms, duplicates };
+  }
+  var PROTECTED = /(`+)[\s\S]*?\1|!?\[[^\]]*\]\([^)]*\)|<[^>]+>|https?:\/\/\S+/g;
+  var escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  function createLinker({ ids, terms }) {
+    const keys = [...ids.keys(), ...terms.keys()].sort((a, b) => b.length - a.length);
+    if (!keys.length) return null;
+    const pattern = new RegExp(`(?<![\\p{L}\\p{N}_-])(${keys.map(escapeRegExp).join("|")})(?![\\p{L}\\p{N}_-])`, "gu");
+    let seen = /* @__PURE__ */ new Set();
+    const replace = (text) => text.replace(pattern, (key) => {
+      if (ids.has(key)) return `<a class="vm-xref" href="#${idAnchor(key)}" title="${escapeHtml(ids.get(key).title)}">${escapeHtml(key)}</a>`;
+      if (seen.has(key)) return key;
+      seen.add(key);
+      return `<a class="vm-term" href="#${termAnchor(key)}" title="${escapeHtml(plain(terms.get(key).meaning))}">${escapeHtml(key)}</a>`;
+    });
+    const link = (line) => {
+      let result = "";
+      let last = 0;
+      for (const match of line.matchAll(PROTECTED)) {
+        result += replace(line.slice(last, match.index)) + match[0];
+        last = match.index + match[0].length;
+      }
+      return result + replace(line.slice(last));
+    };
+    link.section = () => {
+      seen = /* @__PURE__ */ new Set();
+    };
+    return link;
   }
 
   // src/core.js
@@ -1298,6 +1398,8 @@ var __visualMarkdown = (() => {
     const firstContent = lines.findIndex((line, i) => i > endLine && line.trim());
     const bandAfter = firstContent >= 0 && /^# /.test(lines[firstContent]) ? firstContent : endLine;
     const sections = sectionIds(lines);
+    const link = createLinker(collectReferences(lines, endLine + 1, lang));
+    const linkText = (line) => !link || /^\s*(<|\[[^\]]+\]:)/.test(line) || /^( {4}|\t)/.test(line) ? line : link(line);
     const output = [];
     let changed = Boolean(band);
     let fence = null;
@@ -1344,20 +1446,26 @@ var __visualMarkdown = (() => {
           changed = true;
           i = end;
         } else if (badges.size && tableBody && isTableRow(line)) {
-          output.push(renderTableRow(line, badges));
+          output.push(linkText(renderTableRow(line, badges)));
           changed = true;
         } else if (badges.size && isTableSeparator(line) && isTableRow(lines[i - 1] ?? "")) {
           output.push(line);
           tableBody = true;
-        } else if (!open && (card = renderCard(lines, i))) {
+        } else if (!open && (card = renderCard(lines, i, link && linkText))) {
           output.push(...card.output);
           changed = true;
           i = card.end;
         } else if (!open && (section = renderSection(line, lang, today))) {
+          link?.section();
           output.push(...section);
           changed = true;
-        } else {
+        } else if (/^#{1,6}\s/.test(line)) {
+          link?.section();
           output.push(line);
+        } else {
+          const linked = open ? line : linkText(line);
+          if (linked !== line) changed = true;
+          output.push(linked);
           if (open) fence = { char: open[1][0], length: open[1].length };
         }
       }

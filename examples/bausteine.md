@@ -483,6 +483,16 @@ sequenceDiagram
     A-->>D: Stand und nächste Handlung
 ```
 
-## Noch nicht gebaut {#offen updated=2026-11-02}
+## Verweise und Begriffe {#verweise updated=2026-11-02}
 
-Die erste Runde ist vollständig, aus der zweiten gibt es `scale`, `gallery` und `compare`. Es fehlen noch Links und Erklärungen für IDs wie E47.
+Eine Karte, deren Titel mit einer ID beginnt, definiert sie, etwa E51 oder Frage 6 oben bei den Karten. Überall sonst im Text wird die ID zum Link auf die Karte, und beim Hovern steht ihr Titel. E47 bleibt Text, weil keine Karte sie definiert.
+
+Begriffe stehen in einem `glossary`-Block, der als Tabelle erscheint. Im Text wird ein Begriff beim ersten Auftreten pro Abschnitt zum Link auf seine Zeile, beim Hovern steht die Erklärung. Jede PO kann mehrere Positionen haben, die zweite PO in diesem Abschnitt bleibt deshalb ohne Linie. In `Code`, in Links und in Überschriften wird nichts verlinkt.
+
+```glossary
+PO: Bestellung im SAP, eine Nummer kann mehrere Positionen haben
+MPE: Markdown Preview Enhanced, die VS-Code-Erweiterung für diese Vorschau
+Spend: Ausgaben für eingekaufte Waren und Leistungen in einem Zeitraum
+```
+
+Die Definitionen müssen in derselben Datei stehen, weil der Parser keine anderen Dateien lesen kann. Ein Verweis in eine andere Datei bleibt ein normaler Link.

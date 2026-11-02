@@ -8,6 +8,7 @@ import { BLOCKS } from './blocks/index.js';
 import { renderSection, sectionIds } from './sections.js';
 import { parseBadges, isTableSeparator, isTableRow, renderTableRow } from './badges.js';
 import { renderCard } from './cards.js';
+import { collectReferences, createLinker } from './references.js';
 
 export function transform(markdown, { today = new Date() } = {}) {
   const { visual, endLine } = readVisual(markdown);
@@ -17,6 +18,9 @@ export function transform(markdown, { today = new Date() } = {}) {
   const firstContent = lines.findIndex((line, i) => i > endLine && line.trim());
   const bandAfter = firstContent >= 0 && /^# /.test(lines[firstContent]) ? firstContent : endLine;
   const sections = sectionIds(lines);
+  const link = createLinker(collectReferences(lines, endLine + 1, lang));
+  // IDs and terms are linked in running text only: not in headings, HTML, reference definitions or code.
+  const linkText = line => (!link || /^\s*(<|\[[^\]]+\]:)/.test(line) || /^( {4}|\t)/.test(line) ? line : link(line));
   const output = [];
   let changed = Boolean(band);
   let fence = null;
@@ -63,20 +67,26 @@ export function transform(markdown, { today = new Date() } = {}) {
         changed = true;
         i = end;
       } else if (badges.size && tableBody && isTableRow(line)) {
-        output.push(renderTableRow(line, badges));
+        output.push(linkText(renderTableRow(line, badges)));
         changed = true;
       } else if (badges.size && isTableSeparator(line) && isTableRow(lines[i - 1] ?? '')) {
         output.push(line);
         tableBody = true;
-      } else if (!open && (card = renderCard(lines, i))) {
+      } else if (!open && (card = renderCard(lines, i, link && linkText))) {
         output.push(...card.output);
         changed = true;
         i = card.end;
       } else if (!open && (section = renderSection(line, lang, today))) {
+        link?.section();
         output.push(...section);
         changed = true;
-      } else {
+      } else if (/^#{1,6}\s/.test(line)) {
+        link?.section();
         output.push(line);
+      } else {
+        const linked = open ? line : linkText(line);
+        if (linked !== line) changed = true;
+        output.push(linked);
         if (open) fence = { char: open[1][0], length: open[1].length };
       }
     }
