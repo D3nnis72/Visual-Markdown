@@ -141,7 +141,7 @@ basis: Rechnungen 2025
 | `y` | Pflicht. Spalte mit den Zahlen. Mehrere Spalten mit Komma ergeben mehrere Reihen |
 | `says` | Pflicht. Die Aussage in einem Satz, steht fett über dem Diagramm |
 | `basis` | Pflicht. Worauf die Zahlen beruhen, steht klein darunter als „Grundlage:“ |
-| `source` | Wo die Auswertung liegt, am besten als Link. Steht unter der Grundlage als „Quelle:“ |
+| `source` | Wo die Auswertung liegt, am besten als Link. Steht unter der Grundlage als „Quelle:“. Optional, aber `check` warnt, wenn sie fehlt |
 | `color` | Spalte, nach der Balken gestapelt oder Linien und Punkte getrennt werden |
 | `percent` | `yes` rechnet gestapelte Balken auf 100 % |
 | `grouped` | `yes` stellt mehrere Reihen nebeneinander statt gestapelt |
@@ -192,7 +192,7 @@ npm run check -- datei.md ordner/
 node scripts/check.mjs --strict datei.md
 ```
 
-Das Check-Skript nutzt dieselben Parser wie der Renderer und braucht keine Abhängigkeiten. Fehler sind Blöcke, die im Preview als Fehlerkasten erscheinen würden. Warnungen sind fehlende Daten, offene Schritte ohne Beschreibung, ein Stand älter als sieben Tage, ein `as-of` älter als das neueste `updated`, unbekannte Wörter in Karten und Badges und Dateien unter `Customers/` ohne `share: intern`. Der Exit-Code ist 1 bei Fehlern, mit `--strict` auch bei Warnungen. Agents lassen es nach dem Schreiben laufen, so steht es im Skill `visual-markdown`.
+Das Check-Skript nutzt dieselben Parser wie der Renderer und braucht keine Abhängigkeiten. Fehler sind Blöcke, die im Preview als Fehlerkasten erscheinen würden. Warnungen sind fehlende Daten, offene Schritte ohne Beschreibung, Diagramme ohne `source`, ein Stand älter als sieben Tage, ein `as-of` älter als das neueste `updated`, unbekannte Wörter in Karten und Badges und Dateien unter `Customers/` ohne `share: intern`. Der Exit-Code ist 1 bei Fehlern, mit `--strict` auch bei Warnungen. Agents lassen es nach dem Schreiben laufen, so steht es im Skill `visual-markdown`.
 
 ## Mermaid-Diagramme
 

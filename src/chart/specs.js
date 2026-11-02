@@ -4,7 +4,8 @@ import { parseNumber } from './table.js';
 import { formatNumber, formatPercent, formatSigned } from './format.js';
 
 const FONT = 'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif';
-const WIDTH = 640;
+// Total width of every chart, axes and legend included. CSS scales the SVG to the card, so all charts fill it alike.
+const WIDTH = 760;
 const MUTED = '#6b6b74';
 const INK = '#52514e';
 const DARK_INK = '#0b0b0b';
@@ -14,6 +15,8 @@ const LOCALES = {
   en: { decimal: '.', thousands: ',', grouping: [3], currency: ['$', ''] },
 };
 const unique = values => [...new Set(values)];
+// Tilts category labels only when the longest one would not fit under its bar (about 6.5 px per character).
+const labelAngle = names => (Math.max(0, ...names.map(name => String(name).length)) * 6.5 > (WIDTH * 0.85) / Math.max(names.length, 1) ? -30 : 0);
 // Labels inside a colored fill are white, except on the light yellow slot.
 const inkOn = color => (color === PALETTE[3] ? DARK_INK : '#ffffff');
 
@@ -22,6 +25,7 @@ function base(fields, values, lang) {
     $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
     description: fields.says,
     background: 'transparent',
+    autosize: { type: 'fit-x', contains: 'padding' },
     data: { values },
     config: {
       font: FONT,
@@ -68,7 +72,7 @@ function barSpec(fields, data, lang) {
     ...(series ? { color: colorBy(data, data.rows) } : {}), ...offset,
   };
   const size = horizontal
-    ? { width: WIDTH - 140, height: { step: grouped ? 18 * seriesOrder(data.rows).length + 10 : 28 } }
+    ? { width: WIDTH, height: { step: grouped ? 18 * seriesOrder(data.rows).length + 10 : 28 } }
     : { width: WIDTH, height: 260 };
   const bar = { type: 'bar', ...(series && !grouped ? { cornerRadius: 2, stroke: '#ffffff', strokeWidth: 1.5 } : { cornerRadiusEnd: 4 }) };
   if (series) return { ...base(fields, values, lang), ...size, mark: bar, encoding };
@@ -139,7 +143,7 @@ function heatmapSpec(fields, data, lang) {
   const columns = seriesOrder(data.rows);
   return {
     ...base(fields, values, lang),
-    width: Math.min(WIDTH - 160, columns.length * 120), height: { step: 36 },
+    width: WIDTH, height: { step: 36 },
     encoding: {
       x: { field: 'series', type: 'ordinal', sort: columns, title: null, axis: { orient: 'top', labelAngle: 0 } },
       y: { field: 'x', type: 'ordinal', sort: unique(data.rows.map(row => row.x)), title: null },
@@ -173,7 +177,7 @@ function waterfallSpec(fields, data, lang) {
     return { x: row.x, start, end: running, kind: row.y >= 0 ? 'up' : 'down', label: formatSigned(row.y, lang) };
   });
   const order = values.map(value => value.x);
-  const x = { field: 'x', type: 'ordinal', sort: order, title: null, axis: { labelAngle: order.some(name => name.length > 14) ? -30 : 0 }, scale: { paddingInner: 0.3 } };
+  const x = { field: 'x', type: 'ordinal', sort: order, title: null, axis: { labelAngle: labelAngle(order) }, scale: { paddingInner: 0.3 } };
   const kinds = [t(lang, 'chartTotal'), t(lang, 'chartUp'), t(lang, 'chartDown')];
   const named = values.map(value => ({ ...value, kind: kinds[['total', 'up', 'down'].indexOf(value.kind)] }));
   return {
@@ -206,7 +210,7 @@ function paretoSpec(fields, data, lang) {
     return { x: row.x, share: row.y / total, cumulative: cumulative / total, label: formatPercent(row.y / total, lang, 0) };
   });
   const names = [t(lang, 'chartShare'), t(lang, 'chartCumulative')];
-  const x = { field: 'x', type: 'ordinal', sort: values.map(value => value.x), title: data.xTitle, axis: { labelAngle: values.some(v => v.x.length > 10) ? -30 : 0 }, scale: { paddingInner: 0.25 } };
+  const x = { field: 'x', type: 'ordinal', sort: values.map(value => value.x), title: data.xTitle, axis: { labelAngle: labelAngle(values.map(value => value.x)) }, scale: { paddingInner: 0.25 } };
   const y = field => ({ field, type: 'quantitative', title: null, scale: { domain: [0, 1] }, axis: { format: '%' } });
   return {
     ...base(fields, values, lang), width: WIDTH, height: 260,
@@ -237,7 +241,7 @@ function scatterSpec(fields, data, lang) {
   };
 }
 
-/** Each row against its target: a filled bar on a lighter track of the same hue. */
+/** Each row against its target: a filled bar on a lighter track of the same hue, the numbers above its end. */
 function progressSpec(fields, data, lang) {
   const values = data.rows.map(row => {
     const share = row.target ? row.y / row.target : 0;
@@ -246,12 +250,12 @@ function progressSpec(fields, data, lang) {
   const y = { field: 'x', type: 'ordinal', sort: values.map(value => value.x), title: null };
   const x = field => ({ field, type: 'quantitative', scale: { domain: [0, 1] }, axis: null });
   return {
-    ...base(fields, values, lang), width: WIDTH - 320, height: { step: 30 },
+    ...base(fields, values, lang), width: WIDTH, height: { step: 40 },
     encoding: { y },
     layer: [
       { mark: { type: 'bar', height: 10, cornerRadius: 5, color: TRACK }, encoding: { x: { datum: 1, type: 'quantitative', scale: { domain: [0, 1] }, axis: null } } },
       { mark: { type: 'bar', height: 10, cornerRadius: 5, color: PALETTE[0] }, encoding: { x: x('share') } },
-      { mark: { type: 'text', align: 'left', dx: 10 }, encoding: { x: { datum: 1, type: 'quantitative', scale: { domain: [0, 1] }, axis: null }, text: { field: 'label' } } },
+      { mark: { type: 'text', align: 'right', baseline: 'bottom', dy: -9 }, encoding: { x: { datum: 1, type: 'quantitative', scale: { domain: [0, 1] }, axis: null }, text: { field: 'label' } } },
     ],
   };
 }

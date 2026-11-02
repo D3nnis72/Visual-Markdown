@@ -159,7 +159,7 @@ source: [Auswertung im Datenbefund](bausteine.md#diagramme)
 
 Mit `color` stapeln sich die Balken, `percent: yes` rechnet jede Säule auf 100 %.
 
-| Werk | Quelle | Positionen |
+| Werk | System | Positionen |
 | --- | --- | ---: |
 | Nord | SAP | 320 |
 | Nord | Altsystem | 80 |
@@ -172,10 +172,11 @@ Mit `color` stapeln sich die Balken, `percent: yes` rechnet jede Säule auf 100 
 type: bar
 x: Werk
 y: Positionen
-color: Quelle
+color: System
 percent: yes
 says: Im Werk Süd kommt mehr als die Hälfte der Positionen aus dem Altsystem.
 basis: Bestellpositionen 2025, ausgedachte Zahlen
+source: Datenbefund, Abschnitt Herkunft
 ```
 
 Mehrere Spalten in `y` werden zu Linien. Die Reihenfolge der Wochen kommt aus der Tabelle.
@@ -194,6 +195,7 @@ x: Woche
 y: Offen, Geklärt
 says: Seit KW 42 sind mehr Fragen geklärt als offen.
 basis: Fragenliste, Stand jeweils freitags, ausgedachte Zahlen
+source: [Fragenliste](bausteine.md#karten)
 ```
 
 Ein Histogramm braucht die schon ausgezählte Verteilung, die Klassen stehen in der ersten Spalte.
@@ -212,6 +214,7 @@ x: Textlänge
 y: Positionen
 says: Viele Texte enden bei genau 40 Zeichen, dort schneidet das Altsystem ab.
 basis: Positionstexte 2025, ausgedachte Zahlen
+source: Datenbefund, Abschnitt Positionstexte
 ```
 
 ### Kennzahlen {#kennzahlen updated=2026-11-02}
@@ -232,6 +235,7 @@ y: Wert
 note: Hinweis
 says: Der Datenstand auf einen Blick.
 basis: Bestelldaten 2025, ausgedachte Zahlen
+source: Spend-Auswertung, Blatt Übersicht
 ```
 
 ### Anteile {#anteile updated=2026-11-02}
@@ -252,6 +256,7 @@ x: Bereich
 y: Spend in Mio. €
 says: Feldausrüstung und Fertigung machen zusammen fast 70 % des Spends aus.
 basis: Bestelldaten 2025, ausgedachte Zahlen
+source: Spend-Auswertung, Blatt Übersicht
 ```
 
 ### Gruppierte Balken {#gruppiert updated=2026-11-02}
@@ -271,6 +276,7 @@ y: Feldausrüstung, Indirekter Einkauf
 grouped: yes
 says: Im indirekten Einkauf sind fast neun von zehn Euro Services.
 basis: Bestelldaten 2025 nach Typ, ausgedachte Zahlen
+source: Spend-Auswertung, Blatt Typen
 ```
 
 ### Heatmap {#heatmap updated=2026-11-02}
@@ -289,6 +295,7 @@ x: Typ
 y: Feldausrüstung, Fertigung, Indirekter Einkauf, Chemie
 says: Produkte dominieren überall außer im indirekten Einkauf.
 basis: Bestelldaten 2025 nach Typ und Bereich, Mio. €, ausgedachte Zahlen
+source: Spend-Auswertung, Blatt Typ × Bereich
 ```
 
 ### Wasserfall {#wasserfall updated=2026-11-02}
@@ -310,6 +317,7 @@ x: Schritt
 y: Zeilen in Tsd.
 says: Von 1,2 Mio. gelieferten Zeilen bleiben knapp 1 Mio. für die Analyse.
 basis: Bereinigungsschritte der Bestelldaten, ausgedachte Zahlen
+source: Bereinigungsprotokoll
 ```
 
 ### Pareto {#pareto updated=2026-11-02}
@@ -333,6 +341,7 @@ x: Lieferant
 y: Spend in Mio. €
 says: Vier Lieferanten machen 85 % des Spends aus.
 basis: Spend 2025 der acht größten Lieferanten, ausgedachte Zahlen
+source: Spend-Auswertung, Blatt Lieferanten
 ```
 
 ### Streudiagramm {#streudiagramm updated=2026-11-02}
@@ -354,6 +363,7 @@ y: Preisabweichung in %
 label: Lieferant
 says: Wer selten bestellt wird, weicht im Preis stärker ab.
 basis: Bestellungen und Preise 2025, ausgedachte Zahlen
+source: Spend-Auswertung, Blatt Preise
 ```
 
 ### Fortschritt {#fortschritt updated=2026-11-02}
@@ -373,6 +383,7 @@ y: Erledigt
 target: Ziel
 says: Die Anreicherung ist fast durch, die Anfragen haben gerade erst begonnen.
 basis: Arbeitsstand, ausgedachte Zahlen
+source: [Arbeitsliste](bausteine.md#schritte)
 ```
 
 ## Mermaid {#mermaid updated=2026-11-01}

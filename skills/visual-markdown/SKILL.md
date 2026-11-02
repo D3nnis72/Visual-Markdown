@@ -49,4 +49,4 @@ Everything else stays normal Markdown, flows stay Mermaid (skill `mermaid-theme`
 node <this skill's directory>/../../scripts/check.mjs --strict path/to/file.md
 ```
 
-Errors are blocks that render as an error box. Warnings are missing dates, missing descriptions on open steps, an `as-of` older than the newest `updated`, or a customer page without `share: intern`. Fix all of them, or say in your reply why one stays.
+Errors are blocks that render as an error box. Warnings are missing dates, missing descriptions on open steps, a chart without `source`, an `as-of` older than the newest `updated`, or a customer page without `share: intern`. Fix all of them, or say in your reply why one stays.

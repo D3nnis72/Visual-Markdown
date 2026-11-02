@@ -40,3 +40,9 @@ test('ignores plain Markdown and blocks inside longer fences', () => {
   assert.deepEqual(check('# T\n\nText.\n'), []);
   assert.deepEqual(check('# T\n\n````markdown\n```steps\n- [ ] a: A | after: zz\n```\n````\n'), []);
 });
+test('asks for a source on every chart', () => {
+  const table = '\n| Werk | Positionen |\n| --- | --- |\n| Nord | 3 |\n';
+  const chart = extra => `\n\`\`\`chart\ntype: bar\nx: Werk\ny: Positionen\nsays: S\nbasis: B\n${extra}\`\`\`\n`;
+  assert.deepEqual(check(front() + table + chart('')), ['12 warning Diagramm ohne `source`: Wo liegt die Auswertung?']);
+  assert.deepEqual(check(front() + table + chart('source: Auswertung\n')), []);
+});

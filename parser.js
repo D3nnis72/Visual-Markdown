@@ -131,6 +131,7 @@ var __visualMarkdown = (() => {
       checkCardWord: "`{word}` ist weder Icon noch Farbe einer Karte",
       checkBadge: "Badge-Farbe `{color}` gibt es nicht, erlaubt sind {list}",
       checkAsOfOld: "`as-of` ist \xE4lter als das neueste `updated` ({date})",
+      checkChartSource: "Diagramm ohne `source`: Wo liegt die Auswertung?",
       errRequired: "Pflichtfeld \u201E{field}\u201C fehlt",
       errValue: "\u201E{value}\u201C geht nicht f\xFCr {field}, erlaubt sind {list}",
       errNoTable: "keine Tabelle direkt \xFCber dem Block",
@@ -204,6 +205,7 @@ var __visualMarkdown = (() => {
       checkCardWord: "`{word}` is neither an icon nor a color of a card",
       checkBadge: "badge color `{color}` does not exist, use {list}",
       checkAsOfOld: "`as-of` is older than the newest `updated` ({date})",
+      checkChartSource: "Chart without `source`: where does the analysis live?",
       errRequired: 'required field "{field}" is missing',
       errValue: '"{value}" is not allowed for {field}, use {list}',
       errNoTable: "no table directly above the block",
@@ -572,7 +574,7 @@ var __visualMarkdown = (() => {
 
   // src/chart/specs.js
   var FONT = 'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif';
-  var WIDTH = 640;
+  var WIDTH = 760;
   var MUTED = "#6b6b74";
   var INK = "#52514e";
   var DARK_INK = "#0b0b0b";
@@ -582,12 +584,14 @@ var __visualMarkdown = (() => {
     en: { decimal: ".", thousands: ",", grouping: [3], currency: ["$", ""] }
   };
   var unique = (values) => [...new Set(values)];
+  var labelAngle = (names) => Math.max(0, ...names.map((name) => String(name).length)) * 6.5 > WIDTH * 0.85 / Math.max(names.length, 1) ? -30 : 0;
   var inkOn = (color) => color === PALETTE[3] ? DARK_INK : "#ffffff";
   function base(fields, values, lang) {
     return {
       $schema: "https://vega.github.io/schema/vega-lite/v5.json",
       description: fields.says,
       background: "transparent",
+      autosize: { type: "fit-x", contains: "padding" },
       data: { values },
       config: {
         font: FONT,
@@ -646,7 +650,7 @@ var __visualMarkdown = (() => {
       ...series ? { color: colorBy(data, data.rows) } : {},
       ...offset
     };
-    const size = horizontal ? { width: WIDTH - 140, height: { step: grouped ? 18 * seriesOrder(data.rows).length + 10 : 28 } } : { width: WIDTH, height: 260 };
+    const size = horizontal ? { width: WIDTH, height: { step: grouped ? 18 * seriesOrder(data.rows).length + 10 : 28 } } : { width: WIDTH, height: 260 };
     const bar = { type: "bar", ...series && !grouped ? { cornerRadius: 2, stroke: "#ffffff", strokeWidth: 1.5 } : { cornerRadiusEnd: 4 } };
     if (series) return { ...base(fields, values, lang), ...size, mark: bar, encoding };
     const label = {
@@ -715,7 +719,7 @@ var __visualMarkdown = (() => {
     const columns = seriesOrder(data.rows);
     return {
       ...base(fields, values, lang),
-      width: Math.min(WIDTH - 160, columns.length * 120),
+      width: WIDTH,
       height: { step: 36 },
       encoding: {
         x: { field: "series", type: "ordinal", sort: columns, title: null, axis: { orient: "top", labelAngle: 0 } },
@@ -748,7 +752,7 @@ var __visualMarkdown = (() => {
       return { x: row.x, start, end: running, kind: row.y >= 0 ? "up" : "down", label: formatSigned(row.y, lang) };
     });
     const order = values.map((value) => value.x);
-    const x = { field: "x", type: "ordinal", sort: order, title: null, axis: { labelAngle: order.some((name) => name.length > 14) ? -30 : 0 }, scale: { paddingInner: 0.3 } };
+    const x = { field: "x", type: "ordinal", sort: order, title: null, axis: { labelAngle: labelAngle(order) }, scale: { paddingInner: 0.3 } };
     const kinds = [t(lang, "chartTotal"), t(lang, "chartUp"), t(lang, "chartDown")];
     const named = values.map((value) => ({ ...value, kind: kinds[["total", "up", "down"].indexOf(value.kind)] }));
     return {
@@ -782,7 +786,7 @@ var __visualMarkdown = (() => {
       return { x: row.x, share: row.y / total, cumulative: cumulative / total, label: formatPercent(row.y / total, lang, 0) };
     });
     const names = [t(lang, "chartShare"), t(lang, "chartCumulative")];
-    const x = { field: "x", type: "ordinal", sort: values.map((value) => value.x), title: data.xTitle, axis: { labelAngle: values.some((v) => v.x.length > 10) ? -30 : 0 }, scale: { paddingInner: 0.25 } };
+    const x = { field: "x", type: "ordinal", sort: values.map((value) => value.x), title: data.xTitle, axis: { labelAngle: labelAngle(values.map((value) => value.x)) }, scale: { paddingInner: 0.25 } };
     const y = (field) => ({ field, type: "quantitative", title: null, scale: { domain: [0, 1] }, axis: { format: "%" } });
     return {
       ...base(fields, values, lang),
@@ -825,13 +829,13 @@ var __visualMarkdown = (() => {
     const x = (field) => ({ field, type: "quantitative", scale: { domain: [0, 1] }, axis: null });
     return {
       ...base(fields, values, lang),
-      width: WIDTH - 320,
-      height: { step: 30 },
+      width: WIDTH,
+      height: { step: 40 },
       encoding: { y },
       layer: [
         { mark: { type: "bar", height: 10, cornerRadius: 5, color: TRACK }, encoding: { x: { datum: 1, type: "quantitative", scale: { domain: [0, 1] }, axis: null } } },
         { mark: { type: "bar", height: 10, cornerRadius: 5, color: PALETTE[0] }, encoding: { x: x("share") } },
-        { mark: { type: "text", align: "left", dx: 10 }, encoding: { x: { datum: 1, type: "quantitative", scale: { domain: [0, 1] }, axis: null }, text: { field: "label" } } }
+        { mark: { type: "text", align: "right", baseline: "bottom", dy: -9 }, encoding: { x: { datum: 1, type: "quantitative", scale: { domain: [0, 1] }, axis: null }, text: { field: "label" } } }
       ]
     };
   }

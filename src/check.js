@@ -63,6 +63,7 @@ export function checkMarkdown(markdown, { path = '', today = new Date() } = {}) 
         uses = true;
         const chart = transformChart(lines, i, end, lang);
         for (const error of chart.errors ?? []) findings.push({ level: 'error', line: error.line, message: error.message });
+        if (!lines.slice(i + 1, end).some(text => /^source:\s*\S/.test(text))) add('warning', i + 1, 'checkChartSource');
       }
       i = end;
       continue;
