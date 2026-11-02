@@ -22,7 +22,7 @@ Ein Markdown-Format, das in der Vorschau von **Markdown Preview Enhanced** (MPE)
 Voraussetzung ist die VS-Code-Erweiterung Markdown Preview Enhanced. Node braucht nur, wer am Parser arbeitet oder das Check-Skript nutzt.
 
 ```bash
-git clone <repo-url> ~/Projects/Visual-Markdown
+git clone https://github.com/D3nnis72/Visual-Markdown.git ~/Projects/Visual-Markdown
 ~/Projects/Visual-Markdown/install.sh
 ```
 

@@ -28,6 +28,8 @@ Not for knowledge docs that mainly agents read: those stay plain Markdown.
 
 Everything else stays normal Markdown, flows stay Mermaid (skill `mermaid-theme`).
 
+`steps` shows the project's work across everyone involved. One person's own to-dos stay in their task tool, such as Notion, and are not copied into `steps`.
+
 ## Dates mean "content last changed or confirmed"
 
 `updated` on a step or section and `as-of` in the front matter are the dates the content was last changed or confirmed true. They are what a reader trusts.

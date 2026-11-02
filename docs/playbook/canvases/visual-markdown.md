@@ -89,7 +89,7 @@ visual:
 
 ## Zuhause, Verteilung, Export
 
-- Zuhause ist dieses Repo. Der lokale Ordner und die README heißen schon `Visual-Markdown`, das GitHub-Repo noch `MPE-Notion-Theme`. Es enthält Theme, Mermaid-Konfiguration, `install.sh`, das Check-Skript und die Skills `visual-markdown` und `mermaid-theme`.
+- Zuhause ist dieses Repo, lokal und auf GitHub `Visual-Markdown`. Es enthält Theme, Mermaid-Konfiguration, `install.sh`, das Check-Skript und die Skills `visual-markdown` und `mermaid-theme`.
 - Neu kommt ein Kern als JavaScript-Modul ohne Abhängigkeiten, mit den Schemas darin. MPE verlangt `parser.js` als eine einzige in sich geschlossene Datei, deshalb wird sie aus dem Kern gebaut. Das Check-Skript nutzt denselben Kern in Node.
 - Kollegen installieren MPE, klonen das Repo und führen `install.sh` aus, das künftig auch `parser.js` verlinkt. Das ist der einzige Weg zum Verteilen.
 - Externes Teilen läuft als statischer PDF-Export. Diagramme werden eingebacken, relative Links auf Repo-Dateien aufgelöst oder entfernt.
@@ -102,14 +102,18 @@ Der Prototyp mit Stand-Band, Abschnitten und `steps` ist gebaut und am 1. Novemb
 ```steps
 - [x] skill: Agent-Skill und Check-Skript | owner: Agent | updated: 2026-11-02
   Der Skill `visual-markdown` verweist auf die README als Formatquelle und regelt, was er dort nicht findet: welcher Baustein wann passt, dass Daten den letzten inhaltlichen Stand meinen und dass nichts erfunden wird. `install.sh` verlinkt ihn. Das Check-Skript meldet Fehler und fehlende Daten mit denselben Parsern wie der Renderer.
-- [ ] share: Umbenennen und Kollegentest | owner: Dennis | after: skill | next: Namen bestätigen, dann das GitHub-Repo umbenennen | done-when: GitHub-Repo heißt Visual-Markdown, ein Kollege hat es mit `install.sh` eingerichtet | updated: 2026-11-02
-  Format, Skill und Check-Skript sind fertig, die README beschreibt die Einrichtung für Kollegen. Es fehlen nur noch der Name auf GitHub und ein erster Kollege, der es einrichtet.
+- [x] rename: GitHub-Repo in `Visual-Markdown` umbenennen | owner: Agent | after: skill | updated: 2026-11-02
+  Die alte Adresse leitet GitHub weiter.
+- [~] status: Echte Statusseite im Alltag | owner: Dennis | after: rename | done-when: Die Accenture-Statusseite ist eine Woche lang in Visual Markdown gepflegt, Schrittliste und Stand im Band sind dabei aktuell geblieben | updated: 2026-11-02
+  Ein frischer Agent stellt die Seite nur mit dem Skill um, das testet zugleich den Skill. `brainstorming` und `docdriven` verweisen auf den Skill. Die Schrittliste zeigt die Arbeit aller Beteiligten, persönliche Aufgaben bleiben in Notion.
+- [ ] more: Entscheidungen und Fragensammlung umstellen | owner: Dennis | after: status | done-when: Beide Accenture-Seiten nutzen Karten mit ihren IDs | updated: 2026-11-02
+  Erst wenn sich die Statusseite bewährt hat.
+- [ ] share: Kollegentest | owner: Dennis | after: rename | done-when: Ein Kollege hat es mit `install.sh` eingerichtet und eine Seite im Preview gesehen | updated: 2026-11-02
+  Die README beschreibt die Einrichtung.
 ```
 
 ## Offene Fragen
 
-- Endgültigen Namen bestätigen, bevor das GitHub-Repo umbenannt wird.
-- Wo verläuft die Grenze zwischen `steps` und den persönlichen Aufgaben in Notion, damit nichts doppelt gepflegt wird?
 - LioCare hat eine eigene Kopie des Notion-Themes im Repo-Root. Ziehen Projekte das Theme künftig nur noch aus diesem Repo?
 
 ## Nicht jetzt
