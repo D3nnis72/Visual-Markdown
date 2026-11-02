@@ -106,7 +106,9 @@ var __visualMarkdown = (() => {
       errNested: "Unterpunkte kommen erst sp\xE4ter",
       errDuplicate: "K\xFCrzel \u201E{id}\u201C doppelt",
       errUnknown: "\u201E{id}\u201C in after gibt es nicht",
-      errCycle: "Zyklus \xFCber {list}"
+      errCycle: "Zyklus \xFCber {list}",
+      shareInternal: "Intern",
+      watermarkNote: "nicht weitergeben"
     },
     en: {
       progress: "{done} of {total} done",
@@ -149,7 +151,9 @@ var __visualMarkdown = (() => {
       errNested: "sub-items are not supported yet",
       errDuplicate: 'duplicate id "{id}"',
       errUnknown: '"{id}" in after does not exist',
-      errCycle: "cycle through {list}"
+      errCycle: "cycle through {list}",
+      shareInternal: "Internal",
+      watermarkNote: "do not share"
     }
   };
   function t(lang, key, vars = {}) {
@@ -219,11 +223,24 @@ var __visualMarkdown = (() => {
   }
   var copyButton = ({ id = null, thread = null, lang, className = "", label }) => `<button type="button" class="vm-copy${className ? ` ${className}` : ""}"${id ? ` data-copy-id="${escapeHtml(id)}"` : ""} data-copied="${escapeHtml(t(lang, "copied"))}" title="${escapeHtml(t(lang, "copy"))}" aria-label="${escapeHtml(label)}"${thread ? ` data-copy-thread="${escapeHtml(thread)}"` : ""}>${COPY_ICON}</button>`;
 
+  // src/share.js
+  var SHARE_VALUES = ["intern", "internal"];
+  var isInternal = (visual) => SHARE_VALUES.includes(String(visual?.share ?? "").trim().toLowerCase());
+  var LOCK_ICON = svg("vm-lock-icon", 12, '<rect x="3.25" y="7" width="9.5" height="6.75" rx="1.5"/><path d="M5.25 7V5a2.75 2.75 0 0 1 5.5 0v2"/>');
+  var shareBadge = (lang) => `<span class="vm-band-share">${LOCK_ICON}${escapeHtml(t(lang, "shareInternal"))}</span>`;
+  function renderWatermark(visual, lang) {
+    const asOf = visual?.["as-of"] ?? visual?.stand;
+    const date = parseDate(asOf);
+    const note = [t(lang, "watermarkNote"), asOf ? t(lang, "stand", { date: date ? formatDate(date, lang) : asOf }) : ""].filter(Boolean).join(" \xB7 ");
+    return `<div class="vm-watermark" aria-hidden="true"><div class="vm-watermark-text"><span class="vm-watermark-word">${escapeHtml(t(lang, "shareInternal"))}</span><span class="vm-watermark-note">${escapeHtml(note)}</span></div></div>`;
+  }
+
   // src/band.js
   function renderBand(visual, today, lang) {
     const asOf = visual?.["as-of"] ?? visual?.stand;
     const created = visual?.created;
-    if (!asOf && !visual?.status && !created) return "";
+    const internal = isInternal(visual);
+    if (!asOf && !visual?.status && !created && !internal) return "";
     const asOfDate = parseDate(asOf);
     const createdDate = parseDate(created);
     const stale = Boolean(asOfDate && isStale(asOfDate, today));
@@ -231,8 +248,10 @@ var __visualMarkdown = (() => {
     const stand = asOf ? `<span>${escapeHtml(t(lang, "stand", { date: asOfDate ? formatDate(asOfDate, lang) : asOf }))}</span>` : "";
     const since = created ? `<span class="vm-band-created">${escapeHtml(t(lang, "created", { date: createdDate ? formatDate(createdDate, lang) : created }))}</span>` : "";
     const warning = stale ? `<span>${escapeHtml(t(lang, "stale", { days: STALE_DAYS }))}</span>` : "";
+    const share = internal ? shareBadge(lang) : "";
     const copy = copyButton({ lang, className: "vm-copy-document", label: t(lang, "copyDocument") });
-    return `<div class="vm-band${stale ? " vm-stale" : ""}">${status}${stand}${since}${warning}${copy}</div>`;
+    const watermark = internal ? renderWatermark(visual, lang) : "";
+    return `<div class="vm-band${stale ? " vm-stale" : ""}">${status}${share}${stand}${since}${warning}${copy}</div>${watermark}`;
   }
 
   // src/steps/schema.js

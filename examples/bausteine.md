@@ -4,6 +4,7 @@ visual:
   created: 2026-10-28
   as-of: 2026-11-01
   lang: de
+  share: intern
   badges: { angereichert: ok, offen: warn, fehlt: bad, läuft: info, später: muted }
 ---
 # Alle Bausteine im Überblick
@@ -12,7 +13,7 @@ Diese Seite zeigt jeden Baustein, den Renderer und Theme heute können, an einem
 
 ## Stand-Band {#band updated=2026-11-01}
 
-Das grüne Band über diesem Abschnitt kommt aus dem Frontmatter. Es zeigt Status, Stand und Erstellungsdatum. Rechts kopiert ein Knopf den Pfad dieser Datei. Ist `as-of` älter als sieben Tage, wird das Band gelb und sagt das dazu.
+Das grüne Band über diesem Abschnitt kommt aus dem Frontmatter. Es zeigt Status, Stand und Erstellungsdatum. Rechts kopiert ein Knopf den Pfad dieser Datei. Ist `as-of` älter als sieben Tage, wird das Band gelb und sagt das dazu. Mit `share: intern` trägt das Band ein rotes Badge „Intern“, und im PDF steht auf jeder Seite schräg „Intern“ mit dem Hinweis „nicht weitergeben“ und dem Stand.
 
 ```yaml
 visual:
@@ -20,6 +21,7 @@ visual:
   created: 2026-10-28
   as-of: 2026-11-01
   lang: de
+  share: intern
   badges: { angereichert: ok, offen: warn, fehlt: bad, läuft: info, später: muted }
 ```
 
@@ -165,4 +167,4 @@ sequenceDiagram
 
 ## Noch nicht gebaut {#offen updated=2026-11-01}
 
-Aus der ersten Runde fehlen noch `chart` für Diagramme aus Tabellen und das Wasserzeichen im PDF. Die zweite Runde mit Links und Erklärungen für IDs, `scale`, `gallery` und `compare` ist noch nicht begonnen.
+Aus der ersten Runde fehlt noch `chart` für Diagramme aus Tabellen. Die zweite Runde mit Links und Erklärungen für IDs, `scale`, `gallery` und `compare` ist noch nicht begonnen.

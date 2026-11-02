@@ -422,6 +422,13 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
     border-left-color: var(--vm-warning);
   }
   .vm-band-status { font-weight: 600; }
+  .vm-band-share {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 1px 8px; border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+    background: var(--vm-error-fill); color: var(--vm-bad-text);
+  }
+  .vm-watermark { display: none; }
   .vm-steps {
     overflow: hidden;
     background: var(--vm-surface);
@@ -652,7 +659,7 @@ body.vscode-dark .markdown-preview.markdown-preview {
 
 /* Chrome soll die Komponentenfarben auch ohne Hintergrundgrafiken drucken. */
 .markdown-preview.markdown-preview {
-  .vm-band, .vm-band *, .vm-steps, .vm-steps *, .vm-section-meta, .vm-section-meta *, .vm-error, .vm-error * {
+  .vm-band, .vm-band *, .vm-watermark, .vm-watermark *, .vm-steps, .vm-steps *, .vm-section-meta, .vm-section-meta *, .vm-error, .vm-error * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -679,5 +686,19 @@ body.vscode-dark .markdown-preview.markdown-preview {
     .vm-chevron { display: none; }
     .vm-group-title { break-after: avoid; }
     .vm-copy { display: none !important; }
+    /* Fest positionierte Elemente wiederholt Chrome auf jeder PDF-Seite. */
+    .vm-watermark {
+      display: flex; position: fixed; inset: 0; z-index: 1000;
+      align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    .vm-watermark-text {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transform: rotate(-35deg);
+      color: rgba(120, 120, 130, 0.12);
+      font-weight: 700; line-height: 1; white-space: nowrap;
+    }
+    .vm-watermark-word { font-size: 140px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .vm-watermark-note { font-size: 26px; color: rgba(120, 120, 130, 0.24); }
   }
 }

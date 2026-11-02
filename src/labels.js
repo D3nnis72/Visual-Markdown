@@ -14,6 +14,7 @@ const labels = {
     errField: 'unbekanntes Feld „{field}“', errNested: 'Unterpunkte kommen erst später',
     errDuplicate: 'Kürzel „{id}“ doppelt', errUnknown: '„{id}“ in after gibt es nicht',
     errCycle: 'Zyklus über {list}',
+    shareInternal: 'Intern', watermarkNote: 'nicht weitergeben',
   },
   en: {
     progress: '{done} of {total} done', done: 'done', running: 'running',
@@ -30,6 +31,7 @@ const labels = {
     errField: 'unknown field "{field}"', errNested: 'sub-items are not supported yet',
     errDuplicate: 'duplicate id "{id}"', errUnknown: '"{id}" in after does not exist',
     errCycle: 'cycle through {list}',
+    shareInternal: 'Internal', watermarkNote: 'do not share',
   },
 };
 export function t(lang, key, vars = {}) {

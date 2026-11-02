@@ -105,3 +105,10 @@ test('accepts icon and color in any order, aliases and no body', () => {
 test('leaves normal quotes, GitHub callouts and fenced cards alone', () => {
   for (const text of ['> Ein Zitat', '> [!NOTE]\n> Hinweis', '```\n> [!card flag green] Code\n```']) assert.equal(run(text), text);
 });
+test('marks internal pages in the band and adds a print watermark', () => {
+  const result = run('---\nvisual:\n  as-of: 2026-11-01\n  share: intern\n---\n# T\n');
+  assert.match(result, /<span class="vm-band-share"><svg class="vm-lock-icon"[\s\S]*?<\/svg>Intern<\/span>/);
+  assert.match(result, /<\/div><div class="vm-watermark" aria-hidden="true"><div class="vm-watermark-text"><span class="vm-watermark-word">Intern<\/span><span class="vm-watermark-note">nicht weitergeben · Stand 1. November 2026<\/span>/);
+  assert.match(run('---\nvisual:\n  share: internal\n  lang: en\n---\n# T\n'), /vm-watermark-word">Internal<\/span><span class="vm-watermark-note">do not share</);
+  assert.doesNotMatch(run('---\nvisual:\n  as-of: 2026-11-01\n  share: public\n---\n# T\n'), /vm-watermark|vm-band-share/);
+});

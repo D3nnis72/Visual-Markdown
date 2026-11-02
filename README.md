@@ -104,6 +104,10 @@ Eine Karte ist ein Callout mit `[!card …]` in der ersten Zeile. Danach folgen 
 
 Icons gibt es aus einer festen Liste: `flag`, `question`, `check`, `warning`, `bulb`, `info`, `pin`, `clock` und `note`. Die Farben sind `green`, `yellow`, `red`, `indigo` und `grey`, die Badge-Namen `ok`, `warn`, `bad`, `info` und `muted` gehen auch. Ohne Farbe ist die Karte grau, ohne Icon steht nur der Titel. Unbekannte Wörter werden ignoriert. Eine Karte ersetzt eigene Bausteine für Entscheidungen, Fragen oder Risiken. Auf GitHub erscheint sie als normales Zitat. Normale Zitate und die GitHub-Callouts wie `> [!NOTE]` bleiben, wie sie sind.
 
+## Wasserzeichen
+
+Seiten mit Kundendaten tragen `share: intern` unter `visual:` im Frontmatter, auf Englisch geht auch `internal`. Im Preview zeigt das Stand-Band dann ein rotes Badge „Intern“ mit Schloss, damit man es vor dem Export sieht. Im PDF steht auf jeder Seite schräg und blass „Intern“, darunter „nicht weitergeben“ und der Stand aus `as-of`. Mit `lang: en` heißt es „Internal“ und „do not share“. Andere Werte von `share` ändern nichts. Das Wasserzeichen schützt nicht gegen Absicht, sondern gegen Versehen. Dass das Feld auf Kundenseiten nicht fehlt, prüft das Check-Skript.
+
 ## Abschnitte
 
 Ein Abschnitt bekommt eine feste Kennung und das Datum seiner letzten Änderung direkt in die Überschrift:
