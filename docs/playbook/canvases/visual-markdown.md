@@ -41,7 +41,7 @@ Der Gewinn ist explizite Struktur, die der Renderer zeigen und verlinken kann. T
 | Abschnitte | Canvasse und Statusseiten | `## Titel {#id updated=…}`, Format in der [README](../../../README.md#abschnitte) | Badges mit Kennung und Datum, Kopierknopf | 1 |
 | `steps` | Schritt-Tabellen in Canvassen, „Nächste Entscheidungen“ auf Statusseiten, Checkboxen und Prosa | Codeblock mit erweiterter Checkliste | Nummerierte Liste mit Zustand, Zuständigen und kurzen Abhängigkeitsverweisen | 1 |
 | Karten | Entscheidungen mit E-IDs, Fragensammlungen, Hinweise mit Status | `> [!card Icon Farbe] Titel`, darunter normales Markdown | Karte mit Icon und Farbe aus festen Listen, auf GitHub ein lesbares Zitat, fertig | 1 |
-| `chart` | Heute fast nur Zahlentabellen: Anteile und Spend je Lieferant, KPI-Werte über Wochen, Gewichte in LioCare | Codeblock direkt unter der Tabelle mit den Zahlen | Balken, gestapelte Balken, Linien und Histogramme über Vega-Lite | 1 |
+| `chart` | Heute fast nur Zahlentabellen: Anteile und Spend je Lieferant, KPI-Werte über Wochen, Gewichte in LioCare | Codeblock direkt unter der Tabelle mit den Zahlen | Balken, gestapelte Balken, Linien und Histogramme über Vega-Lite, im PDF als SVG, fertig | 1 |
 | Callouts | Beispielfälle, Annahmen, Grenzen, Hinweise | `> [!NOTE]` und die übrigen vier GitHub-Arten, eigene Arten wie **Annahme:** fett am Anfang | Kasten je Art, MPE zeichnet ihn schon selbst, fertig | 1 |
 | Badges | Data Status in LioCare, Prüfergebnisse in Findings, Zustände wie offen und entschieden | Eine Zeile im Frontmatter ordnet feste Wörter Farben zu | Getönte Pillen in Tabellenzellen, fertig | 1 |
 | Wasserzeichen | Seiten mit Kundendaten | `share: intern` im Frontmatter | Badge im Band, schräges Wasserzeichen auf jeder PDF-Seite, fertig | 1 |
@@ -58,18 +58,7 @@ Format, englische Syntax und Darstellung besitzt die [README](../../../README.md
 
 ### `chart`
 
-`chart` steht direkt unter der Tabelle mit den Zahlen und sagt nur, welche Spalten wohin gehören. `parser.js` übersetzt beides vor dem Rendern in Vega-Lite, das MPE selbst zeichnet. Das LLM sieht die Zahlen in der Tabelle, und niemand braucht Dateizugriff. Für ein Histogramm steht die schon ausgezählte Verteilung in der Tabelle, große Rohdaten verdichtet vorher ein Skript. Pflichtfelder sind `says`, die Aussage in einem Satz, und `basis`, worauf die Zahlen beruhen. Gestapelte Balken gehen auch auf 100 %. Farben kommen aus dem Theme, die Palette beim Bauen mit dem Skill `dataviz` festlegen. Für Einzelfälle bleibt ein roher `vega-lite`-Block.
-
-````markdown
-```chart
-type: histogram
-x: Textlänge
-y: Positionen
-color: Quelle
-says: SAP-Texte stauen sich bei genau 40 Zeichen, Cameron-Texte nicht.
-basis: PO-Daten 2025, Zeilen im Scope
-```
-````
+Format, Felder und Darstellung besitzt die [README](../../../README.md#diagramme). Das LLM sieht die Zahlen in der Tabelle, und niemand braucht Dateizugriff. Große Rohdaten verdichtet vorher ein Skript.
 
 ### Frontmatter
 
@@ -98,14 +87,12 @@ visual:
 - Externes Teilen läuft als statischer PDF-Export. Diagramme werden eingebacken, relative Links auf Repo-Dateien aufgelöst oder entfernt.
 - Der Weg zu einem eigenen Viewer bleibt offen, weil der Kern zuerst eine eigene Datenstruktur erzeugt und daraus HTML mit eigenen CSS-Klassen, ohne an MPE-Interna zu hängen. `style.less` wird dafür in Farbwerte und Bausteinstile getrennt. Ein eigener Viewer, eine gehostete Seite oder MPEs eingebauter HTML-Export können dann denselben Kern nutzen.
 
-## Roadmap {#roadmap updated=2026-11-01}
+## Roadmap {#roadmap updated=2026-11-02}
 
-Der Prototyp mit Stand-Band, Abschnitten und `steps` ist gebaut und am 1. November an einer echten Statusseite getestet, den Stand besitzt die [README](../../../README.md). Das Token-Ziel misst nur den Formataufwand, neuer Inhalt wie Beschreibungen zählt nicht mit. Badges in Tabellenzellen, generische Karten und das Wasserzeichen sind ebenfalls gebaut. Das Wasserzeichen schützt gegen Versehen, nicht gegen Absicht, deshalb meldet das Check-Skript Kundenseiten ohne `share: intern`. Das Format steht jeweils in der [README](../../../README.md#badges). Die übrigen Bausteine der ersten Runde kommen vor dem Skill, damit der Skill das ganze Format auf einmal beschreibt. Jeder Baustein läuft gleich: kurzer Entwurf mit Dennis, bauen, in `examples/bausteine.md` zeigen, README nachziehen. Callouts zeichnet MPE schon selbst, Tabellen und Links haben den Kartenstil.
+Der Prototyp mit Stand-Band, Abschnitten und `steps` ist gebaut und am 1. November an einer echten Statusseite getestet, den Stand besitzt die [README](../../../README.md). Das Token-Ziel misst nur den Formataufwand, neuer Inhalt wie Beschreibungen zählt nicht mit. Badges in Tabellenzellen, generische Karten, das Wasserzeichen und `chart` sind ebenfalls gebaut, damit ist die erste Runde vollständig. MPE zeichnet `vega-lite` schon vor dem Druck zu SVG, und unser Parser läuft auch im HTML- und PDF-Export. Das Wasserzeichen schützt gegen Versehen, nicht gegen Absicht, deshalb meldet das Check-Skript Kundenseiten ohne `share: intern`. Das Format steht jeweils in der [README](../../../README.md#badges). Callouts zeichnet MPE schon selbst, Tabellen und Links haben den Kartenstil.
 
 ```steps
-- [ ] chart: Diagramme aus Tabellen | owner: Agent | next: prüfen, ob Vega-Lite vor dem PDF-Druck fertig zeichnet | done-when: Balken, Linien und Histogramm aus der Tabelle darüber, auch im PDF | updated: 2026-11-01
-  Ein `chart`-Block unter einer Zahlentabelle sagt nur, welche Spalten wohin gehören. Er kommt zuletzt, weil die PDF-Frage vorher geklärt sein muss.
-- [ ] skill: Agent-Skill und Check-Skript | owner: Agent | after: chart | done-when: Agents schreiben neue Seiten im Format, das Check-Skript meldet fehlende Daten und Beschreibungen | updated: 2026-11-01
+- [~] skill: Agent-Skill und Check-Skript | owner: Agent | done-when: Agents schreiben neue Seiten im Format, das Check-Skript meldet fehlende Daten und Beschreibungen | updated: 2026-11-02
   Der Skill bringt Agents das ganze Format bei: Daten pflegen, Beschreibungen ohne interne Kürzel, erst die Abschnittsliste lesen. Das Check-Skript nutzt denselben Kern wie der Renderer.
 - [ ] share: Umbenennen und Kollegentest | owner: Dennis | after: skill | done-when: GitHub-Repo heißt Visual-Markdown, ein Kollege hat es mit `install.sh` eingerichtet | updated: 2026-11-01
   Erst wenn das Format vollständig ist und Agents es pflegen können, geben wir es weiter.
@@ -113,7 +100,6 @@ Der Prototyp mit Stand-Band, Abschnitten und `steps` ist gebaut und am 1. Novemb
 
 ## Offene Fragen
 
-- Noch zu prüfen: Ist ein Vega-Lite-Diagramm fertig gezeichnet, bevor Chrome das PDF druckt? Läuft unser Parser auch in MPEs eingebautem HTML-Export?
 - Endgültigen Namen bestätigen, bevor das GitHub-Repo umbenannt wird.
 - Wo verläuft die Grenze zwischen `steps` und den persönlichen Aufgaben in Notion, damit nichts doppelt gepflegt wird?
 - LioCare hat eine eigene Kopie des Notion-Themes im Repo-Root. Ziehen Projekte das Theme künftig nur noch aus diesem Repo?

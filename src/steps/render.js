@@ -72,7 +72,3 @@ export function renderSteps(steps, computed, lang, { idPrefix = 'vm-steps', toda
   const head = `<div class="vm-steps-head"><span>${escapeHtml(t(lang, 'progress', computed))}</span><span class="vm-progress"><span style="width:${percent}%"></span></span></div>`;
   return `<div class="vm-steps">${head}${rows}</div>`;
 }
-
-export function renderError(errors, lang) {
-  return `<div class="vm-error">${escapeHtml(t(lang, 'errorAt', errors[0]))}${errors.length > 1 ? ` (+${errors.length - 1})` : ''}</div>`;
-}

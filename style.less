@@ -429,6 +429,19 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
     background: var(--vm-error-fill); color: var(--vm-bad-text);
   }
   .vm-watermark { display: none; }
+
+  .vm-chart {
+    margin: 24px 0;
+    padding: 16px 20px 14px;
+    background: var(--vm-table-body);
+    border: 1px solid var(--vm-border);
+    border-radius: 12px;
+    break-inside: avoid;
+    > p { margin: 0; }
+    svg { display: block; max-width: 100%; height: auto; }
+  }
+  .vm-chart-says { font-weight: 600; margin-bottom: 10px; }
+  .vm-chart-basis { margin-top: 8px; font-size: 12px; color: var(--vm-muted); }
   .vm-steps {
     overflow: hidden;
     background: var(--vm-surface);
@@ -657,9 +670,23 @@ body.vscode-dark .markdown-preview.markdown-preview {
   --vm-info-fill: #1f2759;
 }
 
+/* Vega zeichnet feste Farben ins SVG. Im Dunklen tauscht CSS jede helle Stufe gegen ihre dunkle. */
+body.vscode-dark .markdown-preview.markdown-preview .vm-chart {
+  text { fill: var(--vm-muted); }
+  .role-axis-grid line { stroke: var(--vm-border); }
+  [stroke="#ffffff"] { stroke: var(--vm-table-body); }
+  [fill="#2a78d6"] { fill: #3987e5; } [stroke="#2a78d6"] { stroke: #3987e5; }
+  [fill="#eb6834"] { fill: #d95926; } [stroke="#eb6834"] { stroke: #d95926; }
+  [fill="#1baf7a"] { fill: #199e70; } [stroke="#1baf7a"] { stroke: #199e70; }
+  [fill="#eda100"] { fill: #c98500; } [stroke="#eda100"] { stroke: #c98500; }
+  [fill="#e87ba4"] { fill: #d55181; } [stroke="#e87ba4"] { stroke: #d55181; }
+  [fill="#6250d6"] { fill: #9085e9; } [stroke="#6250d6"] { stroke: #9085e9; }
+  [fill="#e34948"] { fill: #e66767; } [stroke="#e34948"] { stroke: #e66767; }
+}
+
 /* Chrome soll die Komponentenfarben auch ohne Hintergrundgrafiken drucken. */
 .markdown-preview.markdown-preview {
-  .vm-band, .vm-band *, .vm-watermark, .vm-watermark *, .vm-steps, .vm-steps *, .vm-section-meta, .vm-section-meta *, .vm-error, .vm-error * {
+  .vm-band, .vm-band *, .vm-chart, .vm-chart *, .vm-watermark, .vm-watermark *, .vm-steps, .vm-steps *, .vm-section-meta, .vm-section-meta *, .vm-error, .vm-error * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -679,7 +706,7 @@ body.vscode-dark .markdown-preview.markdown-preview {
     > h1:first-child { margin-top: 0; }
     h2 { margin-top: 1em; }
     /* Druckrenderer stellen weiche Schatten teils als graue Rechtecke dar. */
-    .vm-steps { box-shadow: none; }
+    .vm-steps, table { box-shadow: none; }
     .vm-step { break-inside: avoid; }
     .vm-row-details::details-content { content-visibility: visible; }
     .vm-row-details:not([open]) .vm-row-body { display: block; }

@@ -100,7 +100,7 @@ var __visualMarkdown = (() => {
       waves: "Wellen",
       stand: "Stand {date}",
       stale: "\xE4lter als {days} Tage",
-      errorAt: "Fehler in steps, Zeile {line}: {message}",
+      errorAt: "Fehler in {block}, Zeile {line}: {message}",
       errMalformed: "kein Schritt im Format \u201E- [ ] k\xFCrzel: Text\u201C",
       errField: "unbekanntes Feld \u201E{field}\u201C",
       errNested: "Unterpunkte kommen erst sp\xE4ter",
@@ -108,7 +108,14 @@ var __visualMarkdown = (() => {
       errUnknown: "\u201E{id}\u201C in after gibt es nicht",
       errCycle: "Zyklus \xFCber {list}",
       shareInternal: "Intern",
-      watermarkNote: "nicht weitergeben"
+      watermarkNote: "nicht weitergeben",
+      chartBasis: "Grundlage",
+      errRequired: "Pflichtfeld \u201E{field}\u201C fehlt",
+      errValue: "\u201E{value}\u201C geht nicht f\xFCr {field}, erlaubt sind {list}",
+      errNoTable: "keine Tabelle direkt \xFCber dem Block",
+      errColumn: "Spalte \u201E{column}\u201C gibt es in der Tabelle nicht",
+      errColorMulti: "color geht nur mit einer Spalte in y",
+      errNumber: "\u201E{value}\u201C in {column} ist keine Zahl"
     },
     en: {
       progress: "{done} of {total} done",
@@ -145,7 +152,7 @@ var __visualMarkdown = (() => {
       waves: "Waves",
       stand: "As of {date}",
       stale: "older than {days} days",
-      errorAt: "Error in steps, line {line}: {message}",
+      errorAt: "Error in {block}, line {line}: {message}",
       errMalformed: 'not a step in the form "- [ ] id: text"',
       errField: 'unknown field "{field}"',
       errNested: "sub-items are not supported yet",
@@ -153,7 +160,14 @@ var __visualMarkdown = (() => {
       errUnknown: '"{id}" in after does not exist',
       errCycle: "cycle through {list}",
       shareInternal: "Internal",
-      watermarkNote: "do not share"
+      watermarkNote: "do not share",
+      chartBasis: "Based on",
+      errRequired: 'required field "{field}" is missing',
+      errValue: '"{value}" is not allowed for {field}, use {list}',
+      errNoTable: "no table directly above the block",
+      errColumn: 'the table has no column "{column}"',
+      errColorMulti: "color works only with one column in y",
+      errNumber: '"{value}" in {column} is not a number'
     }
   };
   function t(lang, key, vars = {}) {
@@ -220,6 +234,9 @@ var __visualMarkdown = (() => {
     const shown = date ? formatDate(date, lang, { short: true, today }) : value;
     const title = t(lang, "updated", { date: shown });
     return date && isStale(date, today) ? badge("vm-updated vm-date-stale", UPDATED_ICON, inline(shown), `${title}, ${t(lang, "stale", { days: STALE_DAYS })}`) : badge("vm-updated", UPDATED_ICON, inline(shown), title);
+  }
+  function renderError(errors, lang, block = "steps") {
+    return `<div class="vm-error">${escapeHtml(t(lang, "errorAt", { block, ...errors[0] }))}${errors.length > 1 ? ` (+${errors.length - 1})` : ""}</div>`;
   }
   var copyButton = ({ id = null, thread = null, lang, className = "", label }) => `<button type="button" class="vm-copy${className ? ` ${className}` : ""}"${id ? ` data-copy-id="${escapeHtml(id)}"` : ""} data-copied="${escapeHtml(t(lang, "copied"))}" title="${escapeHtml(t(lang, "copy"))}" aria-label="${escapeHtml(label)}"${thread ? ` data-copy-thread="${escapeHtml(thread)}"` : ""}>${COPY_ICON}</button>`;
 
@@ -436,8 +453,227 @@ var __visualMarkdown = (() => {
     const head = `<div class="vm-steps-head"><span>${escapeHtml(t(lang, "progress", computed))}</span><span class="vm-progress"><span style="width:${percent}%"></span></span></div>`;
     return `<div class="vm-steps">${head}${rows}</div>`;
   }
-  function renderError(errors, lang) {
-    return `<div class="vm-error">${escapeHtml(t(lang, "errorAt", errors[0]))}${errors.length > 1 ? ` (+${errors.length - 1})` : ""}</div>`;
+
+  // src/chart/schema.js
+  var CHART_TYPES = ["bar", "line", "histogram"];
+  var CHART_FIELDS = ["type", "x", "y", "color", "percent", "orientation", "says", "basis"];
+  var CHART_REQUIRED = ["type", "x", "y", "says", "basis"];
+  var CHART_VALUES = { percent: ["yes", "no"], orientation: ["vertical", "horizontal"] };
+  var PALETTE = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"];
+
+  // src/badges.js
+  var BADGE_COLORS = ["ok", "warn", "bad", "info", "muted"];
+  var SEPARATOR = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/;
+  function parseBadges(value) {
+    const map = /* @__PURE__ */ new Map();
+    const body = /^\{(.*)\}$/.exec(String(value ?? "").trim())?.[1] ?? "";
+    for (const entry of body.split(",")) {
+      const [word, color] = entry.split(":").map((part) => part?.trim().replace(/^(["'])(.*)\1$/, "$2"));
+      if (word && BADGE_COLORS.includes(color)) map.set(word.toLowerCase(), color);
+    }
+    return map;
+  }
+  var isTableSeparator = (line) => line.includes("-") && SEPARATOR.test(line);
+  var isTableRow = (line) => line.trim().startsWith("|");
+  function renderTableRow(line, badges) {
+    return line.replace(/(\|)([^|]*)(?=\|)/g, (match, pipe, cell) => {
+      const word = cell.trim();
+      const color = badges.get(word.toLowerCase());
+      return color ? `${pipe}${cell.replace(word, `<span class="vm-pill vm-pill-${color}">${escapeHtml(word)}</span>`)}` : match;
+    });
+  }
+
+  // src/chart/table.js
+  var cells = (line) => line.trim().replace(/^\|/, "").replace(/(?<!\\)\|\s*$/, "").split(/(?<!\\)\|/).map((cell) => cell.trim().replace(/\\\|/g, "|").replace(/^(\*\*|\*|`)(.*)\1$/, "$2").trim());
+  function tableAbove(lines, start) {
+    let end = start - 1;
+    while (end >= 0 && !lines[end].trim()) end--;
+    let first = end;
+    while (first > 0 && isTableRow(lines[first - 1])) first--;
+    if (end < 0 || !isTableRow(lines[end]) || end - first < 2 || !isTableSeparator(lines[first + 1])) return null;
+    const header = cells(lines[first]);
+    const rows = lines.slice(first + 2, end + 1).map((line, index) => ({ line: first + 3 + index, values: cells(line) }));
+    return { header, rows };
+  }
+  function parseNumber(raw, lang) {
+    let text = String(raw ?? "").replace(/[\s %€$]|EUR|USD/gi, "");
+    if (!text || /^[-–—]$/.test(text)) return null;
+    const german = /^[+-]?\d{1,3}(\.\d{3})+(,\d+)?$/;
+    const english = /^[+-]?\d{1,3}(,\d{3})+(\.\d+)?$/;
+    if (lang === "en") {
+      if (english.test(text)) text = text.replace(/,/g, "");
+    } else if (german.test(text)) {
+      text = text.replace(/\./g, "").replace(",", ".");
+    } else if (/^[+-]?\d+,\d+$/.test(text)) {
+      text = text.replace(",", ".");
+    }
+    return /^[+-]?(\d+(\.\d*)?|\.\d+)$/.test(text) ? Number(text) : NaN;
+  }
+
+  // src/chart/render.js
+  var FONT = 'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+  var WIDTH = 640;
+  var ISO_DATE = /^\d{4}-\d{2}(-\d{2})?$/;
+  var LOCALES = {
+    de: { decimal: ",", thousands: ".", grouping: [3], currency: ["", " \u20AC"] },
+    en: { decimal: ".", thousands: ",", grouping: [3], currency: ["$", ""] }
+  };
+  function parseChart(body, firstLine, lang) {
+    const fields = {};
+    const errors = [];
+    body.split(/\r?\n/).forEach((text, index) => {
+      if (!text.trim()) return;
+      const line = firstLine + index;
+      const match = /^([a-z-]+):\s*(.*?)\s*$/i.exec(text);
+      if (!match || !CHART_FIELDS.includes(match[1])) {
+        errors.push({ line, message: t(lang, "errField", { field: match?.[1] ?? text.trim() }) });
+        return;
+      }
+      fields[match[1]] = match[2];
+    });
+    for (const field of CHART_REQUIRED) {
+      if (!fields[field]) errors.push({ line: firstLine, message: t(lang, "errRequired", { field }) });
+    }
+    if (fields.type && !CHART_TYPES.includes(fields.type)) {
+      errors.push({ line: firstLine, message: t(lang, "errValue", { field: "type", value: fields.type, list: CHART_TYPES.join(", ") }) });
+    }
+    for (const [field, allowed] of Object.entries(CHART_VALUES)) {
+      if (fields[field] && !allowed.includes(fields[field])) {
+        errors.push({ line: firstLine, message: t(lang, "errValue", { field, value: fields[field], list: allowed.join(", ") }) });
+      }
+    }
+    return { fields, errors };
+  }
+  function chartData(fields, table, firstLine, lang) {
+    if (!table) return { errors: [{ line: firstLine - 1, message: t(lang, "errNoTable") }] };
+    const errors = [];
+    const column = (name) => {
+      const index = table.header.findIndex((head) => head.toLowerCase() === name.toLowerCase());
+      if (index < 0) errors.push({ line: firstLine, message: t(lang, "errColumn", { column: name }) });
+      return index;
+    };
+    const yNames = fields.y.split(",").map((name) => name.trim()).filter(Boolean);
+    const x = column(fields.x);
+    const ys = yNames.map(column);
+    const color = fields.color ? column(fields.color) : -1;
+    if (fields.color && yNames.length > 1) errors.push({ line: firstLine, message: t(lang, "errColorMulti") });
+    if (errors.length) return { errors };
+    const rows = [];
+    for (const row of table.rows) {
+      ys.forEach((index, n) => {
+        const value = parseNumber(row.values[index], lang);
+        if (Number.isNaN(value)) {
+          errors.push({ line: row.line, message: t(lang, "errNumber", { value: row.values[index], column: table.header[index] }) });
+        } else if (value !== null) {
+          rows.push({ x: row.values[x] ?? "", y: value, series: color >= 0 ? row.values[color] ?? "" : yNames.length > 1 ? table.header[index] : null });
+        }
+      });
+    }
+    return {
+      errors,
+      rows,
+      xTitle: table.header[x],
+      yTitle: yNames.length > 1 ? null : table.header[ys[0]],
+      seriesTitle: color >= 0 ? table.header[color] : null
+    };
+  }
+  function xScale(fields, rows, lang) {
+    const xs = rows.map((row) => row.x);
+    if (fields.type === "line" && xs.every((value) => ISO_DATE.test(value))) return { type: "temporal" };
+    if (fields.type === "line" && xs.every((value) => Number.isFinite(parseNumber(value, lang)))) return { type: "quantitative", numeric: true };
+    return { type: "ordinal", sort: null };
+  }
+  function chartSpec(fields, data, lang) {
+    const series = data.rows.some((row) => row.series !== null);
+    const scale = xScale(fields, data.rows, lang);
+    const values = data.rows.map((row) => ({
+      x: scale.numeric ? parseNumber(row.x, lang) : row.x,
+      y: row.y,
+      ...series ? { series: row.series } : {}
+    }));
+    const percent = fields.percent === "yes";
+    const categories = new Set(values.map((row) => row.x)).size;
+    const longLabels = values.some((row) => String(row.x).length > 12);
+    const horizontal = fields.type === "bar" && (fields.orientation ? fields.orientation === "horizontal" : longLabels || categories > 8);
+    const order = [...new Set(values.map((row) => row.x))];
+    const category = { field: "x", type: scale.type, title: data.xTitle, ...scale.sort === null ? { sort: order } : {} };
+    const measure = {
+      field: "y",
+      type: "quantitative",
+      title: percent ? null : data.yTitle,
+      ...series && fields.type !== "line" ? { stack: percent ? "normalize" : "zero" } : {},
+      ...percent ? { axis: { format: "%" } } : {}
+    };
+    const colorEncoding = series ? { color: { field: "series", type: "nominal", title: data.seriesTitle, sort: [...new Set(values.map((row) => row.series))] } } : {};
+    const spec = {
+      $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+      description: fields.says,
+      background: "transparent",
+      data: { values },
+      config: {
+        font: FONT,
+        locale: { number: LOCALES[lang] },
+        view: { stroke: null },
+        range: { category: PALETTE },
+        axis: {
+          labelFontSize: 12,
+          titleFontSize: 12,
+          titleFontWeight: 500,
+          titlePadding: 10,
+          labelColor: "#6b6b74",
+          titleColor: "#6b6b74",
+          gridColor: "#ededf0",
+          domain: false,
+          ticks: false,
+          labelPadding: 6
+        },
+        axisX: { grid: false },
+        legend: { orient: "top", labelFontSize: 12, titleFontSize: 12, titleFontWeight: 500, labelColor: "#6b6b74", titleColor: "#6b6b74", symbolType: "circle", symbolSize: 90 },
+        mark: { color: PALETTE[0] }
+      }
+    };
+    if (fields.type === "line") {
+      return {
+        ...spec,
+        width: WIDTH,
+        height: 260,
+        mark: { type: "line", strokeWidth: 2, point: { filled: true, size: 50 } },
+        encoding: { x: { ...category, axis: { labelAngle: 0 } }, y: measure, ...colorEncoding }
+      };
+    }
+    const histogram = fields.type === "histogram";
+    const bar = {
+      type: "bar",
+      ...series ? { cornerRadius: 2, stroke: "#ffffff", strokeWidth: 1.5 } : { cornerRadiusEnd: 4 }
+    };
+    const band = { scale: { paddingInner: histogram ? 0.04 : 0.25, paddingOuter: histogram ? 0 : 0.15 } };
+    const encoding = horizontal ? { y: { ...category, ...band, title: null }, x: { ...measure, title: percent ? null : data.yTitle }, ...colorEncoding } : { x: { ...category, ...band, axis: { labelAngle: 0 } }, y: measure, ...colorEncoding };
+    const size = horizontal ? { width: WIDTH - 140, height: { step: 28 } } : { width: WIDTH, height: 260 };
+    if (series) return { ...spec, ...size, mark: bar, encoding };
+    const label = {
+      mark: { type: "text", fontSize: 12, color: "#52514e", ...horizontal ? { align: "left", dx: 6 } : { baseline: "bottom", dy: -4 } },
+      encoding: { ...horizontal ? { y: encoding.y, x: encoding.x } : { x: encoding.x, y: encoding.y }, text: { field: "y", type: "quantitative", format: ",~r" } }
+    };
+    return { ...spec, ...size, layer: [{ mark: bar, encoding }, ...categories <= 16 ? [label] : []] };
+  }
+  function renderChart(fields, spec, lang) {
+    return [
+      `<div class="vm-chart"><div class="vm-chart-says">${inline(fields.says)}</div>`,
+      "",
+      "```vega-lite",
+      JSON.stringify(spec),
+      "```",
+      "",
+      `<div class="vm-chart-basis">${escapeHtml(t(lang, "chartBasis"))}: ${inline(fields.basis)}</div></div>`,
+      ""
+    ];
+  }
+  function transformChart(lines, start, end, lang) {
+    const { fields, errors } = parseChart(lines.slice(start + 1, end).join("\n"), start + 2, lang);
+    if (errors.length) return { errors };
+    const data = chartData(fields, tableAbove(lines, start), start + 2, lang);
+    if (data.errors.length) return { errors: data.errors };
+    return { output: renderChart(fields, chartSpec(fields, data, lang), lang) };
   }
 
   // src/sections.js
@@ -464,28 +700,6 @@ var __visualMarkdown = (() => {
       if (match) ids.add(match[3]);
     }
     return ids;
-  }
-
-  // src/badges.js
-  var BADGE_COLORS = ["ok", "warn", "bad", "info", "muted"];
-  var SEPARATOR = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/;
-  function parseBadges(value) {
-    const map = /* @__PURE__ */ new Map();
-    const body = /^\{(.*)\}$/.exec(String(value ?? "").trim())?.[1] ?? "";
-    for (const entry of body.split(",")) {
-      const [word, color] = entry.split(":").map((part) => part?.trim().replace(/^(["'])(.*)\1$/, "$2"));
-      if (word && BADGE_COLORS.includes(color)) map.set(word.toLowerCase(), color);
-    }
-    return map;
-  }
-  var isTableSeparator = (line) => line.includes("-") && SEPARATOR.test(line);
-  var isTableRow = (line) => line.trim().startsWith("|");
-  function renderTableRow(line, badges) {
-    return line.replace(/(\|)([^|]*)(?=\|)/g, (match, pipe, cell) => {
-      const word = cell.trim();
-      const color = badges.get(word.toLowerCase());
-      return color ? `${pipe}${cell.replace(word, `<span class="vm-pill vm-pill-${color}">${escapeHtml(word)}</span>`)}` : match;
-    });
   }
 
   // src/cards.js
@@ -559,12 +773,20 @@ var __visualMarkdown = (() => {
         if (close && close[1][0] === fence.char && close[1].length >= fence.length) fence = null;
       } else {
         const open = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line);
-        if (open && !line.startsWith(" ") && open[2].trim() === "steps") {
+        const kind = open && !line.startsWith(" ") ? open[2].trim() : null;
+        if (kind === "steps" || kind === "chart") {
           let end = i + 1;
           while (end < lines.length) {
             const close = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(lines[end]);
             if (close && close[1][0] === open[1][0] && close[1].length >= open[1].length) break;
             end++;
+          }
+          if (kind === "chart") {
+            const chart = transformChart(lines, i, end, lang);
+            output.push(...chart.errors ? ["", renderError(chart.errors, lang, "chart"), ""] : ["", ...chart.output]);
+            changed = true;
+            i = end;
+            continue;
           }
           let html;
           try {

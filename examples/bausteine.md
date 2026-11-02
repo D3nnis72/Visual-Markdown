@@ -137,6 +137,82 @@ Formeln laufen über KaTeX: $\text{Fortschritt} = \frac{\text{fertig}}{\text{ges
 
 ---
 
+## Diagramme {#diagramme updated=2026-11-02}
+
+Ein `chart`-Block steht direkt unter der Tabelle mit den Zahlen und sagt nur, welche Spalten wohin gehören. `says` ist die Aussage in einem Satz und steht über dem Diagramm, `basis` steht klein darunter. Eine einzelne Reihe zeigt ihre Werte an den Balken, lange Namen legen die Balken quer.
+
+| Lieferant | Spend in T€ |
+| --- | ---: |
+| Lieferant A | 1.240 |
+| Lieferant B | 860 |
+| Lieferant C | 410 |
+| Lieferant D | 120 |
+
+```chart
+type: bar
+x: Lieferant
+y: Spend in T€
+says: Zwei Lieferanten machen drei Viertel des Spends aus.
+basis: Rechnungen 2025, ausgedachte Zahlen
+```
+
+Mit `color` stapeln sich die Balken, `percent: yes` rechnet jede Säule auf 100 %.
+
+| Werk | Quelle | Positionen |
+| --- | --- | ---: |
+| Nord | SAP | 320 |
+| Nord | Cameron | 80 |
+| Süd | SAP | 150 |
+| Süd | Cameron | 210 |
+| West | SAP | 90 |
+| West | Cameron | 40 |
+
+```chart
+type: bar
+x: Werk
+y: Positionen
+color: Quelle
+percent: yes
+says: Im Werk Süd kommt mehr als die Hälfte der Positionen aus Cameron.
+basis: Bestellpositionen 2025, ausgedachte Zahlen
+```
+
+Mehrere Spalten in `y` werden zu Linien. Die Reihenfolge der Wochen kommt aus der Tabelle.
+
+| Woche | Offen | Geklärt |
+| --- | ---: | ---: |
+| KW 40 | 42 | 5 |
+| KW 41 | 35 | 14 |
+| KW 42 | 24 | 27 |
+| KW 43 | 18 | 36 |
+| KW 44 | 11 | 44 |
+
+```chart
+type: line
+x: Woche
+y: Offen, Geklärt
+says: Seit KW 42 sind mehr Fragen geklärt als offen.
+basis: Fragenliste, Stand jeweils freitags, ausgedachte Zahlen
+```
+
+Ein Histogramm braucht die schon ausgezählte Verteilung, die Klassen stehen in der ersten Spalte.
+
+| Textlänge | Positionen |
+| --- | ---: |
+| 0–10 | 12 |
+| 11–20 | 48 |
+| 21–30 | 95 |
+| 31–39 | 70 |
+| 40 | 160 |
+
+```chart
+type: histogram
+x: Textlänge
+y: Positionen
+says: Viele Texte enden bei genau 40 Zeichen, dort schneidet das Altsystem ab.
+basis: Positionstexte 2025, ausgedachte Zahlen
+```
+
 ## Mermaid {#mermaid updated=2026-11-01}
 
 ```mermaid
@@ -167,4 +243,4 @@ sequenceDiagram
 
 ## Noch nicht gebaut {#offen updated=2026-11-01}
 
-Aus der ersten Runde fehlt noch `chart` für Diagramme aus Tabellen. Die zweite Runde mit Links und Erklärungen für IDs, `scale`, `gallery` und `compare` ist noch nicht begonnen.
+Die erste Runde ist vollständig. Die zweite Runde mit Links und Erklärungen für IDs, `scale`, `gallery` und `compare` ist noch nicht begonnen.

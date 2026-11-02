@@ -104,6 +104,38 @@ Eine Karte ist ein Callout mit `[!card …]` in der ersten Zeile. Danach folgen 
 
 Icons gibt es aus einer festen Liste: `flag`, `question`, `check`, `warning`, `bulb`, `info`, `pin`, `clock` und `note`. Die Farben sind `green`, `yellow`, `red`, `indigo` und `grey`, die Badge-Namen `ok`, `warn`, `bad`, `info` und `muted` gehen auch. Ohne Farbe ist die Karte grau, ohne Icon steht nur der Titel. Unbekannte Wörter werden ignoriert. Eine Karte ersetzt eigene Bausteine für Entscheidungen, Fragen oder Risiken. Auf GitHub erscheint sie als normales Zitat. Normale Zitate und die GitHub-Callouts wie `> [!NOTE]` bleiben, wie sie sind.
 
+## Diagramme
+
+Ein `chart`-Block steht direkt unter der Tabelle mit den Zahlen und sagt nur, welche Spalten wohin gehören. Leerzeilen dazwischen sind erlaubt, anderer Text nicht:
+
+````markdown
+| Lieferant | Spend in T€ |
+| --- | ---: |
+| Lieferant A | 1.240 |
+| Lieferant B | 860 |
+
+```chart
+type: bar
+x: Lieferant
+y: Spend in T€
+says: Lieferant A macht den größten Teil des Spends aus.
+basis: Rechnungen 2025
+```
+````
+
+| Feld | Bedeutung |
+| --- | --- |
+| `type` | Pflicht. `bar` für Balken, `line` für Linien, `histogram` für eine schon ausgezählte Verteilung |
+| `x` | Pflicht. Spalte mit den Kategorien, Wochen oder Klassen. Die Reihenfolge kommt aus der Tabelle |
+| `y` | Pflicht. Spalte mit den Zahlen. Mehrere Spalten mit Komma ergeben mehrere Reihen |
+| `says` | Pflicht. Die Aussage in einem Satz, steht fett über dem Diagramm |
+| `basis` | Pflicht. Worauf die Zahlen beruhen, steht klein darunter |
+| `color` | Spalte, nach der Balken gestapelt oder Linien getrennt werden |
+| `percent` | `yes` rechnet gestapelte Balken auf 100 % |
+| `orientation` | `horizontal` oder `vertical`. Ohne Angabe liegen Balken quer, wenn ein Name länger als zwölf Zeichen ist oder es mehr als acht Balken sind |
+
+Zahlen dürfen deutsch oder englisch geschrieben sein, mit Prozentzeichen oder Währung. Leere Zellen und Striche werden übersprungen. Eine einzelne Reihe zeigt ihre Werte an den Balken. Linien über ISO-Daten oder reine Zahlen bekommen eine echte Zeitachse beziehungsweise Zahlenachse. Der Parser übersetzt Tabelle und Block in einen `vega-lite`-Block, den MPE selbst zu SVG zeichnet, in der Vorschau wie im PDF. Die Farben kommen aus der geprüften Palette des Skills `dataviz` und wechseln im Dunkelmodus auf ihre dunklen Stufen. Fehlt ein Pflichtfeld, eine Spalte oder die Tabelle, steht statt des Diagramms ein Fehlerkasten mit der Zeile. Für Sonderfälle bleibt ein roher `vega-lite`-Block.
+
 ## Wasserzeichen
 
 Seiten mit Kundendaten tragen `share: intern` unter `visual:` im Frontmatter, auf Englisch geht auch `internal`. Im Preview zeigt das Stand-Band dann ein rotes Badge „Intern“ mit Schloss, damit man es vor dem Export sieht. Im PDF steht auf jeder Seite schräg und blass „Intern“, darunter „nicht weitergeben“ und der Stand aus `as-of`. Mit `lang: en` heißt es „Internal“ und „do not share“. Andere Werte von `share` ändern nichts. Das Wasserzeichen schützt nicht gegen Absicht, sondern gegen Versehen. Dass das Feld auf Kundenseiten nicht fehlt, prüft das Check-Skript.

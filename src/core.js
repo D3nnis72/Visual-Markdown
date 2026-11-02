@@ -2,7 +2,9 @@ import { readVisual } from './frontmatter.js';
 import { renderBand } from './band.js';
 import { parseSteps } from './steps/parse.js';
 import { validateSteps, computeSteps } from './steps/compute.js';
-import { renderSteps, renderError } from './steps/render.js';
+import { renderSteps } from './steps/render.js';
+import { renderError } from './meta.js';
+import { transformChart } from './chart/render.js';
 import { renderSection, sectionIds } from './sections.js';
 import { parseBadges, isTableSeparator, isTableRow, renderTableRow } from './badges.js';
 import { renderCard } from './cards.js';
@@ -34,12 +36,20 @@ export function transform(markdown, { today = new Date() } = {}) {
       if (close && close[1][0] === fence.char && close[1].length >= fence.length) fence = null;
     } else {
       const open = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line);
-      if (open && !line.startsWith(' ') && open[2].trim() === 'steps') {
+      const kind = open && !line.startsWith(' ') ? open[2].trim() : null;
+      if (kind === 'steps' || kind === 'chart') {
         let end = i + 1;
         while (end < lines.length) {
           const close = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(lines[end]);
           if (close && close[1][0] === open[1][0] && close[1].length >= open[1].length) break;
           end++;
+        }
+        if (kind === 'chart') {
+          const chart = transformChart(lines, i, end, lang);
+          output.push(...(chart.errors ? ['', renderError(chart.errors, lang, 'chart'), ''] : ['', ...chart.output]));
+          changed = true;
+          i = end;
+          continue;
         }
         let html;
         try {

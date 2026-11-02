@@ -20,5 +20,10 @@ export function updatedBadge(value, lang, today) {
     : badge('vm-updated', UPDATED_ICON, inline(shown), title);
 }
 
+/** A broken block shows this box with the file line instead of disappearing. */
+export function renderError(errors, lang, block = 'steps') {
+  return `<div class="vm-error">${escapeHtml(t(lang, 'errorAt', { block, ...errors[0] }))}${errors.length > 1 ? ` (+${errors.length - 1})` : ''}</div>`;
+}
+
 export const copyButton = ({ id = null, thread = null, lang, className = '', label }) =>
   `<button type="button" class="vm-copy${className ? ` ${className}` : ''}"${id ? ` data-copy-id="${escapeHtml(id)}"` : ''} data-copied="${escapeHtml(t(lang, 'copied'))}" title="${escapeHtml(t(lang, 'copy'))}" aria-label="${escapeHtml(label)}"${thread ? ` data-copy-thread="${escapeHtml(thread)}"` : ''}>${COPY_ICON}</button>`;
