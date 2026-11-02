@@ -5,6 +5,7 @@ import { validateSteps, computeSteps } from './steps/compute.js';
 import { renderSteps, renderError } from './steps/render.js';
 import { renderSection, sectionIds } from './sections.js';
 import { parseBadges, isTableSeparator, isTableRow, renderTableRow } from './badges.js';
+import { renderCard } from './cards.js';
 
 export function transform(markdown, { today = new Date() } = {}) {
   const { visual, endLine } = readVisual(markdown);
@@ -18,6 +19,7 @@ export function transform(markdown, { today = new Date() } = {}) {
   let changed = Boolean(band);
   let fence = null;
   let section = null;
+  let card = null;
   const badges = parseBadges(visual?.badges);
   let tableBody = false;
   const insertBand = () => output.push('', band, '');
@@ -56,6 +58,10 @@ export function transform(markdown, { today = new Date() } = {}) {
       } else if (badges.size && isTableSeparator(line) && isTableRow(lines[i - 1] ?? '')) {
         output.push(line);
         tableBody = true;
+      } else if (!open && (card = renderCard(lines, i))) {
+        output.push(...card.output);
+        changed = true;
+        i = card.end;
       } else if (!open && (section = renderSection(line, lang, today))) {
         output.push(...section);
         changed = true;

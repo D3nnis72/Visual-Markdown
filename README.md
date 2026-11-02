@@ -93,6 +93,17 @@ visual:
 
 Jede Tabellenzelle, deren ganzer Text eines dieser Wörter ist, erscheint dann als getönte Pille mit Punkt, wie die Health-Werte in LioCare. Groß- und Kleinschreibung spielt keine Rolle. Die Farben sind `ok` grün, `warn` gelb, `bad` rot, `info` indigo und `muted` grau, andere Werte werden ignoriert. Kopfzeilen, Zellen mit weiterem Text und Tabellen in Codeblöcken bleiben, wie sie sind. In der Datei bleibt die Tabelle eine normale Markdown-Tabelle.
 
+## Karten
+
+Eine Karte ist ein Callout mit `[!card …]` in der ersten Zeile. Danach folgen Icon und Farbe in beliebiger Reihenfolge, dann der Titel. Darunter steht normales Markdown mit Listen, Links und Tabellen:
+
+```markdown
+> [!card flag green] E51: Pro Werk anfragen
+> Entschieden am 30. Oktober. Wir fragen pro Werk an, weil die Preise je Standort verschieden sind.
+```
+
+Icons gibt es aus einer festen Liste: `flag`, `question`, `check`, `warning`, `bulb`, `info`, `pin`, `clock` und `note`. Die Farben sind `green`, `yellow`, `red`, `indigo` und `grey`, die Badge-Namen `ok`, `warn`, `bad`, `info` und `muted` gehen auch. Ohne Farbe ist die Karte grau, ohne Icon steht nur der Titel. Unbekannte Wörter werden ignoriert. Eine Karte ersetzt eigene Bausteine für Entscheidungen, Fragen oder Risiken. Auf GitHub erscheint sie als normales Zitat. Normale Zitate und die GitHub-Callouts wie `> [!NOTE]` bleiben, wie sie sind.
+
 ## Abschnitte
 
 Ein Abschnitt bekommt eine feste Kennung und das Datum seiner letzten Änderung direkt in die Überschrift:

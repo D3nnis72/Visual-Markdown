@@ -89,6 +89,27 @@ Die fünf Arten von GitHub zeichnet MPE selbst.
 > [!CAUTION]
 > Etwas, das man nicht tun sollte.
 
+## Karten {#karten updated=2026-11-01}
+
+Eine Karte ist ein Callout mit `[!card Icon Farbe]` und Titel in der ersten Zeile, darunter normales Markdown. Icons: `flag`, `question`, `check`, `warning`, `bulb`, `info`, `pin`, `clock`, `note`. Farben: `green`, `yellow`, `red`, `indigo`, `grey`.
+
+> [!card flag green] E51: Pro Werk anfragen
+> Entschieden am 30. Oktober. Wir fragen pro Werk an, weil die Preise je Standort verschieden sind.
+>
+> - ersetzt E47
+> - gilt für Batch 1
+
+> [!card question yellow] Frage 6: Bestellanhänge für alle Positionen?
+> Gestellt an das Kundenteam am 28. Oktober, noch keine Antwort. Ohne die Anhänge fehlen Belege für etwa ein Drittel der Positionen.
+
+> [!card warning red] Risiko: Zugang zum Altsystem
+> Läuft der Zugang Ende November aus, fehlen die Altdaten für den Export.
+
+> [!card bulb indigo] Idee: Stichprobe automatisch ziehen
+
+> [!card note] Notiz ohne Farbe
+> Ohne Farbe ist die Karte grau.
+
 ## Normales Markdown {#markdown updated=2026-11-01}
 
 Text mit **fett**, *kursiv*, `Code` und einem [Link](https://github.com), der als Badge mit Link-Icon erscheint. Tastenkürzel wie <kbd>Cmd</kbd> + <kbd>C</kbd> haben eine eigene Form. Tabellen sehen aus wie die Karte der Schrittliste. Wörter, die unter `badges:` im Frontmatter stehen, erscheinen in Tabellenzellen als farbige Pillen.
@@ -144,4 +165,4 @@ sequenceDiagram
 
 ## Noch nicht gebaut {#offen updated=2026-11-01}
 
-Aus der ersten Runde fehlen noch generische Karten mit `> [!card Icon Farbe] Titel`, `chart` für Diagramme aus Tabellen und das Wasserzeichen im PDF. Die zweite Runde mit Links und Erklärungen für IDs, `scale`, `gallery` und `compare` ist noch nicht begonnen.
+Aus der ersten Runde fehlen noch `chart` für Diagramme aus Tabellen und das Wasserzeichen im PDF. Die zweite Runde mit Links und Erklärungen für IDs, `scale`, `gallery` und `compare` ist noch nicht begonnen.

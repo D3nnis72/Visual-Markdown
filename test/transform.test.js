@@ -87,3 +87,21 @@ test('reads all five colors and ignores unknown ones', () => {
   assert.match(html, /vm-pill-muted">später/);
   assert.doesNotMatch(html, /vm-pill-lila/);
 });
+test('turns a card callout into a card with icon, color, title and Markdown body', () => {
+  const html = run('> [!card flag green] E51: Pro Werk <b>oder</b> über Werke\n> Entschieden am **30. Oktober**.\n>\n> - erster Punkt\n\nDanach');
+  const lines = html.split('\n');
+  assert.match(lines[0], /^<div class="vm-card vm-card-green"><div class="vm-card-head"><span class="vm-card-icon"><svg[^>]*>[\s\S]*?<\/svg><\/span><span class="vm-card-title">E51: Pro Werk &lt;b&gt;oder&lt;\/b&gt; über Werke<\/span><\/div><div class="vm-card-body">$/);
+  assert.deepEqual(lines.slice(1, 7), ['', 'Entschieden am **30. Oktober**.', '', '- erster Punkt', '', '</div></div>']);
+  assert.equal(lines[7], '');
+  assert.equal(lines[8], 'Danach');
+});
+test('accepts icon and color in any order, aliases and no body', () => {
+  const html = run('> [!card warn question] Offene Frage');
+  assert.match(html, /^<div class="vm-card vm-card-yellow">/);
+  assert.match(html, /<span class="vm-card-icon"><svg class="vm-card-svg vm-card-svg-question"/);
+  assert.doesNotMatch(html, /vm-card-body/);
+  assert.match(run('> [!card] Nur Titel'), /^<div class="vm-card vm-card-grey"><div class="vm-card-head"><span class="vm-card-title">Nur Titel<\/span><\/div><\/div>$/m);
+});
+test('leaves normal quotes, GitHub callouts and fenced cards alone', () => {
+  for (const text of ['> Ein Zitat', '> [!NOTE]\n> Hinweis', '```\n> [!card flag green] Code\n```']) assert.equal(run(text), text);
+});

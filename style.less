@@ -571,6 +571,28 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
   .vm-pill-bad { background: var(--vm-error-fill); color: var(--vm-bad-text); }
   .vm-pill-info { background: var(--vm-info-fill); color: var(--vm-running); }
   .vm-pill-muted { background: var(--vm-subtle); color: var(--vm-muted); }
+  /* Generische Karte: Fläche wie die Schrittliste, Icon in getöntem Quadrat, darunter normales Markdown. */
+  .vm-card {
+    margin: 16px 0;
+    padding: 14px 16px;
+    background: var(--vm-surface);
+    border: 1px solid var(--vm-border);
+    border-radius: 12px;
+    box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.05);
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .vm-card-head { display: flex; align-items: center; gap: 12px; }
+  .vm-card-title { font-weight: 600; overflow-wrap: anywhere; }
+  .vm-card-icon { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 9px; }
+  .vm-card-body { margin-top: 6px; font-size: 14px; line-height: 1.55; > :first-child { margin-top: 0; } > :last-child { margin-bottom: 0; } }
+  .vm-card-head:has(.vm-card-icon) + .vm-card-body { padding-left: 48px; }
+  .vm-card-green .vm-card-icon { background: var(--vm-band-fill); color: var(--vm-success); }
+  .vm-card-yellow .vm-card-icon { background: var(--vm-warn-fill); color: var(--vm-warning); }
+  .vm-card-red .vm-card-icon { background: var(--vm-error-fill); color: var(--vm-bad-text); }
+  .vm-card-indigo .vm-card-icon { background: var(--vm-info-fill); color: var(--vm-running); }
+  .vm-card-grey .vm-card-icon { background: var(--vm-subtle); color: var(--vm-muted); }
   .vm-badge.vm-date-stale, .vm-badge.vm-date-missing { background: var(--vm-warn-fill); color: var(--vm-warning); }
   code.vm-id { padding: 0; background: none; color: inherit; font-size: 11px; cursor: text; user-select: all; -webkit-user-select: all; }
   /* Beschreibung, Braucht, Als Nächstes, Dependencies und Ziel: kleine gedämpfte

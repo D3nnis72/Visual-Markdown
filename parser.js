@@ -469,6 +469,49 @@ var __visualMarkdown = (() => {
     });
   }
 
+  // src/cards.js
+  var CARD_START = /^>\s?\[!card((?:\s+[a-z-]+)*)\s*\]\s*(.*)$/i;
+  var COLORS = {
+    green: "green",
+    yellow: "yellow",
+    red: "red",
+    indigo: "indigo",
+    grey: "grey",
+    gray: "grey",
+    ok: "green",
+    warn: "yellow",
+    bad: "red",
+    info: "indigo",
+    muted: "grey"
+  };
+  var ICON_SHAPES2 = {
+    flag: '<path d="M3.75 14V2.5M3.75 3h8.5l-2 3 2 3h-8.5"/>',
+    question: '<circle cx="8" cy="8" r="6.25"/><path d="M6.25 6.25a1.85 1.85 0 0 1 3.6.6c0 1.25-1.85 1.6-1.85 2.65M8 11.4v.1"/>',
+    check: '<circle cx="8" cy="8" r="6.25"/><path d="m5.4 8.15 1.75 1.75 3.45-3.6"/>',
+    warning: '<path d="M8 2.5 14 13H2z"/><path d="M8 6.5v3M8 11.25v.1"/>',
+    bulb: '<path d="M6 12.5h4M6.5 14.25h3M5.25 10c-1-.85-1.75-2-1.75-3.5a4.5 4.5 0 0 1 9 0c0 1.5-.75 2.65-1.75 3.5"/>',
+    info: '<circle cx="8" cy="8" r="6.25"/><path d="M8 7.25v3.75M8 5v.1"/>',
+    pin: '<path d="M8 14.25s4.5-4.1 4.5-7.75a4.5 4.5 0 0 0-9 0c0 3.65 4.5 7.75 4.5 7.75z"/><circle cx="8" cy="6.5" r="1.5"/>',
+    clock: '<circle cx="8" cy="8" r="6.25"/><path d="M8 5v3.25l2.1 1.3"/>',
+    note: '<path d="M4 2.25h5.5L12.75 5.5v8.25H4z"/><path d="M6.25 8.5h4M6.25 11h4"/>'
+  };
+  function renderCard(lines, start) {
+    const match = CARD_START.exec(lines[start]);
+    if (!match) return null;
+    const tokens = match[1].trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const color = COLORS[tokens.find((token) => COLORS[token])] ?? "grey";
+    const iconName = tokens.find((token) => ICON_SHAPES2[token]);
+    let end = start;
+    const body = [];
+    while (end + 1 < lines.length && /^>/.test(lines[end + 1])) body.push(lines[++end].replace(/^>\s?/, ""));
+    while (body.length && !body[body.length - 1].trim()) body.pop();
+    const icon2 = iconName ? `<span class="vm-card-icon">${svg(`vm-card-svg vm-card-svg-${iconName}`, 16, ICON_SHAPES2[iconName])}</span>` : "";
+    const head = `<div class="vm-card vm-card-${color}"><div class="vm-card-head">${icon2}<span class="vm-card-title">${inline(match[2].trim())}</span></div>`;
+    const output = body.length ? [`${head}<div class="vm-card-body">`, "", ...body, "", "</div></div>", ""] : [`${head}</div>`, ""];
+    if (end + 1 < lines.length && !lines[end + 1].trim()) end++;
+    return { output, end };
+  }
+
   // src/core.js
   function transform(markdown, { today = /* @__PURE__ */ new Date() } = {}) {
     const { visual, endLine } = readVisual(markdown);
@@ -482,6 +525,7 @@ var __visualMarkdown = (() => {
     let changed = Boolean(band);
     let fence = null;
     let section = null;
+    let card = null;
     const badges = parseBadges(visual?.badges);
     let tableBody = false;
     const insertBand = () => output.push("", band, "");
@@ -520,6 +564,10 @@ var __visualMarkdown = (() => {
         } else if (badges.size && isTableSeparator(line) && isTableRow(lines[i - 1] ?? "")) {
           output.push(line);
           tableBody = true;
+        } else if (!open && (card = renderCard(lines, i))) {
+          output.push(...card.output);
+          changed = true;
+          i = card.end;
         } else if (!open && (section = renderSection(line, lang, today))) {
           output.push(...section);
           changed = true;
