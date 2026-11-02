@@ -3,7 +3,8 @@ import { t } from '../labels.js';
 import { readBlock, renderSays } from './common.js';
 
 export const GALLERY_FIELDS = ['says', 'columns'];
-export const GALLERY_COLUMNS = ['1', '2', '3', '4'];
+export const GALLERY_COLUMNS = ['1', '2', '3', '4', '5', '6'];
+// More images than columns wrap into further rows, so the block works as a grid as well.
 // "![Hell](bilder/hell.png) Startseite im hellen Modus". Without text after the image, the alt text is the caption.
 const IMAGE = /^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)\s*(.*)$/;
 

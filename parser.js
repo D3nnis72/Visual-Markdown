@@ -1132,7 +1132,7 @@ var __visualMarkdown = (() => {
 
   // src/blocks/gallery.js
   var GALLERY_FIELDS = ["says", "columns"];
-  var GALLERY_COLUMNS = ["1", "2", "3", "4"];
+  var GALLERY_COLUMNS = ["1", "2", "3", "4", "5", "6"];
   var IMAGE = /^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)\s*(.*)$/;
   function parseGallery(body, firstLine, lang) {
     const { fields, items, errors } = readBlock(body, firstLine, GALLERY_FIELDS, lang);

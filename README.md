@@ -200,7 +200,7 @@ columns: 2
 ```
 ````
 
-Jede Zeile ist ein normales Markdown-Bild, der Text dahinter die Bildunterschrift. Ohne Text gilt der Alternativtext. `columns` ist 1 bis 4, ohne Angabe stehen bis zu drei Bilder in einer Reihe. Die Bilder bleiben Markdown, deshalb löst MPE relative Pfade in Vorschau und PDF auf wie bei jedem anderen Bild. Auf GitHub erscheint der Block als Codeblock mit den Bildpfaden.
+Jede Zeile ist ein normales Markdown-Bild, der Text dahinter die Bildunterschrift. Ohne Text gilt der Alternativtext. `columns` ist 1 bis 6, ohne Angabe stehen bis zu drei Bilder in einer Reihe. Mehr Bilder als Spalten laufen in weitere Reihen, so wird die Galerie zum Raster. Die Bilder bleiben Markdown, deshalb löst MPE relative Pfade in Vorschau und PDF auf wie bei jedem anderen Bild. Auf GitHub erscheint der Block als Codeblock mit den Bildpfaden.
 
 `compare` stellt zwei bis vier Ansätze nebeneinander:
 
@@ -217,7 +217,7 @@ says: Der Parser-Hook reicht vorerst.
 ```
 ````
 
-Eine Option beginnt mit `- Titel`. Darunter stehen eingerückt Fließtext, `+ Vorteil` und `- Nachteil`. `| empfohlen` oder `| recommended` markiert höchstens eine Option, sie bekommt einen grünen Rahmen und das Badge „Empfehlung“. Die Spalten brechen bei schmalen Fenstern um. Eine Begründung gehört in `says` oder in den Text darunter.
+Eine Option beginnt mit `- Titel`. Darunter stehen eingerückt Fließtext, `+ Vorteil` und `- Nachteil`. `| empfohlen` oder `| recommended` markiert höchstens eine Option, sie bekommt das Badge „Empfehlung“. Die Spalten brechen bei schmalen Fenstern um. Eine Begründung gehört in `says` oder in den Text darunter.
 
 ## Wasserzeichen
 

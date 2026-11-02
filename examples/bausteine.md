@@ -422,9 +422,22 @@ says: Der Anteilsbalken hell und dunkel.
 ![Anteile dunkel](bilder/anteile-dunkel.png) Dunkles Theme
 ```
 
+Mehr Bilder als Spalten laufen in weitere Reihen, so wird die Galerie zum Raster. Hier sechs Bilder in drei Spalten, `columns` geht bis 6:
+
+```gallery
+says: Sechs Diagrammtypen auf einen Blick.
+columns: 3
+![Balken](bilder/balken.png) Balken mit Werten
+![Linie](bilder/linie.png) Linie über Wochen
+![Gruppiert](bilder/gruppiert.png) Gruppierte Balken
+![Heatmap](bilder/heatmap.png) Heatmap
+![Wasserfall](bilder/wasserfall.png) Wasserfall
+![Pareto](bilder/pareto.png) Pareto
+```
+
 ## Vergleich {#vergleich updated=2026-11-02}
 
-`compare` stellt zwei bis vier Ansätze nebeneinander. Eine Option beginnt mit `- Titel`, darunter stehen eingerückt Text, `+ Vorteil` und `- Nachteil`. `| empfohlen` markiert die Empfehlung.
+`compare` stellt zwei bis vier Ansätze nebeneinander. Eine Option beginnt mit `- Titel`, darunter stehen eingerückt Text, `+ Vorteil` und `- Nachteil`. `| empfohlen` markiert die Empfehlung mit einem Badge.
 
 ```compare
 says: Der Parser-Hook reicht, eine eigene Extension lohnt sich erst mit eigenem Viewer.

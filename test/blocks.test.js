@@ -34,10 +34,16 @@ test('gallery keeps images as Markdown so MPE resolves the paths', () => {
   assert.match(html, /\n!\[Hell\]\(bilder\/hell\.png\)\n/);
   assert.match(html, /<figcaption>Helles Theme<\/figcaption>/);
   assert.match(html, /<figcaption>Dunkel<\/figcaption>/);
-  assert.deepEqual(messages(parseGallery('columns: 6\nbilder/hell.png', 2, 'de')), [
-    '2 „6“ geht nicht für columns, erlaubt sind 1, 2, 3, 4',
+  assert.deepEqual(messages(parseGallery('columns: 7\nbilder/hell.png', 2, 'de')), [
+    '2 „7“ geht nicht für columns, erlaubt sind 1, 2, 3, 4, 5, 6',
     '3 Jede Zeile ist ein Bild: „![Text](pfad.png) Bildunterschrift“',
   ]);
+});
+
+test('gallery fills three columns by default and wraps into rows', () => {
+  const html = transform(block('gallery', [1, 2, 3, 4, 5].map(n => `![B${n}](b${n}.png)`).join('\n')));
+  assert.match(html, /--vm-gallery-columns: 3/);
+  assert.equal(html.match(/<figure/g).length, 5);
 });
 
 test('compare reads options with text, pros, cons and one recommendation', () => {

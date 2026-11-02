@@ -54,8 +54,8 @@ Der Gewinn ist explizite Struktur, die der Renderer zeigen und verlinken kann. T
 | Wasserzeichen | Seiten mit Kundendaten | `share: intern` im Frontmatter | Badge im Band, schräges Wasserzeichen auf jeder PDF-Seite, fertig | 1 |
 | IDs und Glossar | Entscheidungs-IDs wie E47, Frage 6 und Fachbegriffe im Fließtext | Wie heute | Link und Erklärung beim Hovern, braucht einen vorher gebauten Index | 2 |
 | `scale` | Schwellen und Bereiche, etwa die Health States in LioCare | Codeblock mit einer Zeile je Bereich, Format in der [README](../../../README.md#skalen-galerien-und-vergleiche) | Getöntes Band über den ganzen Bereich, Grenzen darunter, Markierungen darüber, fertig | 2 |
-| `gallery` | Screenshots, Referenzbilder, vorher und nachher, Dark und Light in LioCare | Codeblock mit normalen Markdown-Bildern | Bilder im Raster mit Bildunterschrift, auch im PDF, fertig | 2 |
-| `compare` | Zwei bis vier Ansätze mit Vor- und Nachteilen beim Brainstorming | Codeblock mit `- Option`, darunter `+` und `-` | Spalten nebeneinander, Empfehlung grün umrandet, fertig | 2 |
+| `gallery` | Screenshots, Referenzbilder, vorher und nachher, Dark und Light in LioCare | Codeblock mit normalen Markdown-Bildern | Bilder im Raster mit bis zu sechs Spalten und Bildunterschrift, auch im PDF, fertig | 2 |
+| `compare` | Zwei bis vier Ansätze mit Vor- und Nachteilen beim Brainstorming | Codeblock mit `- Option`, darunter `+` und `-` | Spalten nebeneinander, Empfehlung mit Badge, fertig | 2 |
 
 Details stehen unten nur für die Bausteine, bei denen die Tabelle nicht reicht.
 
