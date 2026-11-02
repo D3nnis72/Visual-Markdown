@@ -441,6 +441,13 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
     svg { display: block; width: 100%; height: auto; }
   }
   .vm-chart-says { font-weight: 600; margin-bottom: 10px; }
+  .vm-chart-legend {
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 16px;
+    margin: 0 0 10px; font-size: 12px; color: var(--vm-muted);
+  }
+  .vm-chart-legend-title { font-weight: 500; }
+  .vm-chart-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .vm-chart-legend-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
   .vm-chart-foot { display: flex; flex-direction: column; gap: 2px; margin-top: 8px; font-size: 12px; color: var(--vm-muted); }
   /* Kennzahlen stehen flach in der Karte, nur durch eine Linie getrennt. */
   .vm-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); row-gap: 14px; margin: 4px 0 6px; }
@@ -691,6 +698,14 @@ body.vscode-dark .markdown-preview.markdown-preview .vm-chart {
   [fill="#e87ba4"] { fill: #d55181; } [stroke="#e87ba4"] { stroke: #d55181; }
   [fill="#6250d6"] { fill: #9085e9; } [stroke="#6250d6"] { stroke: #9085e9; }
   [fill="#e34948"] { fill: #e66767; } [stroke="#e34948"] { stroke: #e66767; }
+  // Dieselben dunklen Stufen für die Punkte der HTML-Legende.
+  .vm-chart-legend-dot[data-color="#2a78d6"] { background: #3987e5 !important; }
+  .vm-chart-legend-dot[data-color="#eb6834"] { background: #d95926 !important; }
+  .vm-chart-legend-dot[data-color="#1baf7a"] { background: #199e70 !important; }
+  .vm-chart-legend-dot[data-color="#eda100"] { background: #c98500 !important; }
+  .vm-chart-legend-dot[data-color="#e87ba4"] { background: #d55181 !important; }
+  .vm-chart-legend-dot[data-color="#6250d6"] { background: #9085e9 !important; }
+  .vm-chart-legend-dot[data-color="#e34948"] { background: #e66767 !important; }
 }
 
 /* Chrome soll die Komponentenfarben auch ohne Hintergrundgrafiken drucken. */

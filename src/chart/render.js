@@ -2,7 +2,7 @@ import { escapeHtml, inline } from '../html.js';
 import { t } from '../labels.js';
 import { CHART_TYPES, CHART_FIELDS, CHART_REQUIRED, CHART_VALUES, CHART_NEEDS, TOTAL_LABEL } from './schema.js';
 import { tableAbove, parseNumber } from './table.js';
-import { chartSpec } from './specs.js';
+import { chartSpec, chartLegend } from './specs.js';
 
 /** Reads `key: value` lines. Returns the fields and errors with file line numbers. */
 export function parseChart(body, firstLine, lang) {
@@ -93,6 +93,13 @@ function renderKpis(rows) {
   return `<div class="vm-kpis">${rows.map(row => `<div class="vm-kpi"><div class="vm-kpi-label">${inline(row.x)}</div><div class="vm-kpi-value">${inline(row.y)}</div>${row.note ? `<div class="vm-kpi-note">${inline(row.note)}</div>` : ''}</div>`).join('')}</div>`;
 }
 
+function renderLegend(legend) {
+  if (!legend?.items.length) return '';
+  const title = legend.title ? `<span class="vm-chart-legend-title">${escapeHtml(legend.title)}</span>` : '';
+  const items = legend.items.map(item => `<span class="vm-chart-legend-item"><span class="vm-chart-legend-dot" data-color="${item.color}" style="background:${item.color}"></span>${escapeHtml(item.label)}</span>`);
+  return `<div class="vm-chart-legend">${title}${items.join('')}</div>`;
+}
+
 export function renderChart(fields, data, lang) {
   const foot = [
     `<div class="vm-chart-foot"><div class="vm-chart-basis">${escapeHtml(t(lang, 'chartBasis'))}: ${inline(fields.basis)}</div>`,
@@ -101,7 +108,7 @@ export function renderChart(fields, data, lang) {
   ].join('');
   const head = `<div class="vm-chart vm-chart-${fields.type}"><div class="vm-chart-says">${inline(fields.says)}</div>`;
   if (fields.type === 'kpi') return [`${head}${renderKpis(data.rows)}${foot}`, ''];
-  return [head, '', '```vega-lite', JSON.stringify(chartSpec(fields, data, lang)), '```', '', foot, ''];
+  return [`${head}${renderLegend(chartLegend(fields, data, lang))}`, '', '```vega-lite', JSON.stringify(chartSpec(fields, data, lang)), '```', '', foot, ''];
 }
 
 export function transformChart(lines, start, end, lang) {

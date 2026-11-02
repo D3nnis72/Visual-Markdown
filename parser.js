@@ -584,7 +584,23 @@ var __visualMarkdown = (() => {
     en: { decimal: ".", thousands: ",", grouping: [3], currency: ["$", ""] }
   };
   var unique = (values) => [...new Set(values)];
-  var labelAngle = (names) => Math.max(0, ...names.map((name) => String(name).length)) * 6.5 > WIDTH * 0.85 / Math.max(names.length, 1) ? -30 : 0;
+  function categoryAxis(names) {
+    const room = Math.floor(WIDTH * 0.85 / Math.max(names.length, 1) / 6.5);
+    const wrapped = {};
+    for (const name of names.map(String)) {
+      if (name.length <= room) continue;
+      const lines = [];
+      for (const word of name.split(/\s+/)) {
+        const last = lines.length - 1;
+        if (last >= 0 && `${lines[last]} ${word}`.length <= room) lines[last] += ` ${word}`;
+        else lines.push(word);
+      }
+      if (lines.length > 2 || lines.some((line) => line.length > room)) return { labelAngle: -30 };
+      wrapped[name] = lines;
+    }
+    if (!Object.keys(wrapped).length) return { labelAngle: 0 };
+    return { labelAngle: 0, labelExpr: `${JSON.stringify(wrapped)}[datum.label] || datum.label`, labelLineHeight: 14 };
+  }
   var inkOn = (color) => color === PALETTE[3] ? DARK_INK : "#ffffff";
   function base(fields, values, lang) {
     return {
@@ -612,7 +628,8 @@ var __visualMarkdown = (() => {
           labelLimit: 320
         },
         axisX: { grid: false },
-        legend: { orient: "top", labelLimit: 280, labelFontSize: 12, titleFontSize: 12, titleFontWeight: 500, labelColor: MUTED, titleColor: MUTED, symbolType: "circle", symbolSize: 90 },
+        // The legend is HTML above the chart (chartLegend), so it can be centered whatever Vega measures.
+        legend: { disable: true },
         mark: { color: PALETTE[0] },
         text: { fontSize: 12, color: INK }
       }
@@ -674,13 +691,17 @@ var __visualMarkdown = (() => {
       encoding: { x, y: { field: "y", type: "quantitative", title: data.yTitle }, ...series ? { color: colorBy(data, data.rows) } : {} }
     };
   }
-  function shareSpec(fields, data, lang) {
+  function shareParts(data, lang) {
     let parts = data.rows.map((row) => ({ x: row.x, y: row.y }));
     if (parts.length > SHARE_MAX_PARTS) {
       const kept = [...parts].sort((a, b) => b.y - a.y).slice(0, SHARE_MAX_PARTS - 1);
       const rest = parts.filter((part) => !kept.includes(part)).reduce((sum, part) => sum + part.y, 0);
       parts = [...parts.filter((part) => kept.includes(part)), { x: t(lang, "chartOther"), y: rest }];
     }
+    return parts;
+  }
+  function shareSpec(fields, data, lang) {
+    const parts = shareParts(data, lang);
     const total = parts.reduce((sum, part) => sum + part.y, 0) || 1;
     let start = 0;
     const values = parts.map((part, index) => {
@@ -696,6 +717,8 @@ var __visualMarkdown = (() => {
       ...base(fields, values, lang),
       width: WIDTH,
       height: 28,
+      // No side padding: the bar lines up with the heading and the foot text.
+      padding: { left: 0, right: 0, top: 5, bottom: 5 },
       encoding: { y: { value: 14 } },
       layer: [
         {
@@ -752,7 +775,7 @@ var __visualMarkdown = (() => {
       return { x: row.x, start, end: running, kind: row.y >= 0 ? "up" : "down", label: formatSigned(row.y, lang) };
     });
     const order = values.map((value) => value.x);
-    const x = { field: "x", type: "ordinal", sort: order, title: null, axis: { labelAngle: labelAngle(order) }, scale: { paddingInner: 0.3 } };
+    const x = { field: "x", type: "ordinal", sort: order, title: null, axis: categoryAxis(order), scale: { paddingInner: 0.3 } };
     const kinds = [t(lang, "chartTotal"), t(lang, "chartUp"), t(lang, "chartDown")];
     const named = values.map((value) => ({ ...value, kind: kinds[["total", "up", "down"].indexOf(value.kind)] }));
     return {
@@ -766,7 +789,7 @@ var __visualMarkdown = (() => {
           encoding: {
             y: { field: "start", type: "quantitative", title: data.yTitle },
             y2: { field: "end" },
-            color: { field: "kind", type: "nominal", scale: { domain: kinds, range: [NEUTRAL, PALETTE[0], PALETTE[7]] }, title: null }
+            color: { field: "kind", type: "nominal", scale: { domain: kinds, range: [WATERFALL_COLORS.total, WATERFALL_COLORS.up, WATERFALL_COLORS.down] }, title: null }
           }
         },
         {
@@ -786,7 +809,7 @@ var __visualMarkdown = (() => {
       return { x: row.x, share: row.y / total, cumulative: cumulative / total, label: formatPercent(row.y / total, lang, 0) };
     });
     const names = [t(lang, "chartShare"), t(lang, "chartCumulative")];
-    const x = { field: "x", type: "ordinal", sort: values.map((value) => value.x), title: data.xTitle, axis: { labelAngle: labelAngle(values.map((value) => value.x)) }, scale: { paddingInner: 0.25 } };
+    const x = { field: "x", type: "ordinal", sort: values.map((value) => value.x), title: data.xTitle, axis: categoryAxis(values.map((value) => value.x)), scale: { paddingInner: 0.25 } };
     const y = (field) => ({ field, type: "quantitative", title: null, scale: { domain: [0, 1] }, axis: { format: "%" } });
     return {
       ...base(fields, values, lang),
@@ -850,6 +873,31 @@ var __visualMarkdown = (() => {
     scatter: scatterSpec,
     progress: progressSpec
   };
+  var WATERFALL_COLORS = { total: NEUTRAL, up: PALETTE[0], down: PALETTE[7] };
+  function chartLegend(fields, data, lang) {
+    const palette = (labels2) => labels2.map((label, index) => ({ label, color: PALETTE[index % PALETTE.length] }));
+    switch (fields.type) {
+      case "share":
+        return { title: null, items: palette(shareParts(data, lang).map((part) => part.x)) };
+      case "pareto":
+        return { title: null, items: palette([t(lang, "chartShare"), t(lang, "chartCumulative")]) };
+      case "waterfall": {
+        const kinds = data.rows.map((row, index) => index === 0 || row.total || row.y === null ? "total" : row.y >= 0 ? "up" : "down");
+        const present = ["total", "up", "down"].filter((kind) => kinds.includes(kind));
+        const names = { total: t(lang, "chartTotal"), up: t(lang, "chartUp"), down: t(lang, "chartDown") };
+        return { title: null, items: present.map((kind) => ({ label: names[kind], color: WATERFALL_COLORS[kind] })) };
+      }
+      case "bar":
+      case "histogram":
+      case "line":
+      case "scatter": {
+        if (!data.rows.some((row) => row.series !== null)) return null;
+        return { title: data.seriesTitle, items: palette(seriesOrder(data.rows)) };
+      }
+      default:
+        return null;
+    }
+  }
   var chartSpec = (fields, data, lang) => BUILDERS[fields.type](fields, data, lang);
 
   // src/chart/render.js
@@ -938,6 +986,12 @@ var __visualMarkdown = (() => {
   function renderKpis(rows) {
     return `<div class="vm-kpis">${rows.map((row) => `<div class="vm-kpi"><div class="vm-kpi-label">${inline(row.x)}</div><div class="vm-kpi-value">${inline(row.y)}</div>${row.note ? `<div class="vm-kpi-note">${inline(row.note)}</div>` : ""}</div>`).join("")}</div>`;
   }
+  function renderLegend(legend) {
+    if (!legend?.items.length) return "";
+    const title = legend.title ? `<span class="vm-chart-legend-title">${escapeHtml(legend.title)}</span>` : "";
+    const items = legend.items.map((item) => `<span class="vm-chart-legend-item"><span class="vm-chart-legend-dot" data-color="${item.color}" style="background:${item.color}"></span>${escapeHtml(item.label)}</span>`);
+    return `<div class="vm-chart-legend">${title}${items.join("")}</div>`;
+  }
   function renderChart(fields, data, lang) {
     const foot = [
       `<div class="vm-chart-foot"><div class="vm-chart-basis">${escapeHtml(t(lang, "chartBasis"))}: ${inline(fields.basis)}</div>`,
@@ -946,7 +1000,7 @@ var __visualMarkdown = (() => {
     ].join("");
     const head = `<div class="vm-chart vm-chart-${fields.type}"><div class="vm-chart-says">${inline(fields.says)}</div>`;
     if (fields.type === "kpi") return [`${head}${renderKpis(data.rows)}${foot}`, ""];
-    return [head, "", "```vega-lite", JSON.stringify(chartSpec(fields, data, lang)), "```", "", foot, ""];
+    return [`${head}${renderLegend(chartLegend(fields, data, lang))}`, "", "```vega-lite", JSON.stringify(chartSpec(fields, data, lang)), "```", "", foot, ""];
   }
   function transformChart(lines, start, end, lang) {
     const { fields, errors } = parseChart(lines.slice(start + 1, end).join("\n"), start + 2, lang);

@@ -15,8 +15,25 @@ const LOCALES = {
   en: { decimal: '.', thousands: ',', grouping: [3], currency: ['$', ''] },
 };
 const unique = values => [...new Set(values)];
-// Tilts category labels only when the longest one would not fit under its bar (about 6.5 px per character).
-const labelAngle = names => (Math.max(0, ...names.map(name => String(name).length)) * 6.5 > (WIDTH * 0.85) / Math.max(names.length, 1) ? -30 : 0);
+// Category labels under bars: wrapped onto up to two lines when they are too wide for their band (about 6.5 px
+// per character), tilted only when a single word is still too long. Tilting wastes height, Vega overestimates it.
+function categoryAxis(names) {
+  const room = Math.floor((WIDTH * 0.85) / Math.max(names.length, 1) / 6.5);
+  const wrapped = {};
+  for (const name of names.map(String)) {
+    if (name.length <= room) continue;
+    const lines = [];
+    for (const word of name.split(/\s+/)) {
+      const last = lines.length - 1;
+      if (last >= 0 && `${lines[last]} ${word}`.length <= room) lines[last] += ` ${word}`;
+      else lines.push(word);
+    }
+    if (lines.length > 2 || lines.some(line => line.length > room)) return { labelAngle: -30 };
+    wrapped[name] = lines;
+  }
+  if (!Object.keys(wrapped).length) return { labelAngle: 0 };
+  return { labelAngle: 0, labelExpr: `${JSON.stringify(wrapped)}[datum.label] || datum.label`, labelLineHeight: 14 };
+}
 // Labels inside a colored fill are white, except on the light yellow slot.
 const inkOn = color => (color === PALETTE[3] ? DARK_INK : '#ffffff');
 
@@ -37,7 +54,8 @@ function base(fields, values, lang) {
         labelColor: MUTED, titleColor: MUTED, gridColor: '#ededf0', domain: false, ticks: false, labelPadding: 6, labelLimit: 320,
       },
       axisX: { grid: false },
-      legend: { orient: 'top', labelLimit: 280, labelFontSize: 12, titleFontSize: 12, titleFontWeight: 500, labelColor: MUTED, titleColor: MUTED, symbolType: 'circle', symbolSize: 90 },
+      // The legend is HTML above the chart (chartLegend), so it can be centered whatever Vega measures.
+      legend: { disable: true },
       mark: { color: PALETTE[0] },
       text: { fontSize: 12, color: INK },
     },
@@ -99,13 +117,18 @@ function lineSpec(fields, data, lang) {
 }
 
 /** One whole split into parts: a tall segmented bar with the share printed on each part. */
-function shareSpec(fields, data, lang) {
+function shareParts(data, lang) {
   let parts = data.rows.map(row => ({ x: row.x, y: row.y }));
   if (parts.length > SHARE_MAX_PARTS) {
     const kept = [...parts].sort((a, b) => b.y - a.y).slice(0, SHARE_MAX_PARTS - 1);
     const rest = parts.filter(part => !kept.includes(part)).reduce((sum, part) => sum + part.y, 0);
     parts = [...parts.filter(part => kept.includes(part)), { x: t(lang, 'chartOther'), y: rest }];
   }
+  return parts;
+}
+
+function shareSpec(fields, data, lang) {
+  const parts = shareParts(data, lang);
   const total = parts.reduce((sum, part) => sum + part.y, 0) || 1;
   let start = 0;
   const values = parts.map((part, index) => {
@@ -119,6 +142,8 @@ function shareSpec(fields, data, lang) {
   const scaleX = { domain: [0, 1] };
   return {
     ...base(fields, values, lang), width: WIDTH, height: 28,
+    // No side padding: the bar lines up with the heading and the foot text.
+    padding: { left: 0, right: 0, top: 5, bottom: 5 },
     encoding: { y: { value: 14 } },
     layer: [
       {
@@ -177,7 +202,7 @@ function waterfallSpec(fields, data, lang) {
     return { x: row.x, start, end: running, kind: row.y >= 0 ? 'up' : 'down', label: formatSigned(row.y, lang) };
   });
   const order = values.map(value => value.x);
-  const x = { field: 'x', type: 'ordinal', sort: order, title: null, axis: { labelAngle: labelAngle(order) }, scale: { paddingInner: 0.3 } };
+  const x = { field: 'x', type: 'ordinal', sort: order, title: null, axis: categoryAxis(order), scale: { paddingInner: 0.3 } };
   const kinds = [t(lang, 'chartTotal'), t(lang, 'chartUp'), t(lang, 'chartDown')];
   const named = values.map(value => ({ ...value, kind: kinds[['total', 'up', 'down'].indexOf(value.kind)] }));
   return {
@@ -188,7 +213,7 @@ function waterfallSpec(fields, data, lang) {
         mark: { type: 'bar', cornerRadius: 3 },
         encoding: {
           y: { field: 'start', type: 'quantitative', title: data.yTitle }, y2: { field: 'end' },
-          color: { field: 'kind', type: 'nominal', scale: { domain: kinds, range: [NEUTRAL, PALETTE[0], PALETTE[7]] }, title: null },
+          color: { field: 'kind', type: 'nominal', scale: { domain: kinds, range: [WATERFALL_COLORS.total, WATERFALL_COLORS.up, WATERFALL_COLORS.down] }, title: null },
         },
       },
       {
@@ -210,7 +235,7 @@ function paretoSpec(fields, data, lang) {
     return { x: row.x, share: row.y / total, cumulative: cumulative / total, label: formatPercent(row.y / total, lang, 0) };
   });
   const names = [t(lang, 'chartShare'), t(lang, 'chartCumulative')];
-  const x = { field: 'x', type: 'ordinal', sort: values.map(value => value.x), title: data.xTitle, axis: { labelAngle: labelAngle(values.map(value => value.x)) }, scale: { paddingInner: 0.25 } };
+  const x = { field: 'x', type: 'ordinal', sort: values.map(value => value.x), title: data.xTitle, axis: categoryAxis(values.map(value => value.x)), scale: { paddingInner: 0.25 } };
   const y = field => ({ field, type: 'quantitative', title: null, scale: { domain: [0, 1] }, axis: { format: '%' } });
   return {
     ...base(fields, values, lang), width: WIDTH, height: 260,
@@ -264,6 +289,28 @@ const BUILDERS = {
   bar: barSpec, histogram: barSpec, line: lineSpec, share: shareSpec, heatmap: heatmapSpec,
   waterfall: waterfallSpec, pareto: paretoSpec, scatter: scatterSpec, progress: progressSpec,
 };
+
+const WATERFALL_COLORS = { total: NEUTRAL, up: PALETTE[0], down: PALETTE[7] };
+
+/** Color keys for the HTML legend: `{ title, items: [{ label, color }] }`, or null when color carries no meaning. */
+export function chartLegend(fields, data, lang) {
+  const palette = labels => labels.map((label, index) => ({ label, color: PALETTE[index % PALETTE.length] }));
+  switch (fields.type) {
+    case 'share': return { title: null, items: palette(shareParts(data, lang).map(part => part.x)) };
+    case 'pareto': return { title: null, items: palette([t(lang, 'chartShare'), t(lang, 'chartCumulative')]) };
+    case 'waterfall': {
+      const kinds = data.rows.map((row, index) => (index === 0 || row.total || row.y === null ? 'total' : row.y >= 0 ? 'up' : 'down'));
+      const present = ['total', 'up', 'down'].filter(kind => kinds.includes(kind));
+      const names = { total: t(lang, 'chartTotal'), up: t(lang, 'chartUp'), down: t(lang, 'chartDown') };
+      return { title: null, items: present.map(kind => ({ label: names[kind], color: WATERFALL_COLORS[kind] })) };
+    }
+    case 'bar': case 'histogram': case 'line': case 'scatter': {
+      if (!data.rows.some(row => row.series !== null)) return null;
+      return { title: data.seriesTitle, items: palette(seriesOrder(data.rows)) };
+    }
+    default: return null;
+  }
+}
 
 /** Builds the Vega-Lite spec MPE renders to SVG, in preview and in the PDF export. */
 export const chartSpec = (fields, data, lang) => BUILDERS[fields.type](fields, data, lang);
