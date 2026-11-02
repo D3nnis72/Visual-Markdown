@@ -1,6 +1,6 @@
-# mpe-notion-theme
+# Visual Markdown
 
-Notion-Look für die **Markdown Preview Enhanced** Vorschau in VS Code, inklusive passend gestylter Mermaid-Diagramme. Die Konfiguration liegt in diesem Repo, damit sie auf allen Geräten identisch ist.
+Ein Markdown-Format, das in der Vorschau von **Markdown Preview Enhanced** (MPE) in VS Code wie ein Projektwerkzeug aussieht und für LLMs trotzdem schlankes Markdown bleibt: Stand-Band, Arbeitsliste mit Abhängigkeiten, Karten, Diagramme aus Tabellen, Badges und Wasserzeichen für interne PDFs. Dazu kommen ein Notion-Look für alles andere, passend gestylte Mermaid-Diagramme, ein Check-Skript und Agent-Skills. Die Dateien bleiben `.md` und sind auf GitHub und ohne Renderer lesbar.
 
 ## Was drin ist
 
@@ -10,19 +10,30 @@ Notion-Look für die **Markdown Preview Enhanced** Vorschau in VS Code, inklusiv
 | `parser.js` | Bausteine für das Preview, erzeugt aus `src/`, nicht von Hand ändern |
 | `src/` | Kern zum Einlesen, Prüfen und Rendern sowie der Adapter für MPE |
 | `config.js` | Crossnote-Config mit der Mermaid-Konfiguration: klassischer Look, Schrift, Abstände, gerade Linien |
+| `skills/visual-markdown` | Agent-Skill: wann welcher Baustein passt, was die Daten bedeuten, wie man eine Seite pflegt und prüft |
 | `skills/mermaid-theme` | Agent-Skill: Diagramme nutzen nur die Theme-Klassen und definieren keine Farben |
+| `scripts/check.mjs` | Check-Skript mit denselben Parsern wie der Renderer, `npm run check -- datei.md` |
 | `visual-markdown.js` | Kopierknöpfe im Preview, wird von `install.sh` ins MPE-Verzeichnis kopiert |
 | `examples/bausteine.md` | Testseite mit allen Bausteinen, nach Änderungen im MPE-Preview öffnen |
-| `install.sh` | Verlinkt `style.less`, `config.js` und `parser.js` in `~/.local/state/crossnote/` (Backup der alten Dateien als `.bak`), kopiert `visual-markdown.js` und trägt es in `head.html` ein |
+| `install.sh` | Verlinkt `style.less`, `config.js` und `parser.js` in `~/.local/state/crossnote/` (Backup der alten Dateien als `.bak`), kopiert `visual-markdown.js` und trägt es in `head.html` ein, verlinkt die Skills nach `~/.agents/skills/` und `~/.claude/skills/` |
 
 ## Einrichten auf einem neuen Gerät
 
+Voraussetzung ist die VS-Code-Erweiterung Markdown Preview Enhanced. Node braucht nur, wer am Parser arbeitet oder das Check-Skript nutzt.
+
 ```bash
-git clone <repo-url> ~/Projects/mpe-notion-theme
-~/Projects/mpe-notion-theme/install.sh
+git clone <repo-url> ~/Projects/Visual-Markdown
+~/Projects/Visual-Markdown/install.sh
 ```
 
-Danach in VS Code `Cmd+Shift+P` und `Developer: Reload Window`. Auf Windows liegt das Verzeichnis unter `%USERPROFILE%\.local\state\crossnote`, dort die Dateien manuell kopieren oder verlinken.
+Danach in den VS-Code-Einstellungen (`settings.json`) zwei Werte setzen und mit `Cmd+Shift+P` und `Developer: Reload Window` neu laden:
+
+```json
+"markdown-preview-enhanced.enablePreviewScripts": true,
+"markdown-preview-enhanced.previewMode": "Previews Only"
+```
+
+Die erste Einstellung schaltet die Kopierknöpfe ein. Die zweite sorgt dafür, dass ein Link auf eine andere `.md`-Datei wieder die Vorschau öffnet statt den Texteditor. Zum Ausprobieren `examples/bausteine.md` öffnen und die Vorschau starten. Auf Windows liegt das Verzeichnis unter `%USERPROFILE%\.local\state\crossnote`, dort die Dateien manuell kopieren oder verlinken.
 
 Weil `install.sh` Symlinks setzt, landen Änderungen über `Markdown Preview Enhanced: Customize CSS` direkt in diesem Repo. Dann nur noch committen und pushen.
 
@@ -36,9 +47,9 @@ Die Preview überschreibt standardmäßig `margin` mit `0`. Eine gezielte Regel 
 
 ## Bausteine
 
-Das Stand-Band zeigt den Stand, das Erstellungsdatum und den optionalen Status aus `visual:` im Frontmatter, also `as-of`, `created` und `status`. Beide Daten stehen im Format `JJJJ-MM-TT`. Wer das Dokument ändert, setzt `as-of` neu. Ein Stand, der älter als sieben Tage ist, bekommt eine Warnfarbe. Rechts im Band kopiert ein Knopf den Pfad des Dokuments, damit man mit einem Agent über die ganze Datei sprechen kann. Ein `steps`-Block zeigt Fortschritt und eine nummerierte Arbeitsübersicht mit Zuständen und Zuständigen. Fehler im Block erscheinen mit der Zeilennummer. Das Datum steht unter `visual.as-of`. Die ergänzten Texte sind auf Deutsch, mit `visual.lang: en` auf Englisch.
+Das Stand-Band zeigt den Stand, das Erstellungsdatum und den optionalen Status aus `visual:` im Frontmatter, also `as-of`, `created` und `status`. Beide Daten stehen im Format `JJJJ-MM-TT`. Wer das Dokument ändert, setzt `as-of` neu. Ein Stand, der älter als sieben Tage ist, bekommt eine Warnfarbe. Rechts im Band kopiert ein Knopf den Pfad des Dokuments, damit man mit einem Agent über die ganze Datei sprechen kann. Ein `steps`-Block zeigt Fortschritt und eine Arbeitsliste mit Zuständen, Zuständigen und Abhängigkeiten. Fehler im Block erscheinen mit der Zeilennummer. Das Datum steht unter `visual.as-of`. Die ergänzten Texte sind auf Deutsch, mit `visual.lang: en` auf Englisch.
 
-Das Format steht unter [steps](#steps). Die Bausteine haben eigene Flächen und Statusfarben, angelehnt an [LioCare](https://www.figma.com/design/wc58qYYenP6PLzQ7yuARzW/LioCare?node-id=12-2). Sie sind vom Seitenhintergrund abgesetzt. Normale Tabellen erscheinen im selben Kartenstil wie die Schrittliste, mit runden Ecken und nur waagerechten Linien. Links im Text werden zu Badges mit Link-Icon. Chrome erhält ihre Farben auch beim PDF-Export ohne aktivierte Hintergrundgrafiken. Im PDF entfallen Kartenschatten und der zusätzliche Preview-Einzug. Der Seitenrand beträgt 14 mm. Der Zehn-Sekunden-Test und die abschließende Entscheidung zum Prototyp stehen noch aus.
+Das Format steht unter [steps](#steps). Die Bausteine haben eigene Flächen und Statusfarben, angelehnt an [LioCare](https://www.figma.com/design/wc58qYYenP6PLzQ7yuARzW/LioCare?node-id=12-2). Sie sind vom Seitenhintergrund abgesetzt. Normale Tabellen erscheinen im selben Kartenstil wie die Schrittliste, mit runden Ecken und nur waagerechten Linien. Links im Text werden zu Badges mit Link-Icon. Chrome erhält ihre Farben auch beim PDF-Export ohne aktivierte Hintergrundgrafiken. Im PDF entfallen Kartenschatten und der zusätzliche Preview-Einzug. Der Seitenrand beträgt 14 mm.
 
 ```bash
 npm install && npm test
@@ -152,6 +163,15 @@ Im Preview verschwinden die geschweiften Klammern. Unter der Überschrift stehen
 
 Die Kennungen sind die Übersicht für Agents. `grep -n '^## ' datei.md` zeigt pro Abschnitt eine Zeile mit Kennung, Datum und Titel, ohne dass die ganze Datei gelesen werden muss. Bevor ein Agent etwas ergänzt, liest er diese Liste, schreibt in den zuständigen Abschnitt und setzt dessen `updated` auf heute. Einen neuen Abschnitt legt er nur für ein Thema an, das noch keiner abdeckt.
 
+## Prüfen
+
+```bash
+npm run check -- datei.md ordner/
+node scripts/check.mjs --strict datei.md
+```
+
+Das Check-Skript nutzt dieselben Parser wie der Renderer und braucht keine Abhängigkeiten. Fehler sind Blöcke, die im Preview als Fehlerkasten erscheinen würden. Warnungen sind fehlende Daten, offene Schritte ohne Beschreibung, ein Stand älter als sieben Tage, ein `as-of` älter als das neueste `updated`, unbekannte Wörter in Karten und Badges und Dateien unter `Customers/` ohne `share: intern`. Der Exit-Code ist 1 bei Fehlern, mit `--strict` auch bei Warnungen. Agents lassen es nach dem Schreiben laufen, so steht es im Skill `visual-markdown`.
+
 ## Mermaid-Diagramme
 
 Das Theme nutzt Farb-Variablen (`--m-node`, `--m-cluster`, `--m-stroke`, `--m-line`, `--m-text`) für hell und dunkel, sodass sich Farben an einer Stelle ändern lassen.
@@ -169,7 +189,7 @@ flowchart LR
 - `:::ok`, `:::warn`, `:::bad`: grün, gelb, rot für Status
 - `:::code`, `:::llm`, `:::human`, `:::gate`, `:::store`: Knotenarten (Code, Modell, Mensch, Entscheidung, Ablage), jeweils mit hellem und dunklem Farbpaar
 
-Das Theme erzwingt Füllung, Rand und Textfarbe mit `!important`. Ein `classDef`, `style` oder `color:` im Diagramm hilft deshalb nicht. Diagramme weisen nur Klassen zu. Für Agents liegt die Regel im Skill `skills/mermaid-theme`; zum Installieren `ln -s <repo>/skills/mermaid-theme ~/.agents/skills/mermaid-theme`.
+Das Theme erzwingt Füllung, Rand und Textfarbe mit `!important`. Ein `classDef`, `style` oder `color:` im Diagramm hilft deshalb nicht. Diagramme weisen nur Klassen zu. Für Agents liegt die Regel im Skill `skills/mermaid-theme`, `install.sh` verlinkt ihn.
 
 Boxen mit Titel und Beschreibung schreibt man als `["<b>Titel</b><br/>Beschreibung"]`.
 

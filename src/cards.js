@@ -20,6 +20,9 @@ const ICON_SHAPES = {
   note: '<path d="M4 2.25h5.5L12.75 5.5v8.25H4z"/><path d="M6.25 8.5h4M6.25 11h4"/>',
 };
 
+export const CARD_COLORS = Object.keys(COLORS);
+export const CARD_ICONS = Object.keys(ICON_SHAPES);
+
 /** Renders the card that starts at lines[start]; returns the output lines and the last consumed index. */
 export function renderCard(lines, start) {
   const match = CARD_START.exec(lines[start]);

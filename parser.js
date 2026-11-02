@@ -110,6 +110,19 @@ var __visualMarkdown = (() => {
       shareInternal: "Intern",
       watermarkNote: "nicht weitergeben",
       chartBasis: "Grundlage",
+      checkNoVisual: "kein `visual:` im Frontmatter",
+      checkMissing: "`{field}` fehlt unter `visual:`",
+      checkBadDate: "\u201E{value}\u201C ist kein Datum im Format JJJJ-MM-TT",
+      checkStale: "{what} ist \xE4lter als {days} Tage ({date})",
+      checkShare: "Datei liegt unter Customers/, aber `share: intern` fehlt",
+      checkShareValue: "`share: {value}` kennt der Renderer nicht, gemeint ist wohl `intern`",
+      checkSectionDate: "Abschnitt `{id}` hat kein `updated=`",
+      checkSectionDuplicate: "Kennung `{id}` gibt es zweimal",
+      checkStepDate: "Schritt `{id}` hat kein `updated`",
+      checkStepDescription: "Schritt `{id}` hat keine Beschreibung in der Zeile darunter",
+      checkCardWord: "`{word}` ist weder Icon noch Farbe einer Karte",
+      checkBadge: "Badge-Farbe `{color}` gibt es nicht, erlaubt sind {list}",
+      checkAsOfOld: "`as-of` ist \xE4lter als das neueste `updated` ({date})",
       errRequired: "Pflichtfeld \u201E{field}\u201C fehlt",
       errValue: "\u201E{value}\u201C geht nicht f\xFCr {field}, erlaubt sind {list}",
       errNoTable: "keine Tabelle direkt \xFCber dem Block",
@@ -162,6 +175,19 @@ var __visualMarkdown = (() => {
       shareInternal: "Internal",
       watermarkNote: "do not share",
       chartBasis: "Based on",
+      checkNoVisual: "no `visual:` in the front matter",
+      checkMissing: "`{field}` is missing under `visual:`",
+      checkBadDate: '"{value}" is not a date in the form YYYY-MM-DD',
+      checkStale: "{what} is older than {days} days ({date})",
+      checkShare: "file is under Customers/ but `share: intern` is missing",
+      checkShareValue: "the renderer does not know `share: {value}`, use `intern`",
+      checkSectionDate: "section `{id}` has no `updated=`",
+      checkSectionDuplicate: "id `{id}` is used twice",
+      checkStepDate: "step `{id}` has no `updated`",
+      checkStepDescription: "step `{id}` has no description on the line below",
+      checkCardWord: "`{word}` is neither an icon nor a color of a card",
+      checkBadge: "badge color `{color}` does not exist, use {list}",
+      checkAsOfOld: "`as-of` is older than the newest `updated` ({date})",
       errRequired: 'required field "{field}" is missing',
       errValue: '"{value}" is not allowed for {field}, use {list}',
       errNoTable: "no table directly above the block",
@@ -728,6 +754,8 @@ var __visualMarkdown = (() => {
     clock: '<circle cx="8" cy="8" r="6.25"/><path d="M8 5v3.25l2.1 1.3"/>',
     note: '<path d="M4 2.25h5.5L12.75 5.5v8.25H4z"/><path d="M6.25 8.5h4M6.25 11h4"/>'
   };
+  var CARD_COLORS = Object.keys(COLORS);
+  var CARD_ICONS = Object.keys(ICON_SHAPES2);
   function renderCard(lines, start) {
     const match = CARD_START.exec(lines[start]);
     if (!match) return null;

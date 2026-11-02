@@ -6,7 +6,8 @@
     "build": "node scripts/build-parser.mjs",
     "test": "node scripts/build-parser.mjs && node --test test/",
     "tokens": "node scripts/count-tokens.mjs",
-    "preview": "node scripts/preview.mjs"
+    "preview": "node scripts/preview.mjs",
+    "check": "node scripts/check.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

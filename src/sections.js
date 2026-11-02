@@ -4,7 +4,7 @@ import { idBadge, updatedBadge, copyButton } from './meta.js';
 
 // "## Title {#id updated=2026-11-01}" keeps the id and date in the source line,
 // so a grep over the headings gives agents a cheap overview of the document.
-const HEADING = /^(#{2,6})\s+(.*?)\s+\{#([a-z0-9][a-z0-9-]*)((?:\s+[a-z][a-z-]*=[^\s}]+)*)\s*\}\s*$/i;
+export const HEADING = /^(#{2,6})\s+(.*?)\s+\{#([a-z0-9][a-z0-9-]*)((?:\s+[a-z][a-z-]*=[^\s}]+)*)\s*\}\s*$/i;
 
 export function renderSection(line, lang, today) {
   const match = HEADING.exec(line);

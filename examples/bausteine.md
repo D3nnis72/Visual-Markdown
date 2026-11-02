@@ -2,7 +2,7 @@
 visual:
   status: In Arbeit
   created: 2026-10-28
-  as-of: 2026-11-01
+  as-of: 2026-11-02
   lang: de
   share: intern
   badges: { angereichert: ok, offen: warn, fehlt: bad, läuft: info, später: muted }
@@ -19,7 +19,7 @@ Das grüne Band über diesem Abschnitt kommt aus dem Frontmatter. Es zeigt Statu
 visual:
   status: In Arbeit
   created: 2026-10-28
-  as-of: 2026-11-01
+  as-of: 2026-11-02
   lang: de
   share: intern
   badges: { angereichert: ok, offen: warn, fehlt: bad, läuft: info, später: muted }

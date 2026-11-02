@@ -1,3 +1,10 @@
+---
+visual:
+  status: Approved
+  created: 2026-11-01
+  as-of: 2026-11-02
+  lang: de
+---
 # Visual Markdown — Brainstorming Canvas
 
 > **Status:** Approved — basis for specs
@@ -81,7 +88,7 @@ visual:
 
 ## Zuhause, Verteilung, Export
 
-- Zuhause ist dieses Repo. Der lokale Ordner heißt schon `Visual-Markdown`, das GitHub-Repo noch `MPE-Notion-Theme`. Es hat schon Theme, Mermaid-Konfiguration, `install.sh` und den Skill `mermaid-theme`, der nach demselben Prinzip arbeitet.
+- Zuhause ist dieses Repo. Der lokale Ordner und die README heißen schon `Visual-Markdown`, das GitHub-Repo noch `MPE-Notion-Theme`. Es enthält Theme, Mermaid-Konfiguration, `install.sh`, das Check-Skript und die Skills `visual-markdown` und `mermaid-theme`.
 - Neu kommt ein Kern als JavaScript-Modul ohne Abhängigkeiten, mit den Schemas darin. MPE verlangt `parser.js` als eine einzige in sich geschlossene Datei, deshalb wird sie aus dem Kern gebaut. Das Check-Skript nutzt denselben Kern in Node.
 - Kollegen installieren MPE, klonen das Repo und führen `install.sh` aus, das künftig auch `parser.js` verlinkt. Das ist der einzige Weg zum Verteilen.
 - Externes Teilen läuft als statischer PDF-Export. Diagramme werden eingebacken, relative Links auf Repo-Dateien aufgelöst oder entfernt.
@@ -92,10 +99,10 @@ visual:
 Der Prototyp mit Stand-Band, Abschnitten und `steps` ist gebaut und am 1. November an einer echten Statusseite getestet, den Stand besitzt die [README](../../../README.md). Das Token-Ziel misst nur den Formataufwand, neuer Inhalt wie Beschreibungen zählt nicht mit. Badges in Tabellenzellen, generische Karten, das Wasserzeichen und `chart` sind ebenfalls gebaut, damit ist die erste Runde vollständig. MPE zeichnet `vega-lite` schon vor dem Druck zu SVG, und unser Parser läuft auch im HTML- und PDF-Export. Das Wasserzeichen schützt gegen Versehen, nicht gegen Absicht, deshalb meldet das Check-Skript Kundenseiten ohne `share: intern`. Das Format steht jeweils in der [README](../../../README.md#badges). Callouts zeichnet MPE schon selbst, Tabellen und Links haben den Kartenstil.
 
 ```steps
-- [~] skill: Agent-Skill und Check-Skript | owner: Agent | done-when: Agents schreiben neue Seiten im Format, das Check-Skript meldet fehlende Daten und Beschreibungen | updated: 2026-11-02
-  Der Skill bringt Agents das ganze Format bei: Daten pflegen, Beschreibungen ohne interne Kürzel, erst die Abschnittsliste lesen. Das Check-Skript nutzt denselben Kern wie der Renderer.
-- [ ] share: Umbenennen und Kollegentest | owner: Dennis | after: skill | done-when: GitHub-Repo heißt Visual-Markdown, ein Kollege hat es mit `install.sh` eingerichtet | updated: 2026-11-01
-  Erst wenn das Format vollständig ist und Agents es pflegen können, geben wir es weiter.
+- [x] skill: Agent-Skill und Check-Skript | owner: Agent | updated: 2026-11-02
+  Der Skill `visual-markdown` verweist auf die README als Formatquelle und regelt, was er dort nicht findet: welcher Baustein wann passt, dass Daten den letzten inhaltlichen Stand meinen und dass nichts erfunden wird. `install.sh` verlinkt ihn. Das Check-Skript meldet Fehler und fehlende Daten mit denselben Parsern wie der Renderer.
+- [ ] share: Umbenennen und Kollegentest | owner: Dennis | after: skill | next: Namen bestätigen, dann das GitHub-Repo umbenennen | done-when: GitHub-Repo heißt Visual-Markdown, ein Kollege hat es mit `install.sh` eingerichtet | updated: 2026-11-02
+  Format, Skill und Check-Skript sind fertig, die README beschreibt die Einrichtung für Kollegen. Es fehlen nur noch der Name auf GitHub und ein erster Kollege, der es einrichtet.
 ```
 
 ## Offene Fragen
