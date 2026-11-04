@@ -11,10 +11,16 @@ const LOCK_ICON = svg('vm-lock-icon', 12, '<rect x="3.25" y="7" width="9.5" heig
 
 export const shareBadge = lang => `<span class="vm-band-share">${LOCK_ICON}${escapeHtml(t(lang, 'shareInternal'))}</span>`;
 
-/** Hidden on screen; the print styles repeat it on every PDF page. */
+// Text for a CSS string: no quote, backslash, line break or `<` that could end the string or the style tag.
+const cssString = text => `"${String(text).replace(/[\\"<\r\n]/g, char => `\\${char.charCodeAt(0).toString(16)} `)}"`;
+
+/**
+ * A quiet line in the top margin of every PDF page, written as a page margin box so it never covers content.
+ * The screen ignores `@page`, there the band badge is the marker.
+ */
 export function renderWatermark(visual, lang) {
   const asOf = visual?.['as-of'] ?? visual?.stand;
   const date = parseDate(asOf);
-  const note = [t(lang, 'watermarkNote'), asOf ? t(lang, 'stand', { date: date ? formatDate(date, lang) : asOf }) : ''].filter(Boolean).join(' · ');
-  return `<div class="vm-watermark" aria-hidden="true"><div class="vm-watermark-text"><span class="vm-watermark-word">${escapeHtml(t(lang, 'shareInternal'))}</span><span class="vm-watermark-note">${escapeHtml(note)}</span></div></div>`;
+  const line = [t(lang, 'shareInternal').toUpperCase(), t(lang, 'watermarkNote'), asOf ? t(lang, 'stand', { date: date ? formatDate(date, lang) : asOf }) : ''].filter(Boolean).join(' · ');
+  return `<style class="vm-watermark">@page { @top-right { content: ${cssString(line)}; font: 600 7.5pt ui-sans-serif, -apple-system, "Segoe UI", sans-serif; letter-spacing: 0.02em; color: #b3443a; } }</style>`;
 }

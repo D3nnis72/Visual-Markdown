@@ -79,6 +79,8 @@ export function checkMarkdown(markdown, { path = '', today = new Date() } = {}) 
       if (!updated) add('warning', i + 1, 'checkSectionDate', { id });
       else checkDate(updated, i + 1, `\`${id}\``, false);
     }
+    // The band already shows `visual.status`; a „Status:“ line in the text repeats it.
+    if (visual?.status && /^>?\s*\*\*Status:?\*\*/i.test(line)) add('warning', i + 1, 'checkStatusTwice');
     const card = CARD_START.exec(line);
     if (card) {
       uses = true;

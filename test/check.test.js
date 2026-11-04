@@ -46,3 +46,8 @@ test('asks for a source on every chart', () => {
   assert.deepEqual(check(front() + table + chart('')), ['12 warning Diagramm ohne `source`: Wo liegt die Auswertung?']);
   assert.deepEqual(check(front() + table + chart('source: Auswertung\n')), []);
 });
+
+test('flags a status line in the text when the band already shows the status', () => {
+  assert.deepEqual(check(front('  status: Läuft\n') + '\n> **Status:** Läuft noch.\n'), ['9 warning Status steht schon im Band aus `visual.status`, die Zeile im Text doppelt ihn']);
+  assert.deepEqual(check(front() + '\n> **Status:** Läuft noch.\n'), []);
+});

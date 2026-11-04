@@ -49,12 +49,14 @@ Die Preview überschreibt standardmäßig `margin` mit `0`. Eine gezielte Regel 
 
 Das Stand-Band zeigt den Stand, das Erstellungsdatum und den optionalen Status aus `visual:` im Frontmatter, also `as-of`, `created` und `status`. Beide Daten stehen im Format `JJJJ-MM-TT`. Wer das Dokument ändert, setzt `as-of` neu. Ein Stand, der älter als sieben Tage ist, bekommt eine Warnfarbe. Rechts im Band kopiert ein Knopf den Pfad des Dokuments, damit man mit einem Agent über die ganze Datei sprechen kann. Ein `steps`-Block zeigt Fortschritt und eine Arbeitsliste mit Zuständen, Zuständigen und Abhängigkeiten. Fehler im Block erscheinen mit der Zeilennummer. Das Datum steht unter `visual.as-of`. Die ergänzten Texte sind auf Deutsch, mit `visual.lang: en` auf Englisch.
 
-Das Format steht unter [steps](#steps). Die Bausteine haben eigene Flächen und Statusfarben, angelehnt an [LioCare](https://www.figma.com/design/wc58qYYenP6PLzQ7yuARzW/LioCare?node-id=12-2). Sie sind vom Seitenhintergrund abgesetzt. Normale Tabellen erscheinen im selben Kartenstil wie die Schrittliste, mit runden Ecken und nur waagerechten Linien. Links im Text werden zu Badges mit Link-Icon. Chrome erhält ihre Farben auch beim PDF-Export ohne aktivierte Hintergrundgrafiken. Im PDF entfallen Kartenschatten und der zusätzliche Preview-Einzug. Der Seitenrand beträgt 14 mm.
+Das Format steht unter [steps](#steps). Die Bausteine haben eigene Flächen und Statusfarben, angelehnt an [LioCare](https://www.figma.com/design/wc58qYYenP6PLzQ7yuARzW/LioCare?node-id=12-2). Sie sind vom Seitenhintergrund abgesetzt. Normale Tabellen erscheinen im selben Kartenstil wie die Schrittliste, mit runden Ecken und nur waagerechten Linien. Zellen sind oben ausgerichtet, und Link-Badges brechen in Zellen um, damit ein langer Link nicht die Spaltenbreite bestimmt. Links im Text werden zu Badges mit Link-Icon. Chrome erhält ihre Farben auch beim PDF-Export ohne aktivierte Hintergrundgrafiken. Im PDF entfallen Kartenschatten und der zusätzliche Preview-Einzug, Tabellenzeilen werden nicht über zwei Seiten geteilt, und Überschriften bleiben bei ihrem Inhalt. Der Seitenrand beträgt 14 mm.
 
 ```bash
 npm install && npm test
 ./install.sh
 ```
+
+Jede Überschrift mit `{#id}` bekommt einen Anker mit genau dieser Kennung. `[Text](#anfragepakete)` springt innerhalb der Datei dorthin, `[Text](01_buendel.md#anfragepakete)` in die andere Datei. Für den Sprung zwischen Dateien patcht `install.sh` die installierte MPE-Extension mit `scripts/patch-mpe.mjs`. Im Modus „Previews Only“ öffnet MPE einen Link sonst als separates Vorschaufenster und verwirft den Anker. Mit dem Patch öffnet sich die Datei wie aus dem Explorer, und `visual-markdown.js` scrollt zum Anker. Ein MPE-Update überschreibt den Patch, danach `./install.sh` oder `npm run patch-mpe` erneut ausführen und das Fenster neu laden.
 
 Für den Kopierknopf braucht MPE in den VS-Code-Einstellungen `"markdown-preview-enhanced.enablePreviewScripts": true` und einen vertrauenswürdigen Workspace. `install.sh` kopiert dafür `visual-markdown.js` ins MPE-Verzeichnis und trägt es in `head.html` ein. Kopiert statt verlinkt, weil MPE Links auflöst und Skripte nur aus seinem eigenen Verzeichnis lädt. Nach Änderungen an `visual-markdown.js` deshalb `./install.sh` erneut ausführen. Ohne die Einstellung bleibt der Knopf verborgen, alles andere funktioniert gleich.
 
@@ -73,6 +75,8 @@ Die Feldnamen sind Englisch. Ältere deutsche Feldnamen und `visual.stand` bleib
 | `since` | Zeitpunkt, seit dem der Zustand gilt, bei wartenden Schritten hinter dem Wartegrund |
 | `next` | Konkrete nächste Handlung bei laufender oder startbereiter Arbeit |
 | `updated` | Pflichtfeld: Datum der letzten Änderung am Schritt, Format `JJJJ-MM-TT` |
+| `priority` | `P1`, `P2` oder `P3`. Sobald ein Schritt im Block eine Priorität hat, wird der Block nach Priorität gruppiert, siehe unten |
+| `see` | Ein oder mehrere Markdown-Links zu ausführlicheren Stellen, aufgeklappt unter „Mehr dazu“ |
 | `thread` | T3-Code-Thread, in dem ein Agent an dem Schritt arbeitet, als Erwähnung im Format `[Thread: Titel; ref=…]` |
 
 ```steps
@@ -87,7 +91,14 @@ Die Feldnamen sind Englisch. Ältere deutsche Feldnamen und `visual.stand` bleib
 
 Der Titel sagt das Ergebnis des Schritts. Die Beschreibung sagt in ein bis drei Sätzen, was passiert und warum es wichtig ist, und der erste Satz muss allein verständlich sein, weil er in der Übersicht als Zeile steht. Interne Kürzel brauchen eine Erklärung. Mehrere eingerückte Zeilen werden zu einem Absatz zusammengefasst. Ausführliches gehört in einen Abschnitt mit derselben Kennung wie der Schritt, also `## Badges {#badges updated=…}` zum Schritt `badges`. Der Schritt verlinkt dann von selbst darauf.
 
-Die Liste sieht aus wie eine Aufgabenliste in Linear. Sie ist nach Zustand gruppiert, in „Kann starten“, „Läuft“, „Geplant“, „Wartet“ und „Fertig“, jede Gruppe mit Icon und Anzahl. Leere Gruppen entfallen, innerhalb einer Gruppe bleibt die Dateireihenfolge. Jeder Schritt ist eine Zeile: Status-Icon, die feste Kennung klein über dem Titel, darunter die Beschreibung gekürzt auf eine Zeile. Bei wartenden Schritten steht dort zusätzlich der Wartegrund mit „seit“. Rechts stehen die offenen Dependencies mit ihrer Kennung, Zuständige als Person oder Agent, Thread, gegebenenfalls „seit“, das Datum der letzten Änderung, der Kopierknopf und ein Pfeil. Ein Klick auf die Zeile klappt die volle Beschreibung, „Als Nächstes“, „Ziel“ aus `done-when` und den Link zum Abschnitt auf. Im PDF ist alles aufgeklappt. Ein Klick auf den Kopierknopf kopiert nur und klappt nichts auf. „Kann starten“ enthält offene Schritte ohne ausstehende Vorgänger und ohne Wartegrund, „Geplant“ die Schritte, deren Vorgänger noch nicht fertig sind, „Wartet“ Schritte mit Wartegrund oder `[!]`. Die feste Kennung lässt sich zum Kopieren als Ganzes markieren.
+Die Liste sieht aus wie eine Aufgabenliste in Linear. Sie ist nach Zustand gruppiert, in „Kann starten“, „Läuft“, „Geplant“, „Wartet“ und „Fertig“, jede Gruppe mit Icon und Anzahl. Leere Gruppen entfallen, innerhalb einer Gruppe bleibt die Dateireihenfolge. Jeder Schritt ist eine Zeile: Status-Icon, Titel und darunter die Beschreibung gekürzt auf eine Zeile. Die feste Kennung steht nur in der Datei und im Verweis des Kopierknopfs. Bei wartenden Schritten steht dort zusätzlich der Wartegrund mit „seit“. Rechts stehen die offenen Dependencies mit ihrer Kennung, Zuständige als Person oder Agent, Thread, gegebenenfalls „seit“, das Datum der letzten Änderung, der Kopierknopf und ein Pfeil. Ein Klick auf die Zeile klappt die volle Beschreibung, „Als Nächstes“, „Ziel“ aus `done-when` und den Link zum Abschnitt auf. Im PDF ist alles aufgeklappt. Ein Klick auf den Kopierknopf kopiert nur und klappt nichts auf. „Kann starten“ enthält offene Schritte ohne ausstehende Vorgänger und ohne Wartegrund, „Geplant“ die Schritte, deren Vorgänger noch nicht fertig sind, „Wartet“ Schritte mit Wartegrund oder `[!]`.
+
+Mit `priority` wird aus der Arbeitsliste eine Liste nach Dringlichkeit. Die Gruppen heißen dann „P1 · Dringend“, „P2 · Wichtig“ und „P3 · Später“, jede mit einem Signal-Icon wie in Linear, P1 in warmem Orange und P2 in Blau. Schritte ohne Priorität stehen unter „Noch nicht eingestuft“, fertige wie gewohnt am Ende. Das Status-Icon jeder Zeile bleibt, man sieht also weiter, welcher P1-Punkt schon läuft oder wartet. Die Beschreibung heißt aufgeklappt „Warum“, „Als Nächstes“ erscheint bei jedem offenen Schritt, und P1-Zeilen sind schon aufgeklappt. Aufgeklappt verschwindet in jeder Liste die gekürzte Vorschau unter dem Titel, weil die volle Beschreibung darunter steht.
+
+```steps
+- [ ] vorgaben: Zeitraum und Währung abgleichen | priority: P1 | next: Angaben von der Quelle bis zum Formular vergleichen | see: [Zeitraum](03_einladung.md#zeitraum), [Währung](04_rfq.md#waehrung) | updated: 2026-11-04
+  Falsche Vorgaben erzeugen Angebote auf unterschiedlichen Grundlagen.
+```
 
 Positionsnummern gibt es nicht, weil sie sich bei jedem Zustandswechsel verschieben würden. Wie in Linear ist die feste Kennung der Name eines Schritts. Dependencies zeigen deshalb die Kennung, verlinken auf den Schritt und haben seine Farbe, also gelb, wenn er wartet. Erfüllte Voraussetzungen verschwinden. Der Thread erscheint als Badge mit seinem Titel. Der Kopierknopf kopiert einen Verweis wie `/pfad/zur/datei.md#enrich` und hängt den Thread an, falls `thread` gesetzt ist. Den Verweis fügt man in den Chat mit einem Agent ein, damit klar ist, über welchen Schritt man spricht.
 
@@ -245,7 +256,7 @@ Definitionen gelten nur in ihrer eigenen Datei, weil der Parser keine anderen Da
 
 ## Wasserzeichen
 
-Seiten mit Kundendaten tragen `share: intern` unter `visual:` im Frontmatter, auf Englisch geht auch `internal`. Im Preview zeigt das Stand-Band dann ein rotes Badge „Intern“ mit Schloss, damit man es vor dem Export sieht. Im PDF steht auf jeder Seite schräg und blass „Intern“, darunter „nicht weitergeben“ und der Stand aus `as-of`. Mit `lang: en` heißt es „Internal“ und „do not share“. Andere Werte von `share` ändern nichts. Das Wasserzeichen schützt nicht gegen Absicht, sondern gegen Versehen. Dass das Feld auf Kundenseiten nicht fehlt, prüft das Check-Skript.
+Seiten mit Kundendaten tragen `share: intern` unter `visual:` im Frontmatter, auf Englisch geht auch `internal`. Im Preview zeigt das Stand-Band dann ein rotes Badge „Intern“ mit Schloss, damit man es vor dem Export sieht. Im PDF steht oben rechts auf jeder Seite eine kleine rote Zeile „INTERN · nicht weitergeben · Stand …“ mit dem Datum aus `as-of`. Sie sitzt im Seitenrand und überdeckt deshalb keinen Inhalt. Mit `lang: en` heißt es „INTERNAL · do not share“. Andere Werte von `share` ändern nichts. Das Wasserzeichen schützt nicht gegen Absicht, sondern gegen Versehen. Dass das Feld auf Kundenseiten nicht fehlt, prüft das Check-Skript.
 
 ## Abschnitte
 
@@ -255,7 +266,7 @@ Ein Abschnitt bekommt eine feste Kennung und das Datum seiner letzten Änderung 
 ## Regeln für das Format {#format updated=2026-11-01}
 ```
 
-Im Preview verschwinden die geschweiften Klammern. Unter der Überschrift stehen dann Badges für Kennung und Datum und ein Kopierknopf für `pfad.md#format`. Ein altes oder fehlendes Datum erscheint wie bei Schritten in Warnfarbe. Überschriften ohne Klammern bleiben unverändert. Auf GitHub sind die Klammern als Text sichtbar.
+Im Preview verschwinden die geschweiften Klammern. Unter der Überschrift stehen dann das Datum als Badge und ein Kopierknopf für `pfad.md#format`. Die Kennung selbst erscheint nicht, sie steckt im kopierten Verweis. Ein altes oder fehlendes Datum erscheint wie bei Schritten in Warnfarbe. Überschriften ohne Klammern bleiben unverändert. Auf GitHub sind die Klammern als Text sichtbar.
 
 Die Kennungen sind die Übersicht für Agents. `grep -n '^## ' datei.md` zeigt pro Abschnitt eine Zeile mit Kennung, Datum und Titel, ohne dass die ganze Datei gelesen werden muss. Bevor ein Agent etwas ergänzt, liest er diese Liste, schreibt in den zuständigen Abschnitt und setzt dessen `updated` auf heute. Einen neuen Abschnitt legt er nur für ein Thema an, das noch keiner abdeckt.
 

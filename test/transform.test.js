@@ -54,13 +54,15 @@ test('shows the created date next to the stand and a document copy button', () =
 });
 test('turns a section heading with an id into a clean heading with badges and a copy button', () => {
   const lines = run('## Regeln für das Format {#format updated=2026-11-01}\nText darunter').split('\n');
-  assert.equal(lines[0], '## Regeln für das Format');
-  assert.match(lines[1], /^<div class="vm-section-meta" id="vm-section-format">/);
-  assert.match(lines[1], /<code class="vm-id"[^>]*>format<\/code>/);
-  assert.match(lines[1], /class="vm-badge vm-updated" title="aktualisiert 1. Nov."/);
-  assert.match(lines[1], /<button type="button" class="vm-copy vm-copy-section" data-copy-id="format"/);
-  assert.equal(lines[2], '');
-  assert.equal(lines[3], 'Text darunter');
+  assert.equal(lines[0], '<div id="format" class="vm-anchor"></div>');
+  assert.equal(lines[1], '');
+  assert.equal(lines[2], '## Regeln für das Format');
+  assert.match(lines[3], /^<div class="vm-section-meta" id="vm-section-format">/);
+  assert.doesNotMatch(lines[3], /vm-id/);
+  assert.match(lines[3], /class="vm-badge vm-updated" title="aktualisiert 1. Nov."/);
+  assert.match(lines[3], /<button type="button" class="vm-copy vm-copy-section" data-copy-id="format"/);
+  assert.equal(lines[4], '');
+  assert.equal(lines[5], 'Text darunter');
 });
 test('flags a section id without date and leaves other headings alone', () => {
   assert.match(run('### Offen {#offen}'), /vm-date-missing/);
@@ -105,10 +107,11 @@ test('accepts icon and color in any order, aliases and no body', () => {
 test('leaves normal quotes, GitHub callouts and fenced cards alone', () => {
   for (const text of ['> Ein Zitat', '> [!NOTE]\n> Hinweis', '```\n> [!card flag green] Code\n```']) assert.equal(run(text), text);
 });
-test('marks internal pages in the band and adds a print watermark', () => {
+test('marks internal pages in the band and in the top margin of every PDF page', () => {
   const result = run('---\nvisual:\n  as-of: 2026-11-01\n  share: intern\n---\n# T\n');
   assert.match(result, /<span class="vm-band-share"><svg class="vm-lock-icon"[\s\S]*?<\/svg>Intern<\/span>/);
-  assert.match(result, /<\/div><div class="vm-watermark" aria-hidden="true"><div class="vm-watermark-text"><span class="vm-watermark-word">Intern<\/span><span class="vm-watermark-note">nicht weitergeben · Stand 1. November 2026<\/span>/);
-  assert.match(run('---\nvisual:\n  share: internal\n  lang: en\n---\n# T\n'), /vm-watermark-word">Internal<\/span><span class="vm-watermark-note">do not share</);
+  assert.match(result, /<\/div><style class="vm-watermark">@page \{ @top-right \{ content: "INTERN · nicht weitergeben · Stand 1\. November 2026";/);
+  assert.match(run('---\nvisual:\n  share: internal\n  lang: en\n---\n# T\n'), /content: "INTERNAL · do not share";/);
+  assert.match(run('---\nvisual:\n  as-of: "1.11. </style>"\n  share: intern\n---\n# T\n'), /Stand 1\.11\. \\3c \/style>"/);
   assert.doesNotMatch(run('---\nvisual:\n  as-of: 2026-11-01\n  share: public\n---\n# T\n'), /vm-watermark|vm-band-share/);
 });

@@ -15,8 +15,9 @@ Not for knowledge docs that mainly agents read: those stay plain Markdown.
 
 | Content | Block |
 | --- | --- |
-| Status, as-of date, creation date | `visual:` front matter, shown as the band |
+| Status, as-of date, creation date | `visual:` front matter, shown as the band. The status stands only there: no `**Status:**` line in the text, also not from a `brainstorming` canvas header |
 | Work with owners, states and dependencies | `steps` |
+| A list by urgency, such as problems ranked P1 to P3 | `steps` with `priority:` on each item, the reason as description, `next:` and links to the details in `see:`. Not a table with several prose columns, which squeezes into tall narrow cells |
 | Decision, question, risk, idea | `> [!card icon color] Title`, with the ID first when it has one (`E51: …`, `Frage 6: …`), so the ID links to the card everywhere else in the file. Only the file that owns the ID makes the card, other files link to it |
 | Abbreviations and domain terms a reader may not know | `glossary` block, one `Term: explanation` per line |
 | Numbers worth seeing | Table, then `chart` directly below it. Pick the `type` by what the reader must do with the numbers (README, Diagramme) and put the link to the analysis in `source` |
@@ -44,8 +45,9 @@ Everything else stays normal Markdown, flows stay Mermaid (skill `mermaid-theme`
 ## Editing an existing page
 
 1. `grep -n '^##' file.md` lists every section with id and date. Write into the section that owns the topic. A new section only for a topic none covers.
-2. Move steps through their states instead of rewriting them: `[ ]` → `[~]` → `[x]`, `[!]` with `waiting-for` and `since` while blocked, removed again when unblocked.
-3. Mark a step done only when its `done-when` is reported as met. If the news is vaguer, keep it running and write what was reported into the description.
+2. The page's main question or goal stays at the top, in the title, the status band and the first section. A sub-question the user raises, even one they stress ("check first whether X is good enough"), gets its own section or card under it and does not take over the lead. Only the user changes the main question; when their message sounds like they did, ask in one line. A canvas from `brainstorming` names it in its `Main question` line.
+3. Move steps through their states instead of rewriting them: `[ ]` → `[~]` → `[x]`, `[!]` with `waiting-for` and `since` while blocked, removed again when unblocked.
+4. Mark a step done only when its `done-when` is reported as met. If the news is vaguer, keep it running and write what was reported into the description.
 
 ## Do not invent
 
@@ -57,4 +59,4 @@ Everything else stays normal Markdown, flows stay Mermaid (skill `mermaid-theme`
 node "$(git -C <this skill's directory> rev-parse --show-toplevel)/scripts/check.mjs" --strict path/to/file.md
 ```
 
-Errors are blocks that render as an error box. Warnings are missing dates, missing descriptions on open steps, a chart without `source`, an `as-of` older than the newest `updated`, or a customer page without `share: intern`. Fix all of them, or say in your reply why one stays.
+Errors are blocks that render as an error box. Warnings are a `**Status:**` line that repeats the band, missing dates, missing descriptions on open steps, a chart without `source`, an `as-of` older than the newest `updated`, or a customer page without `share: intern`. Fix all of them, or say in your reply why one stays.

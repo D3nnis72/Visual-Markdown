@@ -1,6 +1,6 @@
 import { t } from './labels.js';
 import { escapeHtml } from './html.js';
-import { idBadge, updatedBadge, copyButton } from './meta.js';
+import { updatedBadge, copyButton } from './meta.js';
 
 // "## Title {#id updated=2026-11-01}" keeps the id and date in the source line,
 // so a grep over the headings gives agents a cheap overview of the document.
@@ -11,8 +11,9 @@ export function renderSection(line, lang, today) {
   if (!match) return null;
   const [, hashes, title, id, rest] = match;
   const attributes = Object.fromEntries([...rest.matchAll(/([a-z][a-z-]*)=([^\s}]+)/gi)].map(([, key, value]) => [key, value]));
-  const meta = `<div class="vm-section-meta" id="vm-section-${escapeHtml(id)}">${idBadge(id, lang)}${updatedBadge(attributes.updated, lang, today)}${copyButton({ id, lang, className: 'vm-copy-section', label: t(lang, 'copyStep', { id }) })}</div>`;
-  return [`${hashes} ${title}`, meta, ''];
+  const meta = `<div class="vm-section-meta" id="vm-section-${escapeHtml(id)}">${updatedBadge(attributes.updated, lang, today)}${copyButton({ id, lang, className: 'vm-copy-section', label: t(lang, 'copyStep', { id }) })}</div>`;
+  // An empty anchor with the bare id right above the heading, so `#id` and `datei.md#id` land on the heading itself.
+  return [`<div id="${escapeHtml(id)}" class="vm-anchor"></div>`, '', `${hashes} ${title}`, meta, ''];
 }
 
 /** Ids of all section headings outside code fences, so steps can link to the section with their id. */

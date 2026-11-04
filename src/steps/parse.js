@@ -1,4 +1,4 @@
-import { STATES, FIELDS, LEGACY_FIELDS } from './schema.js';
+import { STATES, FIELDS, LEGACY_FIELDS, PRIORITIES } from './schema.js';
 import { t } from '../labels.js';
 
 export function parseSteps(body, firstLine, lang) {
@@ -19,7 +19,7 @@ export function parseSteps(body, firstLine, lang) {
     if (!match || !Object.hasOwn(STATES, match[1])) { error('errMalformed'); return; }
     const step = {
       id: match[2], state: STATES[match[1]], label: match[3].trim(), after: [],
-      waitingFor: null, who: null, doneWhen: null, since: null, next: null, description: null, thread: null, updated: null, line,
+      waitingFor: null, who: null, doneWhen: null, since: null, next: null, description: null, thread: null, updated: null, priority: null, see: null, line,
     };
     for (const field of fields) {
       const colon = field.indexOf(':');
@@ -28,6 +28,11 @@ export function parseSteps(body, firstLine, lang) {
         : Object.hasOwn(LEGACY_FIELDS, name) ? LEGACY_FIELDS[name] : null;
       if (colon < 0 || !property) { error('errField', { field: name }); continue; }
       const value = field.slice(colon + 1).trim();
+      if (property === 'priority') {
+        if (!PRIORITIES.includes(value.toUpperCase())) error('errPriority', { value, list: PRIORITIES.join(', ') });
+        else step.priority = value.toUpperCase();
+        continue;
+      }
       step[property] = property === 'after' ? value.split(',').map(id => id.trim()).filter(Boolean) : value;
     }
     steps.push(step);

@@ -7,10 +7,28 @@
     var meta = document.getElementById('crossnote-data');
     if (meta) sourceUri = JSON.parse(meta.getAttribute('data-config')).sourceUri || null;
   } catch (error) { /* Ohne Konfiguration bleibt nur die Kennung. */ }
+  // Sprung zu einem Anker, wenn ein Link aus einer anderen Datei auf `datei.md#id` zeigt. Die Nachricht kommt von der
+  // gepatchten MPE-Extension (scripts/patch-mpe.mjs), mehrfach, weil das Preview erst laden und rendern muss.
+  // Sobald der Leser selbst scrollt, zählen weitere Wiederholungen nicht mehr.
+  var anchor = { id: null, readerMoved: false };
+  function scrollToAnchor() {
+    if (!anchor.id || anchor.readerMoved) return;
+    var target = document.getElementById(anchor.id);
+    if (target) target.scrollIntoView({ block: 'start' });
+  }
+  ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (type) {
+    window.addEventListener(type, function () { if (anchor.id) anchor.readerMoved = true; }, { passive: true, capture: true });
+  });
+  new MutationObserver(scrollToAnchor).observe(document.documentElement, { childList: true, subtree: true });
+
   // MPE schickt beim Wechsel der Datei im selben Preview eine neue sourceUri.
   window.addEventListener('message', function (event) {
     var data = event.data;
     if (data && data.command === 'updateHtml' && data.sourceUri) sourceUri = data.sourceUri;
+    if (data && data.command === 'vmScrollToAnchor' && data.id) {
+      if (anchor.id !== data.id) anchor = { id: String(data.id), readerMoved: false };
+      scrollToAnchor();
+    }
   });
 
   function filePath() {

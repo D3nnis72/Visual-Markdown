@@ -1,13 +1,10 @@
 import { escapeHtml, inline } from './html.js';
 import { t } from './labels.js';
-import { COPY_ICON, TAG_ICON, UPDATED_ICON } from './icons.js';
+import { COPY_ICON, UPDATED_ICON } from './icons.js';
 import { STALE_DAYS, parseDate, formatDate, isStale } from './dates.js';
 
 export const badge = (className, icon, content, title) =>
   `<span class="vm-badge ${className}"${title ? ` title="${escapeHtml(title)}"` : ''}>${icon}${content}</span>`;
-
-export const idBadge = (id, lang) =>
-  badge('vm-id-badge', TAG_ICON, `<code class="vm-id" title="${escapeHtml(t(lang, 'identifier'))}">${escapeHtml(id)}</code>`);
 
 /** Last change as a short date; old or missing dates use the warning color. */
 export function updatedBadge(value, lang, today) {

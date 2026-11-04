@@ -152,10 +152,16 @@
     border-top: 1px solid var(--vm-border);
     padding: 14px 16px;
     text-align: left;
-    vertical-align: middle;
+    vertical-align: top;
     line-height: 1.45;
   }
   td { background: var(--vm-table-body); }
+  /* Link-Badges umbrechen in Zellen, sonst bestimmt der längste Link die Spaltenbreite und drückt den Text daneben zusammen. */
+  td a:not(.vm-dep):not(.vm-section-link):not(.vm-xref):not(.vm-term):not(:has(img)) {
+    white-space: normal;
+    /* Icon als Inline-Fläche mit Wortverbinder, damit es nicht allein am Zeilenende stehen bleibt. */
+    &::before { display: inline; content: "\2060"; padding-left: 12px; }
+  }
   th {
     border-top: 0;
     padding-top: 12px;
@@ -164,6 +170,7 @@
     font-size: 12px;
     font-weight: 500;
     color: var(--vm-muted);
+    vertical-align: bottom;
   }
   td:first-child { font-weight: 500; }
   tr:nth-child(even) { background: transparent; }
@@ -404,6 +411,11 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
   --vm-table-body: #ffffff;
   --vm-bad-text: #b3443a;
   --vm-info-fill: #eceefe;
+  /* Prioritäten in Notion-Tönen: warmes Orange statt Alarmrot, ruhiges Blau, Grau. */
+  --vm-p1: #c4620f;
+  --vm-p1-fill: #fbecdd;
+  --vm-p2: #2f73a8;
+  --vm-p2-fill: #e5f0f7;
 
   .vm-band, .vm-error {
     display: flex;
@@ -428,7 +440,6 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
     font-size: 12px; font-weight: 600;
     background: var(--vm-error-fill); color: var(--vm-bad-text);
   }
-  .vm-watermark { display: none; }
 
   .vm-chart, .vm-scale {
     margin: 24px 0;
@@ -583,6 +594,10 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
   .vm-group-ready .vm-group-title { color: var(--vm-success); }
   .vm-group-running .vm-group-title { color: var(--vm-running); }
   .vm-group-waiting .vm-group-title { color: var(--vm-warning); }
+  .vm-group-p1 .vm-group-title { background: var(--vm-p1-fill); color: var(--vm-p1); }
+  .vm-group-p2 .vm-group-title { background: var(--vm-p2-fill); color: var(--vm-p2); }
+  .vm-priority-mark { stroke: var(--vm-table-body); }
+  .vm-priority-dot { fill: var(--vm-table-body); }
   .vm-steps-list { list-style: none; padding: 0; margin: 0; }
   .vm-step {
     position: relative;
@@ -604,17 +619,18 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
   }
   summary.vm-row { cursor: pointer; &:hover { background: var(--vm-surface); } }
   summary.vm-row:focus-visible { outline: 2px solid var(--vm-running); outline-offset: -2px; }
-  .vm-status-icon { flex: none; align-self: flex-start; margin-top: 26px; color: var(--vm-muted); }
+  .vm-status-icon { flex: none; align-self: flex-start; margin-top: 3px; color: var(--vm-muted); }
   .vm-can-start .vm-status-icon, .vm-done .vm-status-icon { color: var(--vm-success); }
   .vm-running .vm-status-icon { color: var(--vm-running); }
   .vm-waiting .vm-status-icon { color: var(--vm-warning); }
   .vm-row-main { flex: 1 1 260px; min-width: 0; }
-  .vm-row-main .vm-id-badge { margin-bottom: 4px; }
   .vm-label { font-weight: 500; overflow-wrap: anywhere; }
   .vm-summary { overflow: hidden; margin-top: 1px; font-size: 13px; color: var(--vm-muted); white-space: nowrap; text-overflow: ellipsis; }
   .vm-need { display: flex; align-items: center; gap: 5px; margin-top: 3px; font-size: 13px; color: var(--vm-warning); svg { flex: none; } }
   .vm-chevron { flex: none; width: 14px; color: var(--vm-muted); transition: transform 0.15s; }
   details[open] > summary .vm-chevron { transform: rotate(90deg); }
+  /* Aufgeklappt steht die volle Beschreibung darunter, die gekürzte Zeile wäre doppelt. */
+  details[open] > summary .vm-summary { display: none; }
   .vm-row-body { padding: 0 52px 14px 44px; }
   .vm-row-body .vm-field:first-child { margin-top: 0; }
   a.vm-section-link {
@@ -709,7 +725,6 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
   .vm-card-indigo .vm-card-icon { background: var(--vm-info-fill); color: var(--vm-running); }
   .vm-card-grey .vm-card-icon { background: var(--vm-subtle); color: var(--vm-muted); }
   .vm-badge.vm-date-stale, .vm-badge.vm-date-missing { background: var(--vm-warn-fill); color: var(--vm-warning); }
-  code.vm-id { padding: 0; background: none; color: inherit; font-size: 11px; cursor: text; user-select: all; -webkit-user-select: all; }
   /* Beschreibung, Braucht, Als Nächstes, Dependencies und Ziel: kleine gedämpfte
      Überschrift mit Icon, darunter der Text. */
   .vm-field { margin-top: 8px; max-width: 68ch; }
@@ -763,6 +778,10 @@ body.vscode-dark .markdown-preview.markdown-preview {
   --vm-table-body: #1e1e1e;
   --vm-bad-text: #ff8c8c;
   --vm-info-fill: #1f2759;
+  --vm-p1: #f0a35e;
+  --vm-p1-fill: #3a2a1a;
+  --vm-p2: #7fb6e6;
+  --vm-p2-fill: #1b2d3d;
 }
 
 /* Vega zeichnet feste Farben ins SVG. Im Dunklen tauscht CSS jede helle Stufe gegen ihre dunkle. */
@@ -791,7 +810,7 @@ body.vscode-dark .markdown-preview.markdown-preview .vm-chart {
 
 /* Chrome soll die Komponentenfarben auch ohne Hintergrundgrafiken drucken. */
 .markdown-preview.markdown-preview {
-  .vm-band, .vm-band *, .vm-chart, .vm-chart *, .vm-scale, .vm-scale *, .vm-gallery, .vm-gallery *, .vm-compare, .vm-compare *, .vm-watermark, .vm-watermark *, .vm-steps, .vm-steps *, .vm-section-meta, .vm-section-meta *, .vm-error, .vm-error * {
+  .vm-band, .vm-band *, .vm-chart, .vm-chart *, .vm-scale, .vm-scale *, .vm-gallery, .vm-gallery *, .vm-compare, .vm-compare *, .vm-steps, .vm-steps *, .vm-section-meta, .vm-section-meta *, .vm-error, .vm-error * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -812,25 +831,16 @@ body.vscode-dark .markdown-preview.markdown-preview .vm-chart {
     h2 { margin-top: 1em; }
     /* Druckrenderer stellen weiche Schatten teils als graue Rechtecke dar. */
     .vm-steps, table { box-shadow: none; }
-    .vm-step { break-inside: avoid; }
+    .vm-step, tr { break-inside: avoid; }
+    /* Überschrift und Tag-Zeile bleiben beim Seitenumbruch bei ihrem Inhalt. */
+    h1, h2, h3, h4, .vm-section-meta { break-after: avoid; }
+    /* Wo Chrome eine Tabelle zwischen zwei Zeilen teilt, bleibt sonst ein grauer Streifen stehen. */
+    table, .vm-steps { background: var(--vm-table-body); }
     .vm-row-details::details-content { content-visibility: visible; }
     .vm-row-details:not([open]) .vm-row-body { display: block; }
     .vm-chevron { display: none; }
+    .vm-row-details .vm-summary { display: none; }
     .vm-group-title { break-after: avoid; }
     .vm-copy { display: none !important; }
-    /* Fest positionierte Elemente wiederholt Chrome auf jeder PDF-Seite. */
-    .vm-watermark {
-      display: flex; position: fixed; inset: 0; z-index: 1000;
-      align-items: center; justify-content: center;
-      pointer-events: none;
-    }
-    .vm-watermark-text {
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      transform: rotate(-35deg);
-      color: rgba(120, 120, 130, 0.12);
-      font-weight: 700; line-height: 1; white-space: nowrap;
-    }
-    .vm-watermark-word { font-size: 140px; letter-spacing: 0.04em; text-transform: uppercase; }
-    .vm-watermark-note { font-size: 26px; color: rgba(120, 120, 130, 0.24); }
   }
 }

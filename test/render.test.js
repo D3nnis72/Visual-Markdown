@@ -19,7 +19,7 @@ test('groups rows once in ready, running, planned, waiting, done order with coun
 test('shows status icon, id tag above the title and a one-line description', () => {
   const item = row(run('- [~] run: Ausführen | owner: Team\n  Wir ergänzen <fehlende> Angaben, damit `Preise` vergleichbar sind.'), 'run');
   assert.match(item, /<svg class="vm-status-icon vm-icon-running"/);
-  assert.match(item, /<div class="vm-row-main"><span class="vm-badge vm-id-badge"><svg class="vm-tag-icon"[\s\S]*?<\/svg><code class="vm-id"[^>]*>run<\/code><\/span><div class="vm-label">Ausführen<\/div><div class="vm-summary">Wir ergänzen &lt;fehlende&gt; Angaben, damit <code>Preise<\/code> vergleichbar sind.<\/div>/);
+  assert.match(item, /<div class="vm-row-main"><div class="vm-label">Ausführen<\/div><div class="vm-summary">Wir ergänzen &lt;fehlende&gt; Angaben, damit <code>Preise<\/code> vergleichbar sind.<\/div>/);
 });
 test('opens description, next action and goal in native details', () => {
   const item = row(run('- [~] run: A | next: Stichprobe ziehen | done-when: Stichprobe geprüft\n  Volle Beschreibung'), 'run');
@@ -88,4 +88,21 @@ test('shows when a step was last updated and flags old or missing dates', () => 
 test('reports progress and keeps an empty list readable', () => {
   assert.match(run(example), /1 von 6 fertig/);
   assert.match(run(''), /0 von 0 fertig/);
+});
+
+test('groups by priority when a block uses it, keeps the status icon and opens P1', () => {
+  const html = run('- [ ] later: L | priority: P3\n  W\n- [x] old: O | priority: P1\n- [~] urgent: U | priority: P1 | next: Prüfen | see: [Thema](01_x.md#a)\n  Weil es eilt.\n- [ ] plain: N\n  W\n- [ ] mid: M | priority: P2 | next: Später prüfen\n  W');
+  const groups = [...html.matchAll(/class="vm-group vm-group-([^" ]+)"/g)].map(match => match[1]);
+  assert.deepEqual(groups, ['p1', 'p2', 'p3', 'none', 'done']);
+  assert.match(html, /<svg class="vm-group-icon vm-icon-p1"[^>]*>[\s\S]*?<\/svg>P1 · Dringend<span class="vm-group-count">1</);
+  const urgent = row(html, 'urgent');
+  assert.match(urgent, /<details class="vm-row-details" open>/);
+  assert.match(urgent, /vm-status-icon vm-icon-running/);
+  assert.match(urgent, caption('Warum', 'Weil es eilt\\.'));
+  assert.match(urgent, caption('Mehr dazu', '<a href="01_x\\.md#a">Thema</a>'));
+  // P2 shows its next step although it is only planned, but stays closed.
+  const mid = row(html, 'mid');
+  assert.match(mid, /<details class="vm-row-details"><summary/);
+  assert.match(mid, caption('Als Nächstes', 'Später prüfen'));
+  assert.doesNotMatch(row(html, 'old'), / open>/);
 });

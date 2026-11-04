@@ -13,7 +13,7 @@ Diese Seite zeigt jeden Baustein, den Renderer und Theme heute können, an einem
 
 ## Stand-Band {#band updated=2026-11-01}
 
-Das grüne Band über diesem Abschnitt kommt aus dem Frontmatter. Es zeigt Status, Stand und Erstellungsdatum. Rechts kopiert ein Knopf den Pfad dieser Datei. Ist `as-of` älter als sieben Tage, wird das Band gelb und sagt das dazu. Mit `share: intern` trägt das Band ein rotes Badge „Intern“, und im PDF steht auf jeder Seite schräg „Intern“ mit dem Hinweis „nicht weitergeben“ und dem Stand.
+Das grüne Band über diesem Abschnitt kommt aus dem Frontmatter. Es zeigt Status, Stand und Erstellungsdatum. Rechts kopiert ein Knopf den Pfad dieser Datei. Ist `as-of` älter als sieben Tage, wird das Band gelb und sagt das dazu. Mit `share: intern` trägt das Band ein rotes Badge „Intern“, und im PDF steht oben rechts auf jeder Seite eine kleine Zeile „INTERN · nicht weitergeben“ mit dem Stand.
 
 ```yaml
 visual:

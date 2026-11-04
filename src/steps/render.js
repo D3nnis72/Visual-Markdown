@@ -1,7 +1,7 @@
 import { escapeHtml, inline } from '../html.js';
 import { t } from '../labels.js';
-import { svg, AGENT_ICON, PERSON_ICON, THREAD_ICON, SINCE_ICON, CAPTION_ICONS, DEPENDENCY_ICON, SECTION_ICON, CHEVRON_ICON } from '../icons.js';
-import { badge, idBadge, updatedBadge, copyButton } from '../meta.js';
+import { svg, PRIORITY_SHAPES, AGENT_ICON, PERSON_ICON, THREAD_ICON, SINCE_ICON, CAPTION_ICONS, DEPENDENCY_ICON, SECTION_ICON, CHEVRON_ICON } from '../icons.js';
+import { badge, updatedBadge, copyButton } from '../meta.js';
 
 const ICON_SHAPES = {
   ready: '<circle cx="8" cy="8" r="6.25"/><path d="M6.75 5.75v4.5L10.25 8z" fill="currentColor"/>',
@@ -10,7 +10,7 @@ const ICON_SHAPES = {
   waiting: '<circle cx="8" cy="8" r="6.25"/><path d="M8 5v3.25l2.1 1.3"/>',
   done: '<circle cx="8" cy="8" r="6.25"/><path d="m5.4 8.15 1.75 1.75 3.45-3.6"/>',
 };
-const icon = (key, className = 'vm-group-icon') => svg(`${className} vm-icon-${key}`, 16, ICON_SHAPES[key]);
+const icon = (key, className = 'vm-group-icon') => svg(`${className} vm-icon-${key}`, 16, ICON_SHAPES[key] ?? PRIORITY_SHAPES[key]);
 
 // T3 Code thread mentions look like "[Thread: title; ref=…]"; other references only show the label.
 const threadLabel = (reference, lang) => /^\[Thread:\s*([^;\]]+)/.exec(reference)?.[1].trim() || t(lang, 'thread');
@@ -27,8 +27,14 @@ export function renderSteps(steps, computed, lang, { idPrefix = 'vm-steps', toda
     if (state !== 'open') return state;
     return computed.now.includes(step.id) ? 'ready' : 'later';
   };
-  const groups = ['ready', 'running', 'later', 'waiting', 'done']
-    .map(key => ({ key, steps: steps.filter(step => groupOf(step) === key) }))
+  // With priorities the list answers "what first": open steps by priority, done steps at the end.
+  // The status icon in each row still shows whether a step runs, waits or can start.
+  const prioritized = steps.some(step => step.priority);
+  const listGroupOf = step => !prioritized ? groupOf(step)
+    : step.state === 'done' ? 'done' : step.priority?.toLowerCase() ?? 'none';
+  const groupKeys = prioritized ? ['p1', 'p2', 'p3', 'none', 'done'] : ['ready', 'running', 'later', 'waiting', 'done'];
+  const groups = groupKeys
+    .map(key => ({ key, steps: steps.filter(step => listGroupOf(step) === key) }))
     .filter(group => group.steps.length);
   const target = id => `${idPrefix}-${id}`;
   // A dependency takes the color of the step it points to.
@@ -54,15 +60,16 @@ export function renderSteps(steps, computed, lang, { idPrefix = 'vm-steps', toda
       updatedBadge(step.updated, lang, today),
     ].join('');
     const body = [
-      step.description ? field('description', 'description', inline(step.description)) : '',
-      step.next && (state === 'running' || group === 'ready') ? field('next', 'lineNext', inline(step.next)) : '',
+      step.description ? field('description', prioritized ? 'why' : 'description', inline(step.description)) : '',
+      step.next && (state === 'running' || group === 'ready' || (prioritized && state !== 'done')) ? field('next', 'lineNext', inline(step.next)) : '',
       step.doneWhen && state !== 'done' ? field('goal', 'goal', inline(step.doneWhen)) : '',
+      step.see ? field('see', 'see', inline(step.see)) : '',
       sections.has(step.id) ? `<a class="vm-section-link" href="#vm-section-${escapeHtml(step.id)}">${SECTION_ICON}${escapeHtml(t(lang, 'sectionLink'))}</a>` : '',
     ].join('');
     const copy = copyButton({ id: step.id, thread: step.thread, lang, label: t(lang, 'copyStep', { id: step.id }) });
-    const head = `${icon(group, 'vm-status-icon')}<div class="vm-row-main">${idBadge(step.id, lang)}<div class="vm-label">${inline(step.label)}</div>${summary}${need}</div><div class="vm-row-end"><div class="vm-meta">${meta}</div>${copy}`;
+    const head = `${icon(group, 'vm-status-icon')}<div class="vm-row-main"><div class="vm-label">${inline(step.label)}</div>${summary}${need}</div><div class="vm-row-end"><div class="vm-meta">${meta}</div>${copy}`;
     const row = body
-      ? `<details class="vm-row-details"><summary class="vm-row">${head}<span class="vm-chevron">${CHEVRON_ICON}</span></div></summary><div class="vm-row-body">${body}</div></details>`
+      ? `<details class="vm-row-details"${step.priority === 'P1' && state !== 'done' ? ' open' : ''}><summary class="vm-row">${head}<span class="vm-chevron">${CHEVRON_ICON}</span></div></summary><div class="vm-row-body">${body}</div></details>`
       : `<div class="vm-row">${head}<span class="vm-chevron"></span></div></div>`;
     return `<li id="${target(step.id)}" class="vm-step vm-${state}${group === 'ready' ? ' vm-can-start' : ''}">${row}</li>`;
   };

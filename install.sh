@@ -29,6 +29,9 @@ if ! grep -qF "$TAG" "$DEST/head.html" 2>/dev/null; then
   echo "Ergänzt: $DEST/head.html"
 fi
 
+# Links auf andere Markdown-Dateien springen in „Previews Only“ zum Anker. MPE-Updates überschreiben das, dann erneut ausführen.
+if command -v node >/dev/null 2>&1; then node "$SRC/scripts/patch-mpe.mjs"; else echo "Node fehlt, MPE-Linkpatch übersprungen"; fi
+
 # Agent-Skills: ~/.agents/skills gilt für Codex, Copilot und Gemini, Claude Code liest ~/.claude/skills.
 SKILLS="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
 mkdir -p "$SKILLS"

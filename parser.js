@@ -107,6 +107,13 @@ var __visualMarkdown = (() => {
       errDuplicate: "K\xFCrzel \u201E{id}\u201C doppelt",
       errUnknown: "\u201E{id}\u201C in after gibt es nicht",
       errCycle: "Zyklus \xFCber {list}",
+      errPriority: "Priorit\xE4t \u201E{value}\u201C gibt es nicht, erlaubt sind {list}",
+      group_p1: "P1 \xB7 Dringend",
+      group_p2: "P2 \xB7 Wichtig",
+      group_p3: "P3 \xB7 Sp\xE4ter",
+      group_none: "Noch nicht eingestuft",
+      why: "Warum",
+      see: "Mehr dazu",
       shareInternal: "Intern",
       watermarkNote: "nicht weitergeben",
       chartBasis: "Grundlage",
@@ -131,6 +138,7 @@ var __visualMarkdown = (() => {
       checkCardWord: "`{word}` ist weder Icon noch Farbe einer Karte",
       checkBadge: "Badge-Farbe `{color}` gibt es nicht, erlaubt sind {list}",
       checkAsOfOld: "`as-of` ist \xE4lter als das neueste `updated` ({date})",
+      checkStatusTwice: "Status steht schon im Band aus `visual.status`, die Zeile im Text doppelt ihn",
       checkChartSource: "Diagramm ohne `source`: Wo liegt die Auswertung?",
       errScaleLine: "Bereiche sehen so aus: \u201E- 0\u201340: Kritisch | bad\u201C",
       errScaleBounds: "Bereich {from}\u2013{to} muss aufsteigen",
@@ -199,6 +207,13 @@ var __visualMarkdown = (() => {
       errDuplicate: 'duplicate id "{id}"',
       errUnknown: '"{id}" in after does not exist',
       errCycle: "cycle through {list}",
+      errPriority: 'priority "{value}" does not exist, use {list}',
+      group_p1: "P1 \xB7 Urgent",
+      group_p2: "P2 \xB7 Important",
+      group_p3: "P3 \xB7 Later",
+      group_none: "Not ranked yet",
+      why: "Why",
+      see: "More",
       shareInternal: "Internal",
       watermarkNote: "do not share",
       chartBasis: "Based on",
@@ -223,6 +238,7 @@ var __visualMarkdown = (() => {
       checkCardWord: "`{word}` is neither an icon nor a color of a card",
       checkBadge: "badge color `{color}` does not exist, use {list}",
       checkAsOfOld: "`as-of` is older than the newest `updated` ({date})",
+      checkStatusTwice: "the band already shows `visual.status`, this line repeats it",
       checkChartSource: "Chart without `source`: where does the analysis live?",
       errScaleLine: 'Ranges look like "- 0\u201340: Critical | bad"',
       errScaleBounds: "range {from}\u2013{to} must go up",
@@ -259,7 +275,6 @@ var __visualMarkdown = (() => {
   var AGENT_ICON = svg("vm-agent-icon", 13, '<rect x="2.75" y="5" width="10.5" height="8" rx="2.25"/><path d="M8 5V2.75M6 8.75v.5M10 8.75v.5"/>');
   var COPY_ICON = svg("vm-copy-icon", 15, '<g class="vm-copy-idle"><rect x="5.25" y="5.25" width="8.5" height="8.5" rx="1.75"/><path d="M10.75 5.25V4A1.75 1.75 0 0 0 9 2.25H4A1.75 1.75 0 0 0 2.25 4v5A1.75 1.75 0 0 0 4 10.75h1.25"/></g><path class="vm-copy-done" d="m3.5 8.25 3 3 6-6.5"/>');
   var PERSON_ICON = svg("vm-person-icon", 13, '<circle cx="8" cy="5.5" r="2.75"/><path d="M2.75 13.75c.6-2.6 2.75-4 5.25-4s4.65 1.4 5.25 4"/>');
-  var TAG_ICON = svg("vm-tag-icon", 13, '<path d="M2.25 3.25v4.6a1 1 0 0 0 .3.7l5.2 5.2a1 1 0 0 0 1.4 0l4.4-4.4a1 1 0 0 0 0-1.4l-5.2-5.2a1 1 0 0 0-.7-.3h-4.6a.8.8 0 0 0-.8.8z"/><circle cx="5.25" cy="5.25" r=".75" fill="currentColor" stroke="none"/>');
   var UPDATED_ICON = svg("vm-updated-icon", 13, '<path d="M13.25 8A5.25 5.25 0 1 1 11.7 4.3"/><path d="M13.25 2.5v3h-3"/>');
   var THREAD_ICON = svg("vm-thread-icon", 13, '<path d="M2.75 4.25a1.5 1.5 0 0 1 1.5-1.5h7.5a1.5 1.5 0 0 1 1.5 1.5v5.5a1.5 1.5 0 0 1-1.5 1.5H6.5l-3.75 2.5z"/>');
   var SINCE_ICON = svg("vm-since-icon", 13, '<circle cx="8" cy="8" r="6.25"/><path d="M8 5v3.25l2.1 1.3"/>');
@@ -268,7 +283,15 @@ var __visualMarkdown = (() => {
     needs: svg("vm-caption-icon", 12, '<circle cx="8" cy="8" r="6.25"/><path d="M8 4.75v3.75M8 11.1v.15"/>'),
     next: svg("vm-caption-icon", 12, '<path d="M2.75 8h10.5M9.25 4l4 4-4 4"/>'),
     dependencies: svg("vm-caption-icon", 12, '<path d="M3.75 2.75v4.5a2.5 2.5 0 0 0 2.5 2.5h7M10 6.5l3.25 3.25L10 13"/>'),
-    goal: svg("vm-caption-icon", 12, '<path d="M3.75 14V2.5M3.75 3h8.5l-2 3 2 3h-8.5"/>')
+    goal: svg("vm-caption-icon", 12, '<path d="M3.75 14V2.5M3.75 3h8.5l-2 3 2 3h-8.5"/>'),
+    see: svg("vm-caption-icon", 12, '<path d="M6.5 9.5l3-3M7.25 4.25l.9-.9a2.6 2.6 0 0 1 3.7 3.7l-.9.9M8.75 11.75l-.9.9a2.6 2.6 0 0 1-3.7-3.7l.9-.9"/>')
+  };
+  var bars = (filled) => [0, 1, 2].map((k) => `<rect x="${2 + k * 4.5}" y="${11 - k * 3.5}" width="3" height="${3 + k * 3.5}" rx="1" fill="currentColor" stroke="none"${k < filled ? "" : ' opacity="0.3"'}/>`).join("");
+  var PRIORITY_SHAPES = {
+    p1: '<rect x="1.5" y="1.5" width="13" height="13" rx="3.5" fill="currentColor" stroke="none"/><path d="M8 4.5v4.25" class="vm-priority-mark" stroke-width="1.8"/><circle cx="8" cy="11.25" r="1.05" class="vm-priority-dot" stroke="none"/>',
+    p2: bars(3),
+    p3: bars(1),
+    none: '<circle cx="8" cy="8" r="6.25" stroke-dasharray="2.5 2.4"/>'
   };
   var DEPENDENCY_ICON = svg("vm-dep-icon", 12, '<path d="M3.75 2.75v4.5a2.5 2.5 0 0 0 2.5 2.5h7M10 6.5l3.25 3.25L10 13"/>');
   var SECTION_ICON = svg("vm-section-icon", 13, '<path d="M4 2.25h5.5L12.75 5.5v8.25H4z"/><path d="M9.25 2.25v3.5h3.5"/>');
@@ -307,7 +330,6 @@ var __visualMarkdown = (() => {
 
   // src/meta.js
   var badge = (className, icon2, content, title) => `<span class="vm-badge ${className}"${title ? ` title="${escapeHtml(title)}"` : ""}>${icon2}${content}</span>`;
-  var idBadge = (id, lang) => badge("vm-id-badge", TAG_ICON, `<code class="vm-id" title="${escapeHtml(t(lang, "identifier"))}">${escapeHtml(id)}</code>`);
   function updatedBadge(value, lang, today) {
     if (!value) return badge("vm-updated vm-date-missing", UPDATED_ICON, escapeHtml(t(lang, "noDate")), t(lang, "noDate"));
     const date = parseDate(value);
@@ -325,11 +347,12 @@ var __visualMarkdown = (() => {
   var isInternal = (visual) => SHARE_VALUES.includes(String(visual?.share ?? "").trim().toLowerCase());
   var LOCK_ICON = svg("vm-lock-icon", 12, '<rect x="3.25" y="7" width="9.5" height="6.75" rx="1.5"/><path d="M5.25 7V5a2.75 2.75 0 0 1 5.5 0v2"/>');
   var shareBadge = (lang) => `<span class="vm-band-share">${LOCK_ICON}${escapeHtml(t(lang, "shareInternal"))}</span>`;
+  var cssString = (text) => `"${String(text).replace(/[\\"<\r\n]/g, (char) => `\\${char.charCodeAt(0).toString(16)} `)}"`;
   function renderWatermark(visual, lang) {
     const asOf = visual?.["as-of"] ?? visual?.stand;
     const date = parseDate(asOf);
-    const note = [t(lang, "watermarkNote"), asOf ? t(lang, "stand", { date: date ? formatDate(date, lang) : asOf }) : ""].filter(Boolean).join(" \xB7 ");
-    return `<div class="vm-watermark" aria-hidden="true"><div class="vm-watermark-text"><span class="vm-watermark-word">${escapeHtml(t(lang, "shareInternal"))}</span><span class="vm-watermark-note">${escapeHtml(note)}</span></div></div>`;
+    const line = [t(lang, "shareInternal").toUpperCase(), t(lang, "watermarkNote"), asOf ? t(lang, "stand", { date: date ? formatDate(date, lang) : asOf }) : ""].filter(Boolean).join(" \xB7 ");
+    return `<style class="vm-watermark">@page { @top-right { content: ${cssString(line)}; font: 600 7.5pt ui-sans-serif, -apple-system, "Segoe UI", sans-serif; letter-spacing: 0.02em; color: #b3443a; } }</style>`;
   }
 
   // src/band.js
@@ -352,6 +375,7 @@ var __visualMarkdown = (() => {
   }
 
   // src/steps/schema.js
+  var PRIORITIES = ["P1", "P2", "P3"];
   var STATES = { x: "done", "~": "running", "!": "waiting", " ": "open" };
   var FIELDS = {
     after: "after",
@@ -361,7 +385,9 @@ var __visualMarkdown = (() => {
     since: "since",
     next: "next",
     thread: "thread",
-    updated: "updated"
+    updated: "updated",
+    priority: "priority",
+    see: "see"
   };
   var LEGACY_FIELDS = {
     nach: "after",
@@ -407,6 +433,8 @@ var __visualMarkdown = (() => {
         description: null,
         thread: null,
         updated: null,
+        priority: null,
+        see: null,
         line
       };
       for (const field of fields) {
@@ -418,6 +446,11 @@ var __visualMarkdown = (() => {
           continue;
         }
         const value = field.slice(colon + 1).trim();
+        if (property === "priority") {
+          if (!PRIORITIES.includes(value.toUpperCase())) error("errPriority", { value, list: PRIORITIES.join(", ") });
+          else step.priority = value.toUpperCase();
+          continue;
+        }
         step[property] = property === "after" ? value.split(",").map((id) => id.trim()).filter(Boolean) : value;
       }
       steps.push(step);
@@ -487,7 +520,7 @@ var __visualMarkdown = (() => {
     waiting: '<circle cx="8" cy="8" r="6.25"/><path d="M8 5v3.25l2.1 1.3"/>',
     done: '<circle cx="8" cy="8" r="6.25"/><path d="m5.4 8.15 1.75 1.75 3.45-3.6"/>'
   };
-  var icon = (key, className = "vm-group-icon") => svg(`${className} vm-icon-${key}`, 16, ICON_SHAPES[key]);
+  var icon = (key, className = "vm-group-icon") => svg(`${className} vm-icon-${key}`, 16, ICON_SHAPES[key] ?? PRIORITY_SHAPES[key]);
   var threadLabel = (reference, lang) => /^\[Thread:\s*([^;\]]+)/.exec(reference)?.[1].trim() || t(lang, "thread");
   function renderSteps(steps, computed, lang, { idPrefix = "vm-steps", today = /* @__PURE__ */ new Date(), sections = /* @__PURE__ */ new Set() } = {}) {
     const byId = new Map(steps.map((step) => [step.id, step]));
@@ -497,7 +530,10 @@ var __visualMarkdown = (() => {
       if (state !== "open") return state;
       return computed.now.includes(step.id) ? "ready" : "later";
     };
-    const groups = ["ready", "running", "later", "waiting", "done"].map((key) => ({ key, steps: steps.filter((step) => groupOf(step) === key) })).filter((group) => group.steps.length);
+    const prioritized = steps.some((step) => step.priority);
+    const listGroupOf = (step) => !prioritized ? groupOf(step) : step.state === "done" ? "done" : step.priority?.toLowerCase() ?? "none";
+    const groupKeys = prioritized ? ["p1", "p2", "p3", "none", "done"] : ["ready", "running", "later", "waiting", "done"];
+    const groups = groupKeys.map((key) => ({ key, steps: steps.filter((step) => listGroupOf(step) === key) })).filter((group) => group.steps.length);
     const target = (id) => `${idPrefix}-${id}`;
     const dependency = (id) => `<a href="#${target(id)}" class="vm-dep vm-ref-${groupOf(byId.get(id)) === "ready" ? "can-start" : groupOf(byId.get(id)) === "later" ? "open" : groupOf(byId.get(id))}" title="${escapeHtml(byId.get(id).label)}">${DEPENDENCY_ICON}${escapeHtml(id)}</a>`;
     const field = (kind, label, content) => `<div class="vm-field vm-field-${kind}"><div class="vm-caption">${CAPTION_ICONS[kind]}${escapeHtml(t(lang, label))}</div><div class="vm-field-text">${content}</div></div>`;
@@ -518,14 +554,15 @@ var __visualMarkdown = (() => {
         updatedBadge(step.updated, lang, today)
       ].join("");
       const body = [
-        step.description ? field("description", "description", inline(step.description)) : "",
-        step.next && (state === "running" || group === "ready") ? field("next", "lineNext", inline(step.next)) : "",
+        step.description ? field("description", prioritized ? "why" : "description", inline(step.description)) : "",
+        step.next && (state === "running" || group === "ready" || prioritized && state !== "done") ? field("next", "lineNext", inline(step.next)) : "",
         step.doneWhen && state !== "done" ? field("goal", "goal", inline(step.doneWhen)) : "",
+        step.see ? field("see", "see", inline(step.see)) : "",
         sections.has(step.id) ? `<a class="vm-section-link" href="#vm-section-${escapeHtml(step.id)}">${SECTION_ICON}${escapeHtml(t(lang, "sectionLink"))}</a>` : ""
       ].join("");
       const copy = copyButton({ id: step.id, thread: step.thread, lang, label: t(lang, "copyStep", { id: step.id }) });
-      const head2 = `${icon(group, "vm-status-icon")}<div class="vm-row-main">${idBadge(step.id, lang)}<div class="vm-label">${inline(step.label)}</div>${summary}${need}</div><div class="vm-row-end"><div class="vm-meta">${meta}</div>${copy}`;
-      const row = body ? `<details class="vm-row-details"><summary class="vm-row">${head2}<span class="vm-chevron">${CHEVRON_ICON}</span></div></summary><div class="vm-row-body">${body}</div></details>` : `<div class="vm-row">${head2}<span class="vm-chevron"></span></div></div>`;
+      const head2 = `${icon(group, "vm-status-icon")}<div class="vm-row-main"><div class="vm-label">${inline(step.label)}</div>${summary}${need}</div><div class="vm-row-end"><div class="vm-meta">${meta}</div>${copy}`;
+      const row = body ? `<details class="vm-row-details"${step.priority === "P1" && state !== "done" ? " open" : ""}><summary class="vm-row">${head2}<span class="vm-chevron">${CHEVRON_ICON}</span></div></summary><div class="vm-row-body">${body}</div></details>` : `<div class="vm-row">${head2}<span class="vm-chevron"></span></div></div>`;
       return `<li id="${target(step.id)}" class="vm-step vm-${state}${group === "ready" ? " vm-can-start" : ""}">${row}</li>`;
     };
     const rows = groups.map((group) => `<section class="vm-group vm-group-${group.key}"><h3 class="vm-group-title">${icon(group.key)}${escapeHtml(t(lang, `group_${group.key}`))}<span class="vm-group-count">${group.steps.length}</span></h3><ul class="vm-steps-list">${group.steps.map(renderRow).join("")}</ul></section>`).join("");
@@ -1264,8 +1301,8 @@ var __visualMarkdown = (() => {
     if (!match) return null;
     const [, hashes, title, id, rest] = match;
     const attributes = Object.fromEntries([...rest.matchAll(/([a-z][a-z-]*)=([^\s}]+)/gi)].map(([, key, value]) => [key, value]));
-    const meta = `<div class="vm-section-meta" id="vm-section-${escapeHtml(id)}">${idBadge(id, lang)}${updatedBadge(attributes.updated, lang, today)}${copyButton({ id, lang, className: "vm-copy-section", label: t(lang, "copyStep", { id }) })}</div>`;
-    return [`${hashes} ${title}`, meta, ""];
+    const meta = `<div class="vm-section-meta" id="vm-section-${escapeHtml(id)}">${updatedBadge(attributes.updated, lang, today)}${copyButton({ id, lang, className: "vm-copy-section", label: t(lang, "copyStep", { id }) })}</div>`;
+    return [`<div id="${escapeHtml(id)}" class="vm-anchor"></div>`, "", `${hashes} ${title}`, meta, ""];
   }
   function sectionIds(lines) {
     const ids = /* @__PURE__ */ new Set();
