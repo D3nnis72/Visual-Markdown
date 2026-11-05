@@ -17,7 +17,7 @@ Not for knowledge docs that mainly agents read: those stay plain Markdown.
 | --- | --- |
 | Status, as-of date, creation date | `visual:` front matter, shown as the band. The status stands only there: no `**Status:**` line in the text, also not from a `brainstorming` canvas header |
 | Work with owners, states and dependencies | `steps` |
-| A list by urgency, such as problems ranked P1 to P3 | `steps` with `priority:` on each item, the reason as description, `next:` and links to the details in `see:`. Not a table with several prose columns, which squeezes into tall narrow cells |
+| A list by urgency, such as problems ranked P1 to P3 | `steps`: short title, `priority:`, one brief impact sentence as description, and a detail link in `see:`. Add `next:` only for a separate concrete action, such as a named missing test or decision. Reproduction and investigation stay on the detail page |
 | Decision, question, risk, idea | `> [!card icon color] Title`, with the ID first when it has one (`E51: …`, `Frage 6: …`), so the ID links to the card everywhere else in the file. Only the file that owns the ID makes the card, other files link to it |
 | Abbreviations and domain terms a reader may not know | `glossary` block, one `Term: explanation` per line |
 | Numbers worth seeing | Table, then `chart` directly below it. Pick the `type` by what the reader must do with the numbers (README, Diagramme) and put the link to the analysis in `source` |
