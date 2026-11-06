@@ -17,7 +17,7 @@ Not for knowledge docs that mainly agents read: those stay plain Markdown.
 | --- | --- |
 | Status, as-of date, creation date | `visual:` front matter, shown as the band. The status stands only there: no `**Status:**` line in the text, also not from a `brainstorming` canvas header |
 | Work with owners, states and dependencies | `steps` |
-| A list by urgency, such as problems ranked P1 to P3 | `steps`: short title, `priority:`, one brief impact sentence as description, and a detail link in `see:`. Add `next:` only for a separate concrete action, such as a named missing test or decision. Reproduction and investigation stay on the detail page |
+| A list by urgency, such as problems ranked P1 to P3 | `steps`: location and concrete problem in the title, `priority:`, current behaviour, impact and desired result in the description, and a detail link in `see:`. Follow the entry recipe below. Reproduction and investigation stay on the detail page |
 | Decision, question, risk, idea | `> [!card icon color] Title`, with the ID first when it has one (`E51: …`, `Frage 6: …`), so the ID links to the card everywhere else in the file. Only the file that owns the ID makes the card, other files link to it |
 | Abbreviations and domain terms a reader may not know | `glossary` block, one `Term: explanation` per line |
 | Numbers worth seeing | Table, then `chart` directly below it. Pick the `type` by what the reader must do with the numbers (README, Diagramme) and put the link to the analysis in `source` |
@@ -32,6 +32,25 @@ Not for knowledge docs that mainly agents read: those stay plain Markdown.
 Everything else stays normal Markdown, flows stay Mermaid (skill `mermaid-theme`).
 
 `steps` shows the project's work across everyone involved. One person's own to-dos stay in their task tool, such as Notion, and are not copied into `steps`.
+
+## Write overviews, tasks and priorities so each entry stands alone
+
+The opening paragraph names the overall goal, the current obstacle and what remains to be done. Each entry then answers where the issue occurs, what happens there and how it should work, without requiring the reader to open a detail page.
+
+Use this recipe for problem and review lists:
+
+1. **Title: `<Agent or product> → <page or section>: <concrete problem>`.** Use the actual names from the interface. For tasks, put the concrete outcome after the colon. If a screenshot does not identify the page, say that its exact location is not yet confirmed and use only the known area.
+2. **Description: current behaviour and its consequence, then the desired behaviour.** Usually two or three short sentences suffice. The first sentence must make sense on its own in the collapsed list. Name a specific remaining check when a partial fix changes the scope.
+3. **Action and evidence:** put a distinct next action in `next:`, known responsibility in `owner:`, and details or evidence in `see:`. These supplement the problem and desired result. An agreement about who may work on it is not the problem description.
+
+```steps
+- [ ] coverage: Procurement Agent → RFQ → Supplier overview: Offer totals omit item coverage | priority: P1 | see: [Details](details.md#coverage) | updated: 2026-11-06
+  A partial offer can appear cheaper because its total does not show how many requested items were priced. Show priced versus requested items beside the total, with declined and unanswered items distinguishable.
+```
+
+Split a collection of issues when they occur on different pages or can be completed independently. Preserve existing step IDs and links when rewriting. Keep one entry for each problem, with confirmed improvements and the remaining scope together. A repaired example, changed template or reported fix does not establish that the whole flow works.
+
+In a priority overview, explain what makes a problem urgent and order entries by priority, with related problems together within each group. If urgency is not established, leave it unclassified. Before finishing, compare the overview with the newest evidence and detail pages, replacing stale claims while preserving their factual test dates. Check every entry for location, problem, consequence and desired result.
 
 ## Dates mean "content last changed or confirmed"
 
