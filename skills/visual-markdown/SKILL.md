@@ -42,7 +42,7 @@ Use this recipe for problem and review lists:
 1. **Title: `<Agent or product> → <page or section>: <concrete problem>`.** Use the actual names from the interface. For tasks, put the concrete outcome after the colon. If a screenshot does not identify the page, say that its exact location is not yet confirmed and use only the known area.
 2. **Description: problem, consequence and desired result.** Explain what happens and why it matters in two or three short sentences. This is the expanded “Description”, separate from the current work state.
 3. **Current status:** put the latest established working state in `status:`, separate from the problem description and `next:`. This stays visible even when collapsed. Name what has been investigated, assigned, implemented, released and tested as applicable, what remains and which facts are unknown. Include the evidence date and environment for a reported release or test; a reported “live” fix without an environment does not establish production. If a ticket or concrete result exists, link it directly in `status` and update this field with `updated` whenever work progresses. A created ticket alone does not mean implementation has started. Every running step needs a concrete status naming what is done and what keeps it running; for other steps without it, the renderer shows the computed state.
-4. **Action and evidence:** put a distinct next action in `next:`, known responsibility in `owner:`, and details or evidence in `see:`. These supplement the problem and desired result. An agreement about who may work on it is not the problem description.
+4. **Action and evidence:** put a distinct next action in `next:`, the next responsible person in `owner:`, their relation to the reader in `responsibility:`, progress in `workflow:`, and a linked ticket with its checked `ticket-status` and `ticket-owner`, and details or evidence in `see:`. These supplement the problem and desired result. An agreement about who may work on it is not the problem description.
 
 ```steps
 - [ ] coverage: Procurement Agent → RFQ → Supplier overview: Offer totals omit item coverage | priority: P1 | status: Issue documented; implementation and retest pending | see: [Details](details.md#coverage) | updated: 2026-11-06
@@ -52,6 +52,16 @@ Use this recipe for problem and review lists:
 Split a collection of issues when they occur on different pages or can be completed independently. Preserve existing step IDs and links when rewriting. Keep one entry for each problem, with confirmed improvements and the remaining scope together. A repaired example, changed template or reported fix does not establish that the whole flow works.
 
 In a priority overview, explain what makes a problem urgent and order entries by priority, with related problems together within each group. If urgency is not established, leave it unclassified. Before finishing, compare the overview with the newest evidence and detail pages, replacing stale claims while preserving their factual test dates. Check every entry for current work state, location, problem, consequence, desired result and remaining work. Read the entry with its visible `status`: it must answer “where does this stand now?” without opening a linked page or interpreting an icon. Updating the summary from existing evidence does not make an old observation a new live test.
+
+## Ownership, progress and linked tickets
+
+The README's steps schema owns allowed workflows and matching checkbox states. The icon shape shows progress, its colour shows responsibility relative to the reader: self, delegated or neutral. Keep the visible person and status labels; colour is not the only signal. Old entries remain neutral until ownership is established. Do not infer this relation from an arbitrary person's name or from the existence of a ticket.
+
+When creating a ticket or updating an overview, read every relevant linked Linear issue's current status and assignee through the connector. Store the direct `ticket` link, exact `ticket-status`, and `ticket-owner`; update `status` and `updated` from that evidence. The actual responsible person determines delegation, not whether a ticket exists. A ticket assigned to the reader stays self-owned. Preserve names such as In Review, On Hold, Done (Eng), Staging and Production; the general Linear type alone cannot distinguish all progress states. Choose the local workflow for the remaining work and match its checkbox using the README.
+
+If a completed fix still needs a local retest, keep the step open with the retest owner and their responsibility, while retaining the completed ticket's original status and assignee. A ticket's completion is not proof that `done-when` is met. Canceled and duplicate work does not satisfy successful prerequisites. Without a ticket, update from the observed work and confirmed assignments.
+
+Synchronise during authorised overview maintenance or an explicit refresh. A renderer load never calls Linear, and no recurring background job is implied. If access fails, retain the last verified ticket fields and the date of their last successful check in `status`, alongside the current access gap. `updated` may record today’s edit; it is not evidence of a successful ticket check. Never invent a new state.
 
 ## Dates mean "content last changed or confirmed"
 
@@ -67,7 +77,7 @@ In a priority overview, explain what makes a problem urgent and order entries by
 1. `grep -n '^##' file.md` lists every section with id and date. Write into the section that owns the topic. A new section only for a topic none covers.
 2. The page's main question or goal stays at the top, in the title, the status band and the first section. A sub-question the user raises, even one they stress ("check first whether X is good enough"), gets its own section or card under it and does not take over the lead. Only the user changes the main question; when their message sounds like they did, ask in one line. A canvas from `brainstorming` names it in its `Main question` line.
 3. Move steps through their states instead of rewriting them: `[ ]` → `[~]` → `[x]`, `[!]` with `waiting-for` and `since` while blocked, removed again when unblocked.
-4. Mark a step done only when its `done-when` is reported as met. If the news is vaguer, keep it running and write what was reported into the description.
+4. Mark a step done only when its `done-when` is reported as met. If the news is vaguer, preserve the last evidenced workflow and write what was reported into `status`.
 
 ## Do not invent
 

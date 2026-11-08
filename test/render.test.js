@@ -13,7 +13,7 @@ test('groups rows once in ready, running, planned, waiting, done order with coun
   assert.deepEqual(groups, ['ready', 'running', 'later', 'waiting', 'done']);
   const ids = [...html.matchAll(/<li id="vm-steps-1-([^" ]+)"/g)].map(match => match[1]);
   assert.deepEqual(ids, ['docs', 'run', 'review', 'publish', 'approval', 'basis']);
-  assert.match(html, /<h3 class="vm-group-title"><svg class="vm-group-icon vm-icon-later"[^>]*>[\s\S]*?<\/svg>Geplant<span class="vm-group-count">2<\/span><\/h3>/);
+  assert.match(html, /<h3 class="vm-group-title"><svg class="vm-group-icon vm-icon-later"[^>]*>[\s\S]*?<\/svg>Backlog<span class="vm-group-count">2<\/span><\/h3>/);
   assert.doesNotMatch(html, /vm-number|<ol/);
 });
 test('shows status icon, id tag above the title and a one-line description', () => {
@@ -62,17 +62,17 @@ test('keeps anchor targets unique across blocks with the same ids', () => {
 });
 test('translates labels and escapes text and attributes', () => {
   const html = transform('---\nvisual:\n  lang: en\n---\n' + fence('- [~] a: <img> "A" | done-when: `ok`\n- [ ] b: B | after: a'));
-  assert.match(html, /Planned<span/);
+  assert.match(html, /Backlog<span/);
   assert.match(html, caption('Goal', '<code>ok</code>'));
   assert.match(html, /&lt;img&gt; &quot;A&quot;/);
   assert.doesNotMatch(html, /<img>/);
 });
 test('marks agent owners and shows the thread title', () => {
   const html = run('- [~] a: A | owner: Agent | thread: [Thread: Anreicherung ausführen; ref=thread_abc-123]\n- [ ] b: B | owner: Team');
-  assert.match(row(html, 'a'), /<span class="vm-badge vm-owner vm-agent"[^>]*><svg class="vm-agent-icon"[\s\S]*?<\/svg>Agent<\/span>/);
+  assert.match(row(html, 'a'), /<span class="vm-badge vm-owner vm-agent"[^>]*><svg class="vm-agent-icon"[\s\S]*?<\/svg>Neutral · Agent<\/span>/);
   assert.match(row(html, 'a'), /<span class="vm-badge vm-thread"[^>]*><svg class="vm-thread-icon"[\s\S]*?<\/svg>Anreicherung ausführen<\/span>/);
   assert.match(row(html, 'a'), /data-copy-thread="\[Thread: Anreicherung ausführen; ref=thread_abc-123\]"/);
-  assert.match(row(html, 'b'), /<span class="vm-badge vm-owner"[^>]*><svg class="vm-person-icon"[\s\S]*?<\/svg>Team<\/span>/);
+  assert.match(row(html, 'b'), /<span class="vm-badge vm-owner"[^>]*><svg class="vm-person-icon"[\s\S]*?<\/svg>Neutral · Team<\/span>/);
 });
 test('puts the copy button in the row between badges and chevron', () => {
   const item = row(run('- [~] run: A | next: B'), 'run');
@@ -116,9 +116,9 @@ test('keeps current status and its ticket link in the visible row, separate from
   assert.match(item.slice(item.indexOf('vm-row-body')), caption('Beschreibung', 'Wrong dates confuse suppliers\\.'));
 });
 test('shows the computed state when no current status was written', () => {
-  assert.match(row(run('- [ ] a: A'), 'a'), /Aktueller Stand:<\/span> Kann starten/);
+  assert.match(row(run('- [ ] a: A'), 'a'), /Aktueller Stand:<\/span> Todo/);
   const html = transform('---\nvisual:\n  lang: en\n---\n' + fence('- [~] a: A'));
-  assert.match(row(html, 'a'), /Current status:<\/span> In progress/);
+  assert.match(row(html, 'a'), /Current status:<\/span> In Progress/);
 });
 
 

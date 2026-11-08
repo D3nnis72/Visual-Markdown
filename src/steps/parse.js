@@ -1,4 +1,4 @@
-import { STATES, FIELDS, LEGACY_FIELDS, PRIORITIES } from './schema.js';
+import { STATES, FIELDS, LEGACY_FIELDS, PRIORITIES, ENUM_FIELDS } from './schema.js';
 import { t } from '../labels.js';
 
 export function parseSteps(body, firstLine, lang) {
@@ -28,6 +28,10 @@ export function parseSteps(body, firstLine, lang) {
         : Object.hasOwn(LEGACY_FIELDS, name) ? LEGACY_FIELDS[name] : null;
       if (colon < 0 || !property) { error('errField', { field: name }); continue; }
       const value = field.slice(colon + 1).trim();
+      if (ENUM_FIELDS[property] && !ENUM_FIELDS[property].includes(value)) {
+        error('errValue', { field: name, value, list: ENUM_FIELDS[property].join(', ') });
+        continue;
+      }
       if (property === 'priority') {
         if (!PRIORITIES.includes(value.toUpperCase())) error('errPriority', { value, list: PRIORITIES.join(', ') });
         else step.priority = value.toUpperCase();

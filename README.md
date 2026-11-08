@@ -78,6 +78,11 @@ Die Feldnamen sind Englisch. Ältere deutsche Feldnamen und `visual.stand` bleib
 | `status` | Konkreter aktueller Arbeitsstand, immer direkt in der Zeile sichtbar. Unterstützt Markdown-Links, etwa zum angelegten Ticket. |
 | `next` | Konkrete nächste Handlung bei laufender oder startbereiter Arbeit |
 | `updated` | Pflichtfeld: Datum der letzten Änderung am Schritt, Format `JJJJ-MM-TT` |
+| `workflow` | Strukturierter Fortschritt und Icon, siehe Zustandstabelle unten. Muss zur Checkbox passen; `waiting-for` benötigt `on-hold`. |
+| `responsibility` | `self` (blau, bei mir), `delegated` (violett, abgegeben), `unassigned` (grau, neutral). Bezieht sich auf den nächsten Arbeitsschritt. |
+| `ticket` | Direkter Markdown-Link auf das zugeordnete Ticket. Der Renderer ruft es nicht ab. |
+| `ticket-status` | Zuletzt nachgelesener originaler Ticketstatus, etwa `In Review`, `Staging` oder `Done (Eng)`. |
+| `ticket-owner` | Zuletzt nachgelesener Verantwortlicher des Tickets. Darf vom nächsten lokalen Verantwortlichen abweichen. |
 | `priority` | `P1`, `P2` oder `P3`. Sobald ein Schritt im Block eine Priorität hat, wird der Block nach Priorität gruppiert, siehe unten |
 | `see` | Ein oder mehrere Markdown-Links zu ausführlicheren Stellen, aufgeklappt unter „Mehr dazu“ |
 | `thread` | T3-Code-Thread, in dem ein Agent an dem Schritt arbeitet, als Erwähnung im Format `[Thread: Titel; ref=…]` |
@@ -94,7 +99,24 @@ Die Feldnamen sind Englisch. Ältere deutsche Feldnamen und `visual.stand` bleib
 
 Der Titel sagt das Ergebnis des Schritts. Die Beschreibung sagt in ein bis drei Sätzen, was passiert und warum es wichtig ist, und der erste Satz muss allein verständlich sein. Ohne expliziten Statustext wird er in der Übersicht als gekürzte Vorschau gezeigt. Interne Kürzel brauchen eine Erklärung. Mehrere eingerückte Zeilen werden zu einem Absatz zusammengefasst. Ausführliches gehört in einen Abschnitt mit derselben Kennung wie der Schritt, also `## Badges {#badges updated=…}` zum Schritt `badges`. Der Schritt verlinkt dann von selbst darauf.
 
-Die Liste sieht aus wie eine Aufgabenliste in Linear. Sie ist nach Zustand gruppiert, in „Kann starten“, „Läuft“, „Geplant“, „Wartet“ und „Fertig“, jede Gruppe mit Icon und Anzahl. Leere Gruppen entfallen, innerhalb einer Gruppe bleibt die Dateireihenfolge. Jeder Schritt ist eine Zeile: Status-Icon, Titel und darunter die Beschreibung gekürzt auf eine Zeile. Die feste Kennung steht nur in der Datei und im Verweis des Kopierknopfs. Bei wartenden Schritten steht dort zusätzlich der Wartegrund mit „seit“. Rechts stehen die offenen Dependencies mit ihrer Kennung, Zuständige als Person oder Agent, Thread, gegebenenfalls „seit“, das Datum der letzten Änderung, der Kopierknopf und ein Pfeil. Unter dem Titel steht immer „Aktueller Stand“. `status:` beschreibt den belegten Arbeitsstand samt direktem Ticket- oder Ergebnislink. Ohne das Feld erscheint der berechnete Zustand, etwa „Kann starten“ oder „Läuft“. Der Statustext bleibt beim Aufklappen und im PDF sichtbar und wird nicht gekürzt. Bei explizitem `status` ersetzt er die gekürzte Beschreibungsvorschau; die Problembeschreibung steht aufgeklappt unter „Beschreibung“. Er ändert die Gruppierung nicht: Dafür gelten weiterhin `[ ]`, `[~]`, `[!]`, `after` und `waiting-for`. Ein Klick auf die Zeile klappt die volle Beschreibung, „Als Nächstes“, „Ziel“ aus `done-when` und den Link zum Abschnitt auf. Im PDF ist alles aufgeklappt. Ein Klick auf den Kopierknopf kopiert nur und klappt nichts auf. „Kann starten“ enthält offene Schritte ohne ausstehende Vorgänger und ohne Wartegrund, „Geplant“ die Schritte, deren Vorgänger noch nicht fertig sind, „Wartet“ Schritte mit Wartegrund oder `[!]`.
+Die Liste gruppiert nach Fortschritt: Todo, In Progress, In Review, Backlog, On Hold, Done, Canceled und Duplicate. Leere Gruppen entfallen. Die Form des Icons steht für den Fortschritt, seine Farbe und das Zuständigkeitsbadge für den nächsten Verantwortlichen. Blau bedeutet „Bei mir“, violett „Abgegeben“, grau „Nicht zugeordnet“ beziehungsweise „Neutral“, wenn bereits ein Name, aber keine Einordnung bekannt ist. Der Name und die Fortschrittsbeschriftung stehen zusätzlich im Text. Die Farben gelten auch für Abhängigkeitslinks. Ein Todo bei einer anderen Person hat kein grünes Startsymbol.
+
+| `workflow` | Checkbox | Anzeige und Icon |
+| --- | --- | --- |
+| `todo` | `[ ]` | Todo, leerer Kreis |
+| `in-progress` | `[~]` | In Progress, halb gefüllter Kreis |
+| `review` | `[~]` | In Review, Prüfhaken mit Reviewmarkierung |
+| `backlog` | `[ ]` | Backlog, gestrichelter Kreis |
+| `on-hold` | `[!]` | On Hold, Pause im Kreis |
+| `done` | `[x]` | Done, Haken im Kreis |
+| `canceled` | `[ ]` | Canceled, Kreuz im Kreis |
+| `duplicate` | `[ ]` | Duplicate, überlappende Kästchen |
+
+Das gemeinsame Schema `src/steps/schema.js` besitzt erlaubte Werte, Checkboxzuordnung, Beschriftungen und Formen. Ohne neue Felder bleiben alte Checkboxen lesbar und die Zuständigkeit neutral. Offene Schritte mit unerfüllten Voraussetzungen erscheinen ohne expliziten Fortschritt als Backlog, sonst als Todo. Ein explizites Backlog sowie abgegebene, wartende oder verworfene Aufgaben sind keine eigenen Startaktionen. Canceled und Duplicate werden aus dem Fortschrittsnenner und den Arbeitswellen genommen, zählen aber nicht als erfolgreich erledigte Voraussetzungen. Abhängige Aufgaben bleiben deshalb blockiert, bis die Abhängigkeit bewusst korrigiert wird.
+
+Jeder Schritt zeigt Titel, „Aktueller Stand“, Zuständigkeit, Fortschritt, Datum und gegebenenfalls Ticketstatus. Der Statustext bleibt aufgeklappt und im PDF sichtbar. Ein Ticket zeigt seinen originalen Status und Verantwortlichen separat. `status` ist die fachliche Zusammenfassung, `workflow` der aktuelle lokale Arbeitsschritt. Beispiel: Ein Ticket ist bereits Staging bei Nino, der noch offene Nachtest steht auf Todo bei Dennis. Erst die erfüllte Abschlussbedingung beendet den Canvas-Punkt.
+
+Ein Klick auf die Zeile klappt Beschreibung, nächste Aktion, Ziel, Detailverweise und den verknüpften Abschnitt auf. Im PDF sind die Details sichtbar. Der Kopierknopf kopiert den Verweis ohne Aufklappen. Der `owner` allein ändert weder Zuständigkeit noch Fortschritt. Unbekannte Werte, Checkboxkonflikte und Ticketmetadaten ohne Ticketlink werden als Fehler gemeldet. Ein Ticket ohne nachgelesenen Status und eine abgegebene Aufgabe ohne Verantwortlichen erzeugen Checker-Warnungen.
 
 Mit `priority` wird aus der Arbeitsliste eine Liste nach Dringlichkeit. Die Gruppen heißen dann „P1 · Dringend“, „P2 · Wichtig“ und „P3 · Später“, jede mit einem Signal-Icon wie in Linear, P1 in warmem Orange und P2 in Blau. Schritte ohne Priorität stehen unter „Noch nicht eingestuft“, fertige wie gewohnt am Ende. Das Status-Icon jeder Zeile bleibt, man sieht also weiter, welcher P1-Punkt schon läuft oder wartet. Die Beschreibung heißt aufgeklappt „Beschreibung“, „Als Nächstes“ erscheint bei jedem offenen Schritt, und P1-Zeilen sind schon aufgeklappt. Aufgeklappt verschwindet in jeder Liste die gekürzte Vorschau unter dem Titel, weil die volle Beschreibung darunter steht.
 
@@ -103,7 +125,9 @@ Mit `priority` wird aus der Arbeitsliste eine Liste nach Dringlichkeit. Die Grup
   Falsche Vorgaben erzeugen Angebote auf unterschiedlichen Grundlagen.
 ```
 
-Positionsnummern gibt es nicht, weil sie sich bei jedem Zustandswechsel verschieben würden. Wie in Linear ist die feste Kennung der Name eines Schritts. Dependencies zeigen deshalb die Kennung, verlinken auf den Schritt und haben seine Farbe, also gelb, wenn er wartet. Erfüllte Voraussetzungen verschwinden. Der Thread erscheint als Badge mit seinem Titel. Der Kopierknopf kopiert einen Verweis wie `/pfad/zur/datei.md#enrich` und hängt den Thread an, falls `thread` gesetzt ist. Den Verweis fügt man in den Chat mit einem Agent ein, damit klar ist, über welchen Schritt man spricht.
+Positionsnummern gibt es nicht, weil sie sich bei jedem Zustandswechsel verschieben würden. Wie in Linear ist die feste Kennung der Name eines Schritts. Dependencies zeigen deshalb die Kennung, verlinken auf den Schritt und haben seine Zuständigkeitsfarbe: blau bei mir, violett abgegeben, grau neutral. Erfüllte Voraussetzungen verschwinden. Der Thread erscheint als Badge mit seinem Titel. Der Kopierknopf kopiert einen Verweis wie `/pfad/zur/datei.md#enrich` und hängt den Thread an, falls `thread` gesetzt ist. Den Verweis fügt man in den Chat mit einem Agent ein, damit klar ist, über welchen Schritt man spricht.
+
+Bei der Pflege einer Übersicht liest der Agent verknüpfte Linear-Tickets gezielt nach und aktualisiert `ticket-status`, `ticket-owner`, `status`, `updated` und gegebenenfalls den lokalen Fortschritt und Verantwortlichen. Namen und Status müssen aus der Quelle kommen. `Todo` allein beweist keinen begonnenen Fix. Ein abgeschlossenes Ticket ersetzt keinen erforderlichen Nachtest. Der Abgleich geschieht bei Bearbeitung oder ausdrücklich gewünschter Aktualisierung, nicht automatisch im Hintergrund. Bei fehlendem Zugriff bleibt der zuletzt belegte Stand mit seiner Prüfgrenze erhalten. Ohne Ticket pflegt der Agent den belegten lokalen Stand. Der Renderer bleibt offline und enthält keine Zugangsdaten.
 
 Der Agent pflegt Zustände, Wartegründe, Abschlussbedingungen und Daten in der Datei. Bei jeder Änderung an einem Schritt setzt er dessen `updated` und das `as-of` des Dokuments auf den aktuellen Tag. Der Renderer berechnet daraus die Übersicht, erkennt aber keinen Arbeitsfortschritt außerhalb der Datei. Unterpunkte werden noch nicht unterstützt. Unbekannte Felder, doppelte Kürzel, fehlende Vorgänger und Zyklen erscheinen als Fehler mit Zeilennummer.
 

@@ -70,6 +70,15 @@ var __visualMarkdown = (() => {
       done: "fertig",
       running: "l\xE4uft",
       currentStatus: "Aktueller Stand",
+      responsibility_self: "Bei mir",
+      responsibility_delegated: "Abgegeben",
+      responsibility_unassigned: "Nicht zugeordnet",
+      responsibility_neutral: "Neutral",
+      ticketOwner: "Ticket bei {who}",
+      errWorkflowWaiting: "waiting-for ben\xF6tigt den Fortschritt on-hold",
+      errWorkflowCheckbox: "Fortschritt \u201E{workflow}\u201C widerspricht dem Checkbox-Zustand",
+      errTicketLink: "ticket erwartet einen Markdown-Link mit http(s)-URL",
+      errTicketMissing: "ticket-status und ticket-owner ben\xF6tigen einen ticket-Link",
       group_ready: "Kann starten",
       group_running: "L\xE4uft",
       group_later: "Geplant",
@@ -133,6 +142,8 @@ var __visualMarkdown = (() => {
       checkShareValue: "`share: {value}` kennt der Renderer nicht, gemeint ist wohl `intern`",
       checkSectionDate: "Abschnitt `{id}` hat kein `updated=`",
       checkSectionDuplicate: "Kennung `{id}` gibt es zweimal",
+      checkTicketStatus: "Schritt `{id}` mit Ticket hat keinen nachgelesenen `ticket-status`",
+      checkDelegatedOwner: "Abgegebener Schritt `{id}` hat keinen `owner`",
       checkStepStatus: "Laufender Schritt `{id}` hat keinen konkreten `status` mit aktuellem Arbeitsstand",
       checkStepDate: "Schritt `{id}` hat kein `updated`",
       checkStepDescription: "Schritt `{id}` hat keine Beschreibung in der Zeile darunter",
@@ -171,6 +182,15 @@ var __visualMarkdown = (() => {
       done: "done",
       running: "running",
       currentStatus: "Current status",
+      responsibility_self: "Mine",
+      responsibility_delegated: "Delegated",
+      responsibility_unassigned: "Unassigned",
+      responsibility_neutral: "Neutral",
+      ticketOwner: "Ticket assigned to {who}",
+      errWorkflowWaiting: "waiting-for requires the on-hold workflow",
+      errWorkflowCheckbox: "Workflow \u201C{workflow}\u201D conflicts with the checkbox state",
+      errTicketLink: "ticket expects a Markdown link with an http(s) URL",
+      errTicketMissing: "ticket-status and ticket-owner require a ticket link",
       group_ready: "Ready",
       group_running: "In progress",
       group_later: "Planned",
@@ -390,7 +410,12 @@ var __visualMarkdown = (() => {
     updated: "updated",
     priority: "priority",
     see: "see",
-    status: "status"
+    status: "status",
+    workflow: "workflow",
+    responsibility: "responsibility",
+    ticket: "ticket",
+    "ticket-status": "ticketStatus",
+    "ticket-owner": "ticketOwner"
   };
   var LEGACY_FIELDS = {
     nach: "after",
@@ -399,6 +424,22 @@ var __visualMarkdown = (() => {
     "fertig wenn": "doneWhen",
     seit: "since"
   };
+  var WORKFLOWS = {
+    todo: { state: "open", group: "ready", label: "Todo", shape: '<circle cx="8" cy="8" r="6.25"/>' },
+    "in-progress": { state: "running", group: "running", label: "In Progress", shape: '<circle cx="8" cy="8" r="6.25"/><path d="M8 4.25a3.75 3.75 0 0 1 0 7.5z" fill="currentColor" stroke="none"/>' },
+    review: { state: "running", group: "review", label: "In Review", shape: '<circle cx="8" cy="8" r="6.25"/><path d="m4.5 8 2.25 2.25L11.5 5.5"/><circle cx="12.5" cy="12.5" r="2" fill="currentColor" stroke="none"/>' },
+    backlog: { state: "open", group: "later", label: "Backlog", shape: '<circle cx="8" cy="8" r="6.25" stroke-dasharray="2.5 2.4"/>' },
+    "on-hold": { state: "waiting", group: "waiting", label: "On Hold", shape: '<circle cx="8" cy="8" r="6.25"/><path d="M6 5.5v5M10 5.5v5"/>' },
+    done: { state: "done", group: "done", label: "Done", shape: '<circle cx="8" cy="8" r="6.25"/><path d="m5.4 8.15 1.75 1.75 3.45-3.6"/>' },
+    canceled: { state: "open", group: "canceled", label: "Canceled", terminal: true, shape: '<circle cx="8" cy="8" r="6.25"/><path d="m5.5 5.5 5 5M10.5 5.5l-5 5"/>' },
+    duplicate: { state: "open", group: "duplicate", label: "Duplicate", terminal: true, shape: '<rect x="2" y="2" width="9" height="9" rx="2"/><path d="M6 13.5h5.5a2 2 0 0 0 2-2V6"/>' }
+  };
+  var RESPONSIBILITIES = ["self", "delegated", "unassigned"];
+  var ENUM_FIELDS = { workflow: Object.keys(WORKFLOWS), responsibility: RESPONSIBILITIES };
+  var isDismissed = (step) => Boolean(WORKFLOWS[step.workflow]?.terminal);
+  var groupKeys = Object.values(WORKFLOWS).map((value) => value.group);
+  var progressShapes = Object.fromEntries(Object.values(WORKFLOWS).map((value) => [value.group, value.shape]));
+  var progressLabels = Object.fromEntries(Object.values(WORKFLOWS).map((value) => [value.group, value.label]));
 
   // src/steps/parse.js
   function parseSteps(body, firstLine, lang) {
@@ -450,6 +491,10 @@ var __visualMarkdown = (() => {
           continue;
         }
         const value = field.slice(colon + 1).trim();
+        if (ENUM_FIELDS[property] && !ENUM_FIELDS[property].includes(value)) {
+          error("errValue", { field: name, value, list: ENUM_FIELDS[property].join(", ") });
+          continue;
+        }
         if (property === "priority") {
           if (!PRIORITIES.includes(value.toUpperCase())) error("errPriority", { value, list: PRIORITIES.join(", ") });
           else step.priority = value.toUpperCase();
@@ -471,6 +516,11 @@ var __visualMarkdown = (() => {
       else byId.set(step.id, step);
     }
     for (const step of steps) {
+      const workflow = WORKFLOWS[step.workflow];
+      if (workflow && workflow.state !== step.state) errors.push({ line: step.line, message: t(lang, "errWorkflowCheckbox", { workflow: step.workflow }) });
+      if (workflow && step.waitingFor && step.workflow !== "on-hold") errors.push({ line: step.line, message: t(lang, "errWorkflowWaiting") });
+      if (step.ticket && !/^\[[^\]]+\]\(https?:\/\/[^)\s]+\)$/.test(step.ticket)) errors.push({ line: step.line, message: t(lang, "errTicketLink") });
+      if ((step.ticketStatus || step.ticketOwner) && !step.ticket) errors.push({ line: step.line, message: t(lang, "errTicketMissing") });
       for (const id of step.after) {
         if (!byId.has(id)) errors.push({ line: step.line, message: t(lang, "errUnknown", { id }) });
       }
@@ -499,7 +549,7 @@ var __visualMarkdown = (() => {
     var _a;
     const byId = new Map(steps.map((step) => [step.id, step]));
     const done = steps.filter((step) => step.state === "done").length;
-    const now = steps.filter((step) => step.state === "open" && !step.waitingFor && step.after.every((id) => byId.get(id).state === "done")).map((step) => step.id);
+    const now = steps.filter((step) => step.state === "open" && !isDismissed(step) && step.workflow !== "backlog" && step.responsibility !== "delegated" && !step.waitingFor && step.after.every((id) => byId.get(id).state === "done")).map((step) => step.id);
     const levels = /* @__PURE__ */ new Map();
     function level(step) {
       if (levels.has(step.id)) return levels.get(step.id);
@@ -510,67 +560,69 @@ var __visualMarkdown = (() => {
     }
     const waves = [];
     for (const step of steps) {
-      if (step.state === "done") continue;
+      if (step.state === "done" || isDismissed(step)) continue;
       (waves[_a = level(step)] ?? (waves[_a] = [])).push(step.id);
     }
-    return { done, total: steps.length, now, waves };
+    return { done, total: steps.filter((step) => !isDismissed(step)).length, now, waves };
   }
 
   // src/steps/render.js
-  var ICON_SHAPES = {
-    ready: '<circle cx="8" cy="8" r="6.25"/><path d="M6.75 5.75v4.5L10.25 8z" fill="currentColor"/>',
-    running: '<circle cx="8" cy="8" r="6.25"/><path d="M8 4.25a3.75 3.75 0 0 1 0 7.5z" fill="currentColor" stroke="none"/>',
-    later: '<circle cx="8" cy="8" r="6.25" stroke-dasharray="2.5 2.4"/>',
-    waiting: '<circle cx="8" cy="8" r="6.25"/><path d="M8 5v3.25l2.1 1.3"/>',
-    done: '<circle cx="8" cy="8" r="6.25"/><path d="m5.4 8.15 1.75 1.75 3.45-3.6"/>'
-  };
-  var icon = (key, className = "vm-group-icon") => svg(`${className} vm-icon-${key}`, 16, ICON_SHAPES[key] ?? PRIORITY_SHAPES[key]);
+  var icon = (key, className = "vm-group-icon") => svg(`${className} vm-icon-${key}`, 16, progressShapes[key] ?? PRIORITY_SHAPES[key]);
   var threadLabel = (reference, lang) => /^\[Thread:\s*([^;\]]+)/.exec(reference)?.[1].trim() || t(lang, "thread");
   function renderSteps(steps, computed, lang, { idPrefix = "vm-steps", today = /* @__PURE__ */ new Date(), sections = /* @__PURE__ */ new Set() } = {}) {
     const byId = new Map(steps.map((step) => [step.id, step]));
     const stateOf = (step) => step.state === "open" && step.waitingFor ? "waiting" : step.state;
     const groupOf = (step) => {
+      if (step.workflow) return WORKFLOWS[step.workflow].group;
       const state = stateOf(step);
       if (state !== "open") return state;
-      return computed.now.includes(step.id) ? "ready" : "later";
+      return step.after.every((id) => byId.get(id).state === "done") ? "ready" : "later";
     };
     const prioritized = steps.some((step) => step.priority);
-    const listGroupOf = (step) => !prioritized ? groupOf(step) : step.state === "done" ? "done" : step.priority?.toLowerCase() ?? "none";
-    const groupKeys = prioritized ? ["p1", "p2", "p3", "none", "done"] : ["ready", "running", "later", "waiting", "done"];
-    const groups = groupKeys.map((key) => ({ key, steps: steps.filter((step) => listGroupOf(step) === key) })).filter((group) => group.steps.length);
+    const listGroupOf = (step) => !prioritized ? groupOf(step) : step.state === "done" ? "done" : isDismissed(step) ? groupOf(step) : step.priority?.toLowerCase() ?? "none";
+    const groupKeys2 = prioritized ? ["p1", "p2", "p3", "none", "done", "canceled", "duplicate"] : groupKeys;
+    const groups = groupKeys2.map((key) => ({ key, steps: steps.filter((step) => listGroupOf(step) === key) })).filter((group) => group.steps.length);
     const target = (id) => `${idPrefix}-${id}`;
-    const dependency = (id) => `<a href="#${target(id)}" class="vm-dep vm-ref-${groupOf(byId.get(id)) === "ready" ? "can-start" : groupOf(byId.get(id)) === "later" ? "open" : groupOf(byId.get(id))}" title="${escapeHtml(byId.get(id).label)}">${DEPENDENCY_ICON}${escapeHtml(id)}</a>`;
+    const dependency = (id) => `<a href="#${target(id)}" class="vm-dep vm-ref-${groupOf(byId.get(id)) === "ready" ? "can-start" : groupOf(byId.get(id)) === "later" ? "open" : groupOf(byId.get(id))}" title="${escapeHtml(byId.get(id).label)}" data-responsibility="${escapeHtml(byId.get(id).responsibility ?? "unassigned")}">${DEPENDENCY_ICON}${escapeHtml(id)}</a>`;
     const field = (kind, label, content) => `<div class="vm-field vm-field-${kind}"><div class="vm-caption">${CAPTION_ICONS[kind]}${escapeHtml(t(lang, label))}</div><div class="vm-field-text">${content}</div></div>`;
     const renderRow = (step) => {
       const group = groupOf(step);
       const state = stateOf(step);
+      const responsibility = step.responsibility ?? "unassigned";
+      const closed = state === "done" || isDismissed(step);
+      const ownershipLabel = t(lang, responsibility === "unassigned" && step.who ? "responsibility_neutral" : `responsibility_${responsibility}`);
+      const workflowLabel = progressLabels[group];
       const pending = step.after.filter((id) => byId.get(id).state !== "done");
       const since = step.since ? inline(t(lang, "since", { when: step.since })) : "";
       const showNeed = state === "waiting" && step.waitingFor;
       const need = showNeed ? `<div class="vm-need">${CAPTION_ICONS.needs}${inline(step.waitingFor)}${since ? `, ${since}` : ""}</div>` : "";
-      const currentStatus = `<div class="vm-current-status"><span class="vm-current-status-label">${escapeHtml(t(lang, "currentStatus"))}:</span> ${inline(step.status || t(lang, `group_${group}`))}</div>`;
+      const currentStatus = `<div class="vm-current-status"><span class="vm-current-status-label">${escapeHtml(t(lang, "currentStatus"))}:</span> ${inline(step.status || progressLabels[group])}</div>`;
       const summary = !step.status && step.description ? `<div class="vm-summary">${inline(step.description)}</div>` : "";
-      const owner = step.who && (/^agent\b/i.test(step.who) ? badge("vm-owner vm-agent", AGENT_ICON, inline(step.who)) : badge("vm-owner", PERSON_ICON, inline(step.who)));
+      const ownerIcon = step.who && /^agent\b/i.test(step.who) ? AGENT_ICON : PERSON_ICON;
+      const owner = badge(`vm-owner${step.who && /^agent\b/i.test(step.who) ? " vm-agent" : ""}`, ownerIcon, `${escapeHtml(ownershipLabel)}${step.who ? ` \xB7 ${inline(step.who)}` : ""}`);
+      const ticket = step.ticket ? `<span class="vm-ticket">${inline(step.ticket)}${step.ticketStatus ? ` \xB7 ${escapeHtml(step.ticketStatus)}` : ""}${step.ticketOwner ? ` \xB7 ${escapeHtml(t(lang, "ticketOwner", { who: step.ticketOwner }))}` : ""}</span>` : "";
       const meta = [
         ...pending.map(dependency),
         owner,
+        `<span class="vm-badge vm-workflow-name">${escapeHtml(workflowLabel)}</span>`,
+        ticket,
         step.thread ? badge("vm-thread", THREAD_ICON, escapeHtml(threadLabel(step.thread, lang)), step.thread) : "",
         step.since && !showNeed ? badge("vm-since", SINCE_ICON, inline(step.since), t(lang, "since", { when: step.since })) : "",
         updatedBadge(step.updated, lang, today)
       ].join("");
       const body = [
         step.description ? field("description", "description", inline(step.description)) : "",
-        step.next && (state === "running" || group === "ready" || prioritized && state !== "done") ? field("next", "lineNext", inline(step.next)) : "",
-        step.doneWhen && state !== "done" ? field("goal", "goal", inline(step.doneWhen)) : "",
+        step.next && !closed ? field("next", "lineNext", inline(step.next)) : "",
+        step.doneWhen && !closed ? field("goal", "goal", inline(step.doneWhen)) : "",
         step.see ? field("see", "see", inline(step.see)) : "",
         sections.has(step.id) ? `<a class="vm-section-link" href="#vm-section-${escapeHtml(step.id)}">${SECTION_ICON}${escapeHtml(t(lang, "sectionLink"))}</a>` : ""
       ].join("");
       const copy = copyButton({ id: step.id, thread: step.thread, lang, label: t(lang, "copyStep", { id: step.id }) });
-      const head2 = `${icon(group, "vm-status-icon")}<div class="vm-row-main"><div class="vm-label">${inline(step.label)}</div>${summary}${currentStatus}${need}</div><div class="vm-row-end"><div class="vm-meta">${meta}</div>${copy}`;
-      const row = body ? `<details class="vm-row-details"${step.priority === "P1" && state !== "done" ? " open" : ""}><summary class="vm-row">${head2}<span class="vm-chevron">${CHEVRON_ICON}</span></div></summary><div class="vm-row-body">${body}</div></details>` : `<div class="vm-row">${head2}<span class="vm-chevron"></span></div></div>`;
-      return `<li id="${target(step.id)}" class="vm-step vm-${state}${group === "ready" ? " vm-can-start" : ""}">${row}</li>`;
+      const head2 = `<span class="vm-workflow" title="${escapeHtml(workflowLabel)} \xB7 ${escapeHtml(ownershipLabel)}">${icon(group, "vm-status-icon")}</span><div class="vm-row-main"><div class="vm-label">${inline(step.label)}</div>${summary}${currentStatus}${need}</div><div class="vm-row-end"><div class="vm-meta">${meta}</div>${copy}`;
+      const row = body ? `<details class="vm-row-details"${step.priority === "P1" && !closed ? " open" : ""}><summary class="vm-row">${head2}<span class="vm-chevron">${CHEVRON_ICON}</span></div></summary><div class="vm-row-body">${body}</div></details>` : `<div class="vm-row">${head2}<span class="vm-chevron"></span></div></div>`;
+      return `<li id="${target(step.id)}" class="vm-step vm-${state} vm-responsibility-${responsibility}${isDismissed(step) ? " vm-dismissed" : ""}${group === "ready" ? " vm-can-start" : ""}">${row}</li>`;
     };
-    const rows = groups.map((group) => `<section class="vm-group vm-group-${group.key}"><h3 class="vm-group-title">${icon(group.key)}${escapeHtml(t(lang, `group_${group.key}`))}<span class="vm-group-count">${group.steps.length}</span></h3><ul class="vm-steps-list">${group.steps.map(renderRow).join("")}</ul></section>`).join("");
+    const rows = groups.map((group) => `<section class="vm-group vm-group-${group.key}"><h3 class="vm-group-title">${icon(group.key)}${escapeHtml(progressLabels[group.key] ?? t(lang, `group_${group.key}`))}<span class="vm-group-count">${group.steps.length}</span></h3><ul class="vm-steps-list">${group.steps.map(renderRow).join("")}</ul></section>`).join("");
     const percent = computed.total ? Math.round(100 * computed.done / computed.total) : 0;
     const head = `<div class="vm-steps-head"><span>${escapeHtml(t(lang, "progress", computed))}</span><span class="vm-progress"><span style="width:${percent}%"></span></span></div>`;
     return `<div class="vm-steps">${head}${rows}</div>`;
@@ -1340,7 +1392,7 @@ var __visualMarkdown = (() => {
     info: "indigo",
     muted: "grey"
   };
-  var ICON_SHAPES2 = {
+  var ICON_SHAPES = {
     flag: '<path d="M3.75 14V2.5M3.75 3h8.5l-2 3 2 3h-8.5"/>',
     question: '<circle cx="8" cy="8" r="6.25"/><path d="M6.25 6.25a1.85 1.85 0 0 1 3.6.6c0 1.25-1.85 1.6-1.85 2.65M8 11.4v.1"/>',
     check: '<circle cx="8" cy="8" r="6.25"/><path d="m5.4 8.15 1.75 1.75 3.45-3.6"/>',
@@ -1354,19 +1406,19 @@ var __visualMarkdown = (() => {
   var ID_TITLE = /^(\p{Lu}[\p{L}]*[ -]?\d+)\s*:\s+(.+)$/u;
   var idAnchor = (id) => `vm-id-${id.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-")}`;
   var CARD_COLORS = Object.keys(COLORS);
-  var CARD_ICONS = Object.keys(ICON_SHAPES2);
+  var CARD_ICONS = Object.keys(ICON_SHAPES);
   function renderCard(lines, start, link = null) {
     const match = CARD_START.exec(lines[start]);
     if (!match) return null;
     const tokens = match[1].trim().toLowerCase().split(/\s+/).filter(Boolean);
     const color = COLORS[tokens.find((token) => COLORS[token])] ?? "grey";
-    const iconName = tokens.find((token) => ICON_SHAPES2[token]);
+    const iconName = tokens.find((token) => ICON_SHAPES[token]);
     let end = start;
     const body = [];
     while (end + 1 < lines.length && /^>/.test(lines[end + 1])) body.push(lines[++end].replace(/^>\s?/, ""));
     if (link) body.splice(0, body.length, ...body.map((line) => link(line)));
     while (body.length && !body[body.length - 1].trim()) body.pop();
-    const icon2 = iconName ? `<span class="vm-card-icon">${svg(`vm-card-svg vm-card-svg-${iconName}`, 16, ICON_SHAPES2[iconName])}</span>` : "";
+    const icon2 = iconName ? `<span class="vm-card-icon">${svg(`vm-card-svg vm-card-svg-${iconName}`, 16, ICON_SHAPES[iconName])}</span>` : "";
     const id = ID_TITLE.exec(match[2].trim());
     const head = `<div class="vm-card vm-card-${color}"${id ? ` id="${idAnchor(id[1])}"` : ""}><div class="vm-card-head">${icon2}<span class="vm-card-title">${inline(match[2].trim())}</span></div>`;
     const output = body.length ? [`${head}<div class="vm-card-body">`, "", ...body, "", "</div></div>", ""] : [`${head}</div>`, ""];

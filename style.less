@@ -591,7 +591,7 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
   .vm-group-count { margin-left: 2px; font-weight: 400; color: var(--vm-muted); }
   .vm-group-icon { flex: none; width: 16px; height: 16px; }
   .vm-group-done .vm-group-icon { color: var(--vm-success); }
-  .vm-group-ready .vm-group-title { color: var(--vm-success); }
+  .vm-group-ready .vm-group-title { color: var(--vm-muted); }
   .vm-group-running .vm-group-title { color: var(--vm-running); }
   .vm-group-waiting .vm-group-title { color: var(--vm-warning); }
   .vm-group-p1 .vm-group-title { background: var(--vm-p1-fill); color: var(--vm-p1); }
@@ -620,9 +620,14 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
   summary.vm-row { cursor: pointer; &:hover { background: var(--vm-surface); } }
   summary.vm-row:focus-visible { outline: 2px solid var(--vm-running); outline-offset: -2px; }
   .vm-status-icon { flex: none; align-self: flex-start; margin-top: 3px; color: var(--vm-muted); }
-  .vm-can-start .vm-status-icon, .vm-done .vm-status-icon { color: var(--vm-success); }
-  .vm-running .vm-status-icon { color: var(--vm-running); }
-  .vm-waiting .vm-status-icon { color: var(--vm-warning); }
+  .vm-workflow { flex: none; width: 16px; align-self: flex-start; }
+  .vm-step.vm-responsibility-self { --vm-ownership: #2563eb; }
+  .vm-step.vm-responsibility-delegated { --vm-ownership: #7c3aed; }
+  .vm-step.vm-responsibility-unassigned { --vm-ownership: var(--vm-muted); }
+  .vm-step .vm-status-icon, .vm-step .vm-owner { color: var(--vm-ownership); }
+  .vm-dismissed .vm-label { color: var(--vm-muted); text-decoration: line-through; }
+  .vm-workflow-name { white-space: nowrap; }
+  .vm-ticket { font-size: 12px; color: var(--vm-muted); overflow-wrap: anywhere; }
   .vm-row-main { flex: 1 1 260px; min-width: 0; }
   .vm-label { font-weight: 500; overflow-wrap: anywhere; }
   .vm-current-status { margin-top: 4px; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; color: var(--text); }
@@ -664,6 +669,9 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
     &.vm-ref-running { color: var(--vm-running); }
     &.vm-ref-waiting { color: var(--vm-warning); }
     &.vm-ref-open { color: var(--vm-muted); }
+    &[data-responsibility="self"] { color: #2563eb; }
+    &[data-responsibility="delegated"] { color: #7c3aed; }
+    &[data-responsibility="unassigned"] { color: var(--vm-muted); }
     &:hover { border-color: currentColor; }
   }
   .vm-row-end { display: flex; align-items: center; gap: 8px; margin-left: auto; min-width: 0; }
@@ -845,4 +853,11 @@ body.vscode-dark .markdown-preview.markdown-preview .vm-chart {
     .vm-group-title { break-after: avoid; }
     .vm-copy { display: none !important; }
   }
+}
+
+body.vscode-dark .markdown-preview.markdown-preview {
+  .vm-step.vm-responsibility-self { --vm-ownership: #7bb2ff; }
+  .vm-step.vm-responsibility-delegated { --vm-ownership: #c4a1ff; }
+  .vm-dep[data-responsibility="self"] { color: #7bb2ff; }
+  .vm-dep[data-responsibility="delegated"] { color: #c4a1ff; }
 }

@@ -2,6 +2,7 @@ import { readVisual } from './frontmatter.js';
 import { t } from './labels.js';
 import { STALE_DAYS, parseDate, formatDate, isStale } from './dates.js';
 import { parseSteps } from './steps/parse.js';
+import { isDismissed } from './steps/schema.js';
 import { validateSteps } from './steps/compute.js';
 import { BLOCKS } from './blocks/index.js';
 import { HEADING } from './sections.js';
@@ -57,9 +58,11 @@ export function checkMarkdown(markdown, { path = '', today = new Date() } = {}) 
         for (const error of errors) findings.push({ level: 'error', line: error.line, message: error.message });
         for (const step of steps) {
           if (!step.updated) add('warning', step.line, 'checkStepDate', { id: step.id });
-          else checkDate(step.updated, step.line, `\`${step.id}\``, step.state !== 'done');
+          else checkDate(step.updated, step.line, `\`${step.id}\``, step.state !== 'done' && !isDismissed(step));
           if (step.state === 'running' && !step.status) add('warning', step.line, 'checkStepStatus', { id: step.id });
-          if (step.state !== 'done' && !step.description) add('warning', step.line, 'checkStepDescription', { id: step.id });
+          if (step.ticket && !step.ticketStatus) add('warning', step.line, 'checkTicketStatus', { id: step.id });
+          if (step.responsibility === 'delegated' && !step.who) add('warning', step.line, 'checkDelegatedOwner', { id: step.id });
+          if (step.state !== 'done' && !isDismissed(step) && !step.description) add('warning', step.line, 'checkStepDescription', { id: step.id });
         }
       } else if (BLOCKS[kind]) {
         uses = true;

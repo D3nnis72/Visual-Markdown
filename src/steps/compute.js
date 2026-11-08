@@ -1,3 +1,4 @@
+import { WORKFLOWS, isDismissed } from './schema.js';
 import { t } from '../labels.js';
 
 export function validateSteps(steps, lang) {
@@ -8,6 +9,11 @@ export function validateSteps(steps, lang) {
     else byId.set(step.id, step);
   }
   for (const step of steps) {
+    const workflow = WORKFLOWS[step.workflow];
+    if (workflow && workflow.state !== step.state) errors.push({ line: step.line, message: t(lang, 'errWorkflowCheckbox', { workflow: step.workflow }) });
+    if (workflow && step.waitingFor && step.workflow !== 'on-hold') errors.push({ line: step.line, message: t(lang, 'errWorkflowWaiting') });
+    if (step.ticket && !/^\[[^\]]+\]\(https?:\/\/[^)\s]+\)$/.test(step.ticket)) errors.push({ line: step.line, message: t(lang, 'errTicketLink') });
+    if ((step.ticketStatus || step.ticketOwner) && !step.ticket) errors.push({ line: step.line, message: t(lang, 'errTicketMissing') });
     for (const id of step.after) {
       if (!byId.has(id)) errors.push({ line: step.line, message: t(lang, 'errUnknown', { id }) });
     }
@@ -37,7 +43,7 @@ export function validateSteps(steps, lang) {
 export function computeSteps(steps) {
   const byId = new Map(steps.map(step => [step.id, step]));
   const done = steps.filter(step => step.state === 'done').length;
-  const now = steps.filter(step => step.state === 'open' && !step.waitingFor
+  const now = steps.filter(step => step.state === 'open' && !isDismissed(step) && step.workflow !== 'backlog' && step.responsibility !== 'delegated' && !step.waitingFor
     && step.after.every(id => byId.get(id).state === 'done')).map(step => step.id);
   const levels = new Map();
   function level(step) {
@@ -49,8 +55,8 @@ export function computeSteps(steps) {
   }
   const waves = [];
   for (const step of steps) {
-    if (step.state === 'done') continue;
+    if (step.state === 'done' || isDismissed(step)) continue;
     (waves[level(step)] ??= []).push(step.id);
   }
-  return { done, total: steps.length, now, waves };
+  return { done, total: steps.filter(step => !isDismissed(step)).length, now, waves };
 }

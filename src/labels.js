@@ -1,7 +1,9 @@
 const labels = {
   de: {
     progress: '{done} von {total} fertig', done: 'fertig', running: 'läuft',
-    currentStatus: 'Aktueller Stand',
+    currentStatus: 'Aktueller Stand', responsibility_self: 'Bei mir', responsibility_delegated: 'Abgegeben', responsibility_unassigned: 'Nicht zugeordnet', responsibility_neutral: 'Neutral', ticketOwner: 'Ticket bei {who}',
+    errWorkflowWaiting: 'waiting-for benötigt den Fortschritt on-hold',
+    errWorkflowCheckbox: 'Fortschritt „{workflow}“ widerspricht dem Checkbox-Zustand', errTicketLink: 'ticket erwartet einen Markdown-Link mit http(s)-URL', errTicketMissing: 'ticket-status und ticket-owner benötigen einen ticket-Link',
     group_ready: 'Kann starten', group_running: 'Läuft', group_later: 'Geplant',
     group_waiting: 'Wartet', group_done: 'Fertig', and: 'und', goal: 'Ziel', description: 'Beschreibung',
     lineNext: 'Als Nächstes', lineNeeds: 'Braucht', dependencies: 'Dependencies', identifier: 'Feste Kennung',
@@ -22,6 +24,8 @@ const labels = {
     checkBadDate: '„{value}“ ist kein Datum im Format JJJJ-MM-TT', checkStale: '{what} ist älter als {days} Tage ({date})',
     checkShare: 'Datei liegt unter Customers/, aber `share: intern` fehlt', checkShareValue: '`share: {value}` kennt der Renderer nicht, gemeint ist wohl `intern`',
     checkSectionDate: 'Abschnitt `{id}` hat kein `updated=`', checkSectionDuplicate: 'Kennung `{id}` gibt es zweimal',
+    checkTicketStatus: 'Schritt `{id}` mit Ticket hat keinen nachgelesenen `ticket-status`',
+    checkDelegatedOwner: 'Abgegebener Schritt `{id}` hat keinen `owner`',
     checkStepStatus: 'Laufender Schritt `{id}` hat keinen konkreten `status` mit aktuellem Arbeitsstand',
     checkStepDate: 'Schritt `{id}` hat kein `updated`', checkStepDescription: 'Schritt `{id}` hat keine Beschreibung in der Zeile darunter',
     checkCardWord: '`{word}` ist weder Icon noch Farbe einer Karte', checkBadge: 'Badge-Farbe `{color}` gibt es nicht, erlaubt sind {list}',
@@ -43,7 +47,9 @@ const labels = {
   },
   en: {
     progress: '{done} of {total} done', done: 'done', running: 'running',
-    currentStatus: 'Current status',
+    currentStatus: 'Current status', responsibility_self: 'Mine', responsibility_delegated: 'Delegated', responsibility_unassigned: 'Unassigned', responsibility_neutral: 'Neutral', ticketOwner: 'Ticket assigned to {who}',
+    errWorkflowWaiting: 'waiting-for requires the on-hold workflow',
+    errWorkflowCheckbox: 'Workflow “{workflow}” conflicts with the checkbox state', errTicketLink: 'ticket expects a Markdown link with an http(s) URL', errTicketMissing: 'ticket-status and ticket-owner require a ticket link',
     group_ready: 'Ready', group_running: 'In progress', group_later: 'Planned',
     group_waiting: 'Waiting', group_done: 'Done', and: 'and', goal: 'Goal', description: 'Description',
     lineNext: 'Next', lineNeeds: 'Needs', dependencies: 'Dependencies', identifier: 'Stable identifier',
