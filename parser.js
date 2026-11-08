@@ -113,7 +113,6 @@ var __visualMarkdown = (() => {
       group_p2: "P2 \xB7 Wichtig",
       group_p3: "P3 \xB7 Sp\xE4ter",
       group_none: "Noch nicht eingestuft",
-      why: "Warum",
       see: "Mehr dazu",
       shareInternal: "Intern",
       watermarkNote: "nicht weitergeben",
@@ -215,7 +214,6 @@ var __visualMarkdown = (() => {
       group_p2: "P2 \xB7 Important",
       group_p3: "P3 \xB7 Later",
       group_none: "Not ranked yet",
-      why: "Why",
       see: "More",
       shareInternal: "Internal",
       watermarkNote: "do not share",
@@ -561,7 +559,7 @@ var __visualMarkdown = (() => {
         updatedBadge(step.updated, lang, today)
       ].join("");
       const body = [
-        step.description ? field("description", prioritized ? "why" : "description", inline(step.description)) : "",
+        step.description ? field("description", "description", inline(step.description)) : "",
         step.next && (state === "running" || group === "ready" || prioritized && state !== "done") ? field("next", "lineNext", inline(step.next)) : "",
         step.doneWhen && state !== "done" ? field("goal", "goal", inline(step.doneWhen)) : "",
         step.see ? field("see", "see", inline(step.see)) : "",

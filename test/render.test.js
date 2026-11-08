@@ -98,7 +98,7 @@ test('groups by priority when a block uses it, keeps the status icon and opens P
   const urgent = row(html, 'urgent');
   assert.match(urgent, /<details class="vm-row-details" open>/);
   assert.match(urgent, /vm-status-icon vm-icon-running/);
-  assert.match(urgent, caption('Warum', 'Weil es eilt\\.'));
+  assert.match(urgent, caption('Beschreibung', 'Weil es eilt\\.'));
   assert.match(urgent, caption('Mehr dazu', '<a href="01_x\\.md#a">Thema</a>'));
   // P2 shows its next step although it is only planned, but stays closed.
   const mid = row(html, 'mid');
@@ -107,16 +107,23 @@ test('groups by priority when a block uses it, keeps the status icon and opens P
   assert.doesNotMatch(row(html, 'old'), / open>/);
 });
 
-test('keeps current status and its ticket link in the visible row, outside Why', () => {
+test('keeps current status and its ticket link in the visible row, separate from Description', () => {
   const item = row(run('- [~] a: Fix | status: [Ticket](https://example.com/123) assigned; retest pending | priority: P1\n  Wrong dates confuse suppliers.'), 'a');
   const summary = item.slice(0, item.indexOf('</summary>'));
   assert.match(summary, /class="vm-current-status"/);
   assert.match(summary, /Aktueller Stand:/);
   assert.match(summary, /href="https:\/\/example.com\/123"/);
-  assert.match(item.slice(item.indexOf('vm-row-body')), caption('Warum', 'Wrong dates confuse suppliers\\.'));
+  assert.match(item.slice(item.indexOf('vm-row-body')), caption('Beschreibung', 'Wrong dates confuse suppliers\\.'));
 });
 test('shows the computed state when no current status was written', () => {
   assert.match(row(run('- [ ] a: A'), 'a'), /Aktueller Stand:<\/span> Kann starten/);
   const html = transform('---\nvisual:\n  lang: en\n---\n' + fence('- [~] a: A'));
   assert.match(row(html, 'a'), /Current status:<\/span> In progress/);
+});
+
+
+test('uses Description for prioritized English rows too', () => {
+  const html = transform('---\nvisual:\n  lang: en\n---\n' + fence('- [ ] a: A | priority: P1\n  Context'));
+  assert.match(row(html, 'a'), caption('Description', 'Context'));
+  assert.doesNotMatch(row(html, 'a'), />Why<|>Warum</);
 });

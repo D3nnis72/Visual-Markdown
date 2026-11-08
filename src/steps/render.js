@@ -61,7 +61,7 @@ export function renderSteps(steps, computed, lang, { idPrefix = 'vm-steps', toda
       updatedBadge(step.updated, lang, today),
     ].join('');
     const body = [
-      step.description ? field('description', prioritized ? 'why' : 'description', inline(step.description)) : '',
+      step.description ? field('description', 'description', inline(step.description)) : '',
       step.next && (state === 'running' || group === 'ready' || (prioritized && state !== 'done')) ? field('next', 'lineNext', inline(step.next)) : '',
       step.doneWhen && state !== 'done' ? field('goal', 'goal', inline(step.doneWhen)) : '',
       step.see ? field('see', 'see', inline(step.see)) : '',
