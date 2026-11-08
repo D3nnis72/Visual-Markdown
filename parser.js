@@ -568,6 +568,7 @@ var __visualMarkdown = (() => {
 
   // src/steps/render.js
   var icon = (key, className = "vm-group-icon") => svg(`${className} vm-icon-${key}`, 16, progressShapes[key] ?? PRIORITY_SHAPES[key]);
+  var sameText = (left, right) => left?.trim().replace(/\s+/g, " ").toLowerCase() === right?.trim().replace(/\s+/g, " ").toLowerCase();
   var threadLabel = (reference, lang) => /^\[Thread:\s*([^;\]]+)/.exec(reference)?.[1].trim() || t(lang, "thread");
   function renderSteps(steps, computed, lang, { idPrefix = "vm-steps", today = /* @__PURE__ */ new Date(), sections = /* @__PURE__ */ new Set() } = {}) {
     const byId = new Map(steps.map((step) => [step.id, step]));
@@ -599,8 +600,10 @@ var __visualMarkdown = (() => {
       const currentStatus = `<div class="vm-current-status"><span class="vm-current-status-label">${escapeHtml(t(lang, "currentStatus"))}:</span> ${inline(step.status || progressLabels[group])}</div>`;
       const summary = !step.status && step.description ? `<div class="vm-summary">${inline(step.description)}</div>` : "";
       const ownerIcon = step.who && /^agent\b/i.test(step.who) ? AGENT_ICON : PERSON_ICON;
-      const owner = badge(`vm-owner${step.who && /^agent\b/i.test(step.who) ? " vm-agent" : ""}`, ownerIcon, `${escapeHtml(ownershipLabel)}${step.who ? ` \xB7 ${inline(step.who)}` : ""}`);
-      const ticket = step.ticket ? `<span class="vm-ticket">${inline(step.ticket)}${step.ticketStatus ? ` \xB7 ${escapeHtml(step.ticketStatus)}` : ""}${step.ticketOwner ? ` \xB7 ${escapeHtml(t(lang, "ticketOwner", { who: step.ticketOwner }))}` : ""}</span>` : "";
+      const owner = badge(`vm-owner${step.who && /^agent\b/i.test(step.who) ? " vm-agent" : ""}`, ownerIcon, step.who ? inline(step.who) : escapeHtml(t(lang, "responsibility_unassigned")), ownershipLabel);
+      const showTicketStatus = step.ticketStatus && !sameText(step.ticketStatus, workflowLabel);
+      const showTicketOwner = step.ticketOwner && !sameText(step.ticketOwner, step.who);
+      const ticket = step.ticket ? `<span class="vm-ticket">${inline(step.ticket)}${showTicketStatus ? ` \xB7 ${escapeHtml(step.ticketStatus)}` : ""}${showTicketOwner ? ` \xB7 ${escapeHtml(t(lang, "ticketOwner", { who: step.ticketOwner }))}` : ""}</span>` : "";
       const meta = [
         ...pending.map(dependency),
         owner,

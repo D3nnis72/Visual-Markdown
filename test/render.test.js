@@ -69,10 +69,10 @@ test('translates labels and escapes text and attributes', () => {
 });
 test('marks agent owners and shows the thread title', () => {
   const html = run('- [~] a: A | owner: Agent | thread: [Thread: Anreicherung ausführen; ref=thread_abc-123]\n- [ ] b: B | owner: Team');
-  assert.match(row(html, 'a'), /<span class="vm-badge vm-owner vm-agent"[^>]*><svg class="vm-agent-icon"[\s\S]*?<\/svg>Neutral · Agent<\/span>/);
+  assert.match(row(html, 'a'), /<span class="vm-badge vm-owner vm-agent"[^>]*><svg class="vm-agent-icon"[\s\S]*?<\/svg>Agent<\/span>/);
   assert.match(row(html, 'a'), /<span class="vm-badge vm-thread"[^>]*><svg class="vm-thread-icon"[\s\S]*?<\/svg>Anreicherung ausführen<\/span>/);
   assert.match(row(html, 'a'), /data-copy-thread="\[Thread: Anreicherung ausführen; ref=thread_abc-123\]"/);
-  assert.match(row(html, 'b'), /<span class="vm-badge vm-owner"[^>]*><svg class="vm-person-icon"[\s\S]*?<\/svg>Neutral · Team<\/span>/);
+  assert.match(row(html, 'b'), /<span class="vm-badge vm-owner"[^>]*><svg class="vm-person-icon"[\s\S]*?<\/svg>Team<\/span>/);
 });
 test('puts the copy button in the row between badges and chevron', () => {
   const item = row(run('- [~] run: A | next: B'), 'run');

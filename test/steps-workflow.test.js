@@ -49,16 +49,34 @@ test('a completed Linear fix does not complete a pending self-owned retest', () 
   assert.match(html, /Nino/);
 });
 
-test('same review symbol uses separate self/delegated ownership and visible labels', () => {
+test('same review symbol uses ownership colours and names without visible ownership prefixes', () => {
   const html = render('- [~] own: Own | workflow: review | responsibility: self | owner: Dennis\n- [~] other: Other | workflow: review | responsibility: delegated | owner: Nino\n- [ ] unknown: Unknown');
   assert.equal((html.match(/vm-status-icon vm-icon-review/g) ?? []).length, 2);
   assert.match(html, /vm-responsibility-self/);
   assert.match(html, /vm-responsibility-delegated/);
   assert.match(html, /vm-responsibility-unassigned/);
-  assert.match(html, /Bei mir/);
-  assert.match(html, /Abgegeben/);
-  assert.match(html, /Nicht zugeordnet/);
+  const owners = [...html.matchAll(/<span class="vm-badge vm-owner"[^>]*><svg[\s\S]*?<\/svg>(.*?)<\/span>/g)].map(match => match[1]);
+  assert.deepEqual(owners, ['Nicht zugeordnet', 'Dennis', 'Nino']);
   assert.match(html, /In Review/);
+});
+
+test('ticket metadata shows only differences from the displayed workflow and owner', () => {
+  const cases = [
+    ['todo', 'Todo', 'Nico', 'Nico', ''],
+    ['in-progress', 'In Progress', 'Nico', 'Nico', ''],
+    ['review', 'In Review', 'Nico', 'Nico', ''],
+    ['todo', 'TODO', 'Nico', 'nico', ''],
+    ['todo', 'Staging', 'Dennis', 'Nino', ' · Staging · Ticket bei Nino'],
+    ['todo', 'Todo', 'Dennis', 'Nino', ' · Ticket bei Nino'],
+    ['todo', 'Staging', 'Dennis', 'Dennis', ' · Staging'],
+    ['done', 'Done (Eng)', 'Nico', 'Nico', ' · Done (Eng)'],
+  ];
+  for (const [workflow, status, owner, ticketOwner, suffix] of cases) {
+    const checkbox = workflow === 'done' ? 'x' : workflow === 'todo' ? ' ' : '~';
+    const html = render(`- [${checkbox}] fix: Fix | workflow: ${workflow} | owner: ${owner} | status: Geprüfter Stand | ticket: [ASK-1](https://linear.app/lio/issue/ASK-1) | ticket-status: ${status} | ticket-owner: ${ticketOwner}`);
+    const ticket = html.match(/<span class="vm-ticket">([\s\S]*?)<\/span>/)[1];
+    assert.equal(ticket, `<a href="https://linear.app/lio/issue/ASK-1">ASK-1</a>${suffix}`, `${workflow}, ${status}, ${owner}, ${ticketOwner}`);
+  }
 });
 
 test('implicit progress stays Todo regardless of responsibility', () => {
