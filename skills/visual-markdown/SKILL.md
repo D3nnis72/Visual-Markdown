@@ -40,17 +40,17 @@ The opening paragraph names the overall goal, the current obstacle and what rema
 Use this recipe for problem and review lists:
 
 1. **Title: `<Agent or product> → <page or section>: <concrete problem>`.** Use the actual names from the interface. For tasks, put the concrete outcome after the colon. If a screenshot does not identify the page, say that its exact location is not yet confirmed and use only the known area.
-2. **Description: current behaviour and its consequence, then the desired behaviour.** Usually two or three short sentences suffice. The first sentence must make sense on its own in the collapsed list. Name a specific remaining check when a partial fix changes the scope.
+2. **Description: current work state, problem and consequence, then desired result and remaining work.** Every entry, in every state, starts with the latest known work state: what has been investigated, assigned, implemented, released and tested, as applicable. Include the evidence date and environment for a reported release or test. State which of these facts are unknown. A report that a fix is “live” without an environment establishes a reported deployment only; keep the environment unknown rather than assuming production. Then explain the problem and desired result. Usually three or four short sentences suffice. The first sentence must make sense on its own in the collapsed list. A running entry states what is already done and what keeps it running, such as a deployed fix awaiting a portal/Excel/comparison retest. The expanded description is the current status as well as the reason, even when its UI label is “Warum”.
 3. **Action and evidence:** put a distinct next action in `next:`, known responsibility in `owner:`, and details or evidence in `see:`. These supplement the problem and desired result. An agreement about who may work on it is not the problem description.
 
 ```steps
 - [ ] coverage: Procurement Agent → RFQ → Supplier overview: Offer totals omit item coverage | priority: P1 | see: [Details](details.md#coverage) | updated: 2026-11-06
-  A partial offer can appear cheaper because its total does not show how many requested items were priced. Show priced versus requested items beside the total, with declined and unanswered items distinguishable.
+  Observed in staging on November 6; implementation and release are not yet confirmed. A partial offer can appear cheaper because its total does not show how many requested items were priced. Show priced versus requested items beside the total, with declined and unanswered items distinguishable. Retest coverage against the submitted lines.
 ```
 
 Split a collection of issues when they occur on different pages or can be completed independently. Preserve existing step IDs and links when rewriting. Keep one entry for each problem, with confirmed improvements and the remaining scope together. A repaired example, changed template or reported fix does not establish that the whole flow works.
 
-In a priority overview, explain what makes a problem urgent and order entries by priority, with related problems together within each group. If urgency is not established, leave it unclassified. Before finishing, compare the overview with the newest evidence and detail pages, replacing stale claims while preserving their factual test dates. Check every entry for location, problem, consequence and desired result.
+In a priority overview, explain what makes a problem urgent and order entries by priority, with related problems together within each group. If urgency is not established, leave it unclassified. Before finishing, compare the overview with the newest evidence and detail pages, replacing stale claims while preserving their factual test dates. Check every entry for current work state, location, problem, consequence, desired result and remaining work. Read the expanded details alone: they must answer “where does this stand now?” without relying on the status icon or a linked page. Updating the summary from existing evidence does not make an old observation a new live test.
 
 ## Dates mean "content last changed or confirmed"
 
