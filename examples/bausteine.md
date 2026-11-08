@@ -48,7 +48,7 @@ Der Block enthält jeden Zustand und jedes Feld. Die Beschreibungen sagen, worau
 ```steps
 - [x] daten: Rechnungen auslesen | owner: Team | updated: 2026-10-27
   Die Rechnungen aus dem Export sind ausgelesen und den richtigen Lieferanten zugeordnet. Fertige Schritte zeigen ihre Beschreibung grau und kein Ziel mehr.
-- [~] anreichern: Positionen anreichern | owner: Agent | thread: [Thread: Positionen anreichern; ref=thread_beispiel] | next: Stichprobe ziehen und offene Felder klären | done-when: jede Position hat Maß, Material und Einheit | after: daten | updated: 2026-11-01
+- [~] anreichern: Positionen anreichern | status: [Ticket](https://example.com/issues/123) ist angelegt. Rechnungen sind zugeordnet, Stichprobe und Übernahme stehen aus. | owner: Agent | thread: [Thread: Positionen anreichern; ref=thread_beispiel] | next: Stichprobe ziehen und offene Felder klären | done-when: jede Position hat Maß, Material und Einheit | after: daten | updated: 2026-11-01
   Ein Agent ergänzt fehlende Angaben wie Maße, Material und Einheit. Unten stehen Agent-Icon und Thread. Der Kopierknopf rechts kopiert Pfad, Kennung und Thread.
 - [ ] doku: Vorgehen dokumentieren | owner: Dennis | next: Gliederung anlegen | updated: 2026-10-31
   Hält fest, wie die Daten entstanden sind. Der Schritt hat keine offenen Abhängigkeiten und steht deshalb unter „Kann starten“.

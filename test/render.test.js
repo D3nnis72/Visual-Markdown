@@ -106,3 +106,17 @@ test('groups by priority when a block uses it, keeps the status icon and opens P
   assert.match(mid, caption('Als Nächstes', 'Später prüfen'));
   assert.doesNotMatch(row(html, 'old'), / open>/);
 });
+
+test('keeps current status and its ticket link in the visible row, outside Why', () => {
+  const item = row(run('- [~] a: Fix | status: [Ticket](https://example.com/123) assigned; retest pending | priority: P1\n  Wrong dates confuse suppliers.'), 'a');
+  const summary = item.slice(0, item.indexOf('</summary>'));
+  assert.match(summary, /class="vm-current-status"/);
+  assert.match(summary, /Aktueller Stand:/);
+  assert.match(summary, /href="https:\/\/example.com\/123"/);
+  assert.match(item.slice(item.indexOf('vm-row-body')), caption('Warum', 'Wrong dates confuse suppliers\\.'));
+});
+test('shows the computed state when no current status was written', () => {
+  assert.match(row(run('- [ ] a: A'), 'a'), /Aktueller Stand:<\/span> Kann starten/);
+  const html = transform('---\nvisual:\n  lang: en\n---\n' + fence('- [~] a: A'));
+  assert.match(row(html, 'a'), /Current status:<\/span> In progress/);
+});

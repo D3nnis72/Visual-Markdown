@@ -25,6 +25,7 @@ test('warns about missing and old dates, descriptions and an as-of behind the co
     '10 warning Schritt `a` hat kein `updated`',
     '10 warning Schritt `a` hat keine Beschreibung in der Zeile darunter',
     '11 warning `b` ist älter als 7 Tage (2. Oktober 2026)',
+    '11 warning Laufender Schritt `b` hat keinen konkreten `status` mit aktuellem Arbeitsstand',
   ]);
 });
 test('asks for share: intern under Customers and flags unknown words', () => {

@@ -6,7 +6,7 @@ const parse = body => parseSteps(body, 1, 'de').steps;
 
 test('parses state, id, label and fields', () => {
   assert.deepEqual(parseSteps('- [!] sa: Startauswahl klären | waiting-for: Rückmeldung | owner: Kunde | since: 30. Oktober', 5, 'de'), {
-    steps: [{ id: 'sa', state: 'waiting', label: 'Startauswahl klären', after: [], waitingFor: 'Rückmeldung', who: 'Kunde', doneWhen: null, since: '30. Oktober', next: null, description: null, thread: null, updated: null, priority: null, see: null, line: 5 }], errors: [],
+    steps: [{ id: 'sa', state: 'waiting', label: 'Startauswahl klären', after: [], waitingFor: 'Rückmeldung', who: 'Kunde', doneWhen: null, since: '30. Oktober', next: null, description: null, thread: null, updated: null, priority: null, see: null, status: null, line: 5 }], errors: [],
   });
 });
 test('splits after into ids', () => assert.deepEqual(parse('- [ ] c: C | after: a, b')[0].after, ['a', 'b']));

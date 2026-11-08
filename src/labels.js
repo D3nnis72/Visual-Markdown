@@ -1,6 +1,7 @@
 const labels = {
   de: {
     progress: '{done} von {total} fertig', done: 'fertig', running: 'läuft',
+    currentStatus: 'Aktueller Stand',
     group_ready: 'Kann starten', group_running: 'Läuft', group_later: 'Geplant',
     group_waiting: 'Wartet', group_done: 'Fertig', and: 'und', goal: 'Ziel', description: 'Beschreibung',
     lineNext: 'Als Nächstes', lineNeeds: 'Braucht', dependencies: 'Dependencies', identifier: 'Feste Kennung',
@@ -21,6 +22,7 @@ const labels = {
     checkBadDate: '„{value}“ ist kein Datum im Format JJJJ-MM-TT', checkStale: '{what} ist älter als {days} Tage ({date})',
     checkShare: 'Datei liegt unter Customers/, aber `share: intern` fehlt', checkShareValue: '`share: {value}` kennt der Renderer nicht, gemeint ist wohl `intern`',
     checkSectionDate: 'Abschnitt `{id}` hat kein `updated=`', checkSectionDuplicate: 'Kennung `{id}` gibt es zweimal',
+    checkStepStatus: 'Laufender Schritt `{id}` hat keinen konkreten `status` mit aktuellem Arbeitsstand',
     checkStepDate: 'Schritt `{id}` hat kein `updated`', checkStepDescription: 'Schritt `{id}` hat keine Beschreibung in der Zeile darunter',
     checkCardWord: '`{word}` ist weder Icon noch Farbe einer Karte', checkBadge: 'Badge-Farbe `{color}` gibt es nicht, erlaubt sind {list}',
     checkAsOfOld: '`as-of` ist älter als das neueste `updated` ({date})',
@@ -41,6 +43,7 @@ const labels = {
   },
   en: {
     progress: '{done} of {total} done', done: 'done', running: 'running',
+    currentStatus: 'Current status',
     group_ready: 'Ready', group_running: 'In progress', group_later: 'Planned',
     group_waiting: 'Waiting', group_done: 'Done', and: 'and', goal: 'Goal', description: 'Description',
     lineNext: 'Next', lineNeeds: 'Needs', dependencies: 'Dependencies', identifier: 'Stable identifier',
@@ -61,6 +64,7 @@ const labels = {
     checkBadDate: '"{value}" is not a date in the form YYYY-MM-DD', checkStale: '{what} is older than {days} days ({date})',
     checkShare: 'file is under Customers/ but `share: intern` is missing', checkShareValue: 'the renderer does not know `share: {value}`, use `intern`',
     checkSectionDate: 'section `{id}` has no `updated=`', checkSectionDuplicate: 'id `{id}` is used twice',
+    checkStepStatus: 'in-progress step `{id}` has no concrete `status` describing current progress',
     checkStepDate: 'step `{id}` has no `updated`', checkStepDescription: 'step `{id}` has no description on the line below',
     checkCardWord: '`{word}` is neither an icon nor a color of a card', checkBadge: 'badge color `{color}` does not exist, use {list}',
     checkAsOfOld: '`as-of` is older than the newest `updated` ({date})',

@@ -48,7 +48,8 @@ export function renderSteps(steps, computed, lang, { idPrefix = 'vm-steps', toda
     const since = step.since ? inline(t(lang, 'since', { when: step.since })) : '';
     const showNeed = state === 'waiting' && step.waitingFor;
     const need = showNeed ? `<div class="vm-need">${CAPTION_ICONS.needs}${inline(step.waitingFor)}${since ? `, ${since}` : ''}</div>` : '';
-    const summary = step.description ? `<div class="vm-summary">${inline(step.description)}</div>` : '';
+    const currentStatus = `<div class="vm-current-status"><span class="vm-current-status-label">${escapeHtml(t(lang, 'currentStatus'))}:</span> ${inline(step.status || t(lang, `group_${group}`))}</div>`;
+    const summary = !step.status && step.description ? `<div class="vm-summary">${inline(step.description)}</div>` : '';
     const owner = step.who && (/^agent\b/i.test(step.who)
       ? badge('vm-owner vm-agent', AGENT_ICON, inline(step.who))
       : badge('vm-owner', PERSON_ICON, inline(step.who)));
@@ -67,7 +68,7 @@ export function renderSteps(steps, computed, lang, { idPrefix = 'vm-steps', toda
       sections.has(step.id) ? `<a class="vm-section-link" href="#vm-section-${escapeHtml(step.id)}">${SECTION_ICON}${escapeHtml(t(lang, 'sectionLink'))}</a>` : '',
     ].join('');
     const copy = copyButton({ id: step.id, thread: step.thread, lang, label: t(lang, 'copyStep', { id: step.id }) });
-    const head = `${icon(group, 'vm-status-icon')}<div class="vm-row-main"><div class="vm-label">${inline(step.label)}</div>${summary}${need}</div><div class="vm-row-end"><div class="vm-meta">${meta}</div>${copy}`;
+    const head = `${icon(group, 'vm-status-icon')}<div class="vm-row-main"><div class="vm-label">${inline(step.label)}</div>${summary}${currentStatus}${need}</div><div class="vm-row-end"><div class="vm-meta">${meta}</div>${copy}`;
     const row = body
       ? `<details class="vm-row-details"${step.priority === 'P1' && state !== 'done' ? ' open' : ''}><summary class="vm-row">${head}<span class="vm-chevron">${CHEVRON_ICON}</span></div></summary><div class="vm-row-body">${body}</div></details>`
       : `<div class="vm-row">${head}<span class="vm-chevron"></span></div></div>`;

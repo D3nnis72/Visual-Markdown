@@ -69,6 +69,7 @@ var __visualMarkdown = (() => {
       progress: "{done} von {total} fertig",
       done: "fertig",
       running: "l\xE4uft",
+      currentStatus: "Aktueller Stand",
       group_ready: "Kann starten",
       group_running: "L\xE4uft",
       group_later: "Geplant",
@@ -133,6 +134,7 @@ var __visualMarkdown = (() => {
       checkShareValue: "`share: {value}` kennt der Renderer nicht, gemeint ist wohl `intern`",
       checkSectionDate: "Abschnitt `{id}` hat kein `updated=`",
       checkSectionDuplicate: "Kennung `{id}` gibt es zweimal",
+      checkStepStatus: "Laufender Schritt `{id}` hat keinen konkreten `status` mit aktuellem Arbeitsstand",
       checkStepDate: "Schritt `{id}` hat kein `updated`",
       checkStepDescription: "Schritt `{id}` hat keine Beschreibung in der Zeile darunter",
       checkCardWord: "`{word}` ist weder Icon noch Farbe einer Karte",
@@ -169,6 +171,7 @@ var __visualMarkdown = (() => {
       progress: "{done} of {total} done",
       done: "done",
       running: "running",
+      currentStatus: "Current status",
       group_ready: "Ready",
       group_running: "In progress",
       group_later: "Planned",
@@ -233,6 +236,7 @@ var __visualMarkdown = (() => {
       checkShareValue: "the renderer does not know `share: {value}`, use `intern`",
       checkSectionDate: "section `{id}` has no `updated=`",
       checkSectionDuplicate: "id `{id}` is used twice",
+      checkStepStatus: "in-progress step `{id}` has no concrete `status` describing current progress",
       checkStepDate: "step `{id}` has no `updated`",
       checkStepDescription: "step `{id}` has no description on the line below",
       checkCardWord: "`{word}` is neither an icon nor a color of a card",
@@ -387,7 +391,8 @@ var __visualMarkdown = (() => {
     thread: "thread",
     updated: "updated",
     priority: "priority",
-    see: "see"
+    see: "see",
+    status: "status"
   };
   var LEGACY_FIELDS = {
     nach: "after",
@@ -435,6 +440,7 @@ var __visualMarkdown = (() => {
         updated: null,
         priority: null,
         see: null,
+        status: null,
         line
       };
       for (const field of fields) {
@@ -544,7 +550,8 @@ var __visualMarkdown = (() => {
       const since = step.since ? inline(t(lang, "since", { when: step.since })) : "";
       const showNeed = state === "waiting" && step.waitingFor;
       const need = showNeed ? `<div class="vm-need">${CAPTION_ICONS.needs}${inline(step.waitingFor)}${since ? `, ${since}` : ""}</div>` : "";
-      const summary = step.description ? `<div class="vm-summary">${inline(step.description)}</div>` : "";
+      const currentStatus = `<div class="vm-current-status"><span class="vm-current-status-label">${escapeHtml(t(lang, "currentStatus"))}:</span> ${inline(step.status || t(lang, `group_${group}`))}</div>`;
+      const summary = !step.status && step.description ? `<div class="vm-summary">${inline(step.description)}</div>` : "";
       const owner = step.who && (/^agent\b/i.test(step.who) ? badge("vm-owner vm-agent", AGENT_ICON, inline(step.who)) : badge("vm-owner", PERSON_ICON, inline(step.who)));
       const meta = [
         ...pending.map(dependency),
@@ -561,7 +568,7 @@ var __visualMarkdown = (() => {
         sections.has(step.id) ? `<a class="vm-section-link" href="#vm-section-${escapeHtml(step.id)}">${SECTION_ICON}${escapeHtml(t(lang, "sectionLink"))}</a>` : ""
       ].join("");
       const copy = copyButton({ id: step.id, thread: step.thread, lang, label: t(lang, "copyStep", { id: step.id }) });
-      const head2 = `${icon(group, "vm-status-icon")}<div class="vm-row-main"><div class="vm-label">${inline(step.label)}</div>${summary}${need}</div><div class="vm-row-end"><div class="vm-meta">${meta}</div>${copy}`;
+      const head2 = `${icon(group, "vm-status-icon")}<div class="vm-row-main"><div class="vm-label">${inline(step.label)}</div>${summary}${currentStatus}${need}</div><div class="vm-row-end"><div class="vm-meta">${meta}</div>${copy}`;
       const row = body ? `<details class="vm-row-details"${step.priority === "P1" && state !== "done" ? " open" : ""}><summary class="vm-row">${head2}<span class="vm-chevron">${CHEVRON_ICON}</span></div></summary><div class="vm-row-body">${body}</div></details>` : `<div class="vm-row">${head2}<span class="vm-chevron"></span></div></div>`;
       return `<li id="${target(step.id)}" class="vm-step vm-${state}${group === "ready" ? " vm-can-start" : ""}">${row}</li>`;
     };

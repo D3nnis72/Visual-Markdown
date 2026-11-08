@@ -19,7 +19,7 @@ export function parseSteps(body, firstLine, lang) {
     if (!match || !Object.hasOwn(STATES, match[1])) { error('errMalformed'); return; }
     const step = {
       id: match[2], state: STATES[match[1]], label: match[3].trim(), after: [],
-      waitingFor: null, who: null, doneWhen: null, since: null, next: null, description: null, thread: null, updated: null, priority: null, see: null, line,
+      waitingFor: null, who: null, doneWhen: null, since: null, next: null, description: null, thread: null, updated: null, priority: null, see: null, status: null, line,
     };
     for (const field of fields) {
       const colon = field.indexOf(':');

@@ -58,6 +58,7 @@ export function checkMarkdown(markdown, { path = '', today = new Date() } = {}) 
         for (const step of steps) {
           if (!step.updated) add('warning', step.line, 'checkStepDate', { id: step.id });
           else checkDate(step.updated, step.line, `\`${step.id}\``, step.state !== 'done');
+          if (step.state === 'running' && !step.status) add('warning', step.line, 'checkStepStatus', { id: step.id });
           if (step.state !== 'done' && !step.description) add('warning', step.line, 'checkStepDescription', { id: step.id });
         }
       } else if (BLOCKS[kind]) {

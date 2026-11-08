@@ -4,7 +4,7 @@ export const STATES = { x: 'done', '~': 'running', '!': 'waiting', ' ': 'open' }
 export const FIELDS = {
   after: 'after', 'waiting-for': 'waitingFor', owner: 'who',
   'done-when': 'doneWhen', since: 'since', next: 'next', thread: 'thread', updated: 'updated',
-  priority: 'priority', see: 'see',
+  priority: 'priority', see: 'see', status: 'status',
 };
 // Existing documents remain readable while their source is migrated.
 export const LEGACY_FIELDS = {
