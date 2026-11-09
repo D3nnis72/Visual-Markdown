@@ -79,7 +79,9 @@
     &:hover { background: var(--vm-border); }
   }
 
-  strong { font-weight: 600; }
+  /* Basis-Themes von MPE setzen für strong eine eigene Farbe.
+     Die Textfarbe der Umgebung gilt auch für Links und Hervorhebungen. */
+  strong, b { font-weight: 600; color: inherit; }
 
   /* Listen */
   ul, ol { padding-left: 1.7em; margin: 0.2em 0; }
