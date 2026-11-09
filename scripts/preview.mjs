@@ -10,5 +10,6 @@ const transformed = transform(markdown, { today: new Date() });
 const { endLine } = readVisual(transformed);
 const content = transformed.split(/\r?\n/).slice(endLine + 1).join('\n');
 const html = new MarkdownIt({ html: true }).render(content);
+const runtime = await readFile(new URL('../visual-markdown.js', import.meta.url), 'utf8');
 const { css } = await less.render(await readFile(new URL('../style.less', import.meta.url), 'utf8'));
-await writeFile(output, `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style></head><body class="preview-container${mode === '--dark' ? ' vscode-dark' : ''}"><div class="markdown-preview" data-for="preview">${html}</div></body></html>`);
+await writeFile(output, `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style></head><body class="preview-container${mode === '--dark' ? ' vscode-dark' : ''}"><div class="markdown-preview" data-for="preview">${html}</div><script>${runtime}</script></body></html>`);

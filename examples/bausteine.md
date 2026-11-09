@@ -2,7 +2,7 @@
 visual:
   status: In Arbeit
   created: 2026-10-28
-  as-of: 2026-11-02
+  as-of: 2026-11-09
   lang: de
   share: intern
   badges: { angereichert: ok, offen: warn, fehlt: bad, läuft: info, später: muted }
@@ -19,7 +19,7 @@ Das grüne Band über diesem Abschnitt kommt aus dem Frontmatter. Es zeigt Statu
 visual:
   status: In Arbeit
   created: 2026-10-28
-  as-of: 2026-11-02
+  as-of: 2026-11-09
   lang: de
   share: intern
   badges: { angereichert: ok, offen: warn, fehlt: bad, läuft: info, später: muted }
@@ -496,3 +496,15 @@ Spend: Ausgaben für eingekaufte Waren und Leistungen in einem Zeitraum
 ```
 
 Die Definitionen müssen in derselben Datei stehen, weil der Parser keine anderen Dateien lesen kann. Ein Verweis in eine andere Datei bleibt ein normaler Link.
+
+## Nachrichten {#nachrichten updated=2026-11-09}
+
+Hinweise für Dennis stehen außerhalb des kopierbaren Textes. Der Empfänger steht in der Kopfzeile; nur der Nachrichtentext wird übernommen.
+
+```message
+to: Victor
+---
+Hi Victor, is the service-line check in [ASK-11014](https://linear.app/asklio/issue/ASK-11014) active on Covestro production?
+
+Could you confirm **which request you tested** and share its link?
+```

@@ -62,6 +62,26 @@ Für den Kopierknopf braucht MPE in den VS-Code-Einstellungen `"markdown-preview
 
 `npm test` baut `parser.js` aus `src/` und führt die Tests aus. Das Build-Ergebnis wird mitcommittet, damit die Installation ohne Node funktioniert. `install.sh` verlinkt auch `parser.js` und sichert vorhandene Dateien als `.bak`. Nach Änderungen am Parser in VS Code `Developer: Reload Window` ausführen.
 
+## message
+
+Nachrichten und Agent-Aufträge mit formatierter Vorschau und zwei Kopierknöpfen:
+
+````markdown
+```message
+to: Victor
+---
+Hi Victor, is the check in [ASK-11014](https://linear.app/asklio/issue/ASK-11014) active on production?
+
+Could you confirm which request you tested?
+```
+````
+
+`to:` ist optional und enthält nur den Empfänger. Die eigene Trennzeile `---` ist Pflicht; danach folgt der Nachrichtentext als Markdown. Absätze, Zeilenumbrüche, Listen, Hervorhebungen, Links und Code werden dargestellt. HTML bleibt sichtbarer Text, Bilder werden nicht eingebettet. Für Codeblöcke innerhalb der Nachricht außen eine längere Fence verwenden, etwa vier Backticks um drei innere.
+
+**Nachricht kopieren** schreibt nur den formatierten Inhalt als HTML und Klartext. Links bleiben im HTML anklickbar; im Klartext steht die vollständige Zieladresse neben der Beschriftung. **Markdown kopieren** übernimmt den ursprünglichen Nachrichtentext mit seiner Markdown-Syntax und seinen Abständen. Empfänger, Knöpfe und Rückmeldung werden nicht mitkopiert. Hinweise, Bedingungen und Quellenbelege deshalb außerhalb des Blocks halten; benötigte Ticket- und Datensatzlinks gehören direkt in den Nachrichtentext.
+
+Die Knöpfe erscheinen mit dem oben beschriebenen Preview-Skript. Der Browser-Fallback muss den Kopierbefehl erfolgreich ausführen, bevor „Kopiert“ erscheint. Bei blockiertem Zugriff erscheint eine Fehlermeldung; der Text bleibt manuell markierbar. Im Druck bleibt die Nachricht ohne Knöpfe erhalten. Ob ein Zielprogramm HTML übernimmt, hängt von dessen Einfügefunktion ab.
+
 ## steps
 
 Jeder Eintrag trennt Problem beziehungsweise Zweck (Beschreibung), aktuellen Arbeitsstand (`status`) und nächste Aktion (`next`). Nach Ticketanlage oder neuem Ergebnis `status` und `updated` gemeinsam nachziehen und den direkten Link in `status` aufnehmen. Ein angelegtes Ticket belegt noch keinen begonnenen Fix. Bei laufenden Einträgen ist ein konkreter Statustext Pflicht; der Checker warnt, wenn er fehlt.
@@ -304,7 +324,7 @@ npm run check -- datei.md ordner/
 node scripts/check.mjs --strict datei.md
 ```
 
-Das Check-Skript nutzt dieselben Parser wie der Renderer und braucht keine Abhängigkeiten. Fehler sind Blöcke, die im Preview als Fehlerkasten erscheinen würden. Warnungen sind fehlende Daten, offene Schritte ohne Beschreibung, Diagramme ohne `source`, ein Stand älter als sieben Tage, ein `as-of` älter als das neueste `updated`, unbekannte Wörter in Karten und Badges, doppelt definierte IDs und Begriffe und Dateien unter `Customers/` ohne `share: intern`. Der Exit-Code ist 1 bei Fehlern, mit `--strict` auch bei Warnungen. Agents lassen es nach dem Schreiben laufen, so steht es im Skill `visual-markdown`.
+Das Check-Skript nutzt dieselben Parser wie der Renderer. Im Quell-Repository dafür einmal `npm install` ausführen; die Nachrichten-Vorschau verwendet das bereits eingebundene `markdown-it`. Fehler sind Blöcke, die im Preview als Fehlerkasten erscheinen würden. Warnungen sind fehlende Daten, offene Schritte ohne Beschreibung, Diagramme ohne `source`, ein Stand älter als sieben Tage, ein `as-of` älter als das neueste `updated`, unbekannte Wörter in Karten und Badges, doppelt definierte IDs und Begriffe und Dateien unter `Customers/` ohne `share: intern`. Der Exit-Code ist 1 bei Fehlern, mit `--strict` auch bei Warnungen. Agents lassen es nach dem Schreiben laufen, so steht es im Skill `visual-markdown`.
 
 ## Mermaid-Diagramme
 
