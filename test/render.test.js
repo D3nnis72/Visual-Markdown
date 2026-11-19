@@ -13,8 +13,23 @@ test('groups rows once in ready, running, planned, waiting, done order with coun
   assert.deepEqual(groups, ['ready', 'running', 'later', 'waiting', 'done']);
   const ids = [...html.matchAll(/<li id="vm-steps-1-([^" ]+)"/g)].map(match => match[1]);
   assert.deepEqual(ids, ['docs', 'run', 'review', 'publish', 'approval', 'basis']);
-  assert.match(html, /<h3 class="vm-group-title"><svg class="vm-group-icon vm-icon-later"[^>]*>[\s\S]*?<\/svg>Backlog<span class="vm-group-count">2<\/span><\/h3>/);
+  assert.match(html, /<h3 class="vm-group-title"><svg class="vm-group-icon vm-icon-later"[^>]*>[\s\S]*?<\/svg>Backlog<span class="vm-group-count">2<\/span><span class="vm-chevron vm-group-chevron">[\s\S]*?<\/span><\/h3>/);
   assert.doesNotMatch(html, /vm-number|<ol/);
+});
+test('makes every group independently collapsible with its label and count always visible', () => {
+  for (const body of [example, '- [ ] a: Urgent | priority: P1\n- [ ] b: Other\n- [x] c: Finished']) {
+    const html = run(body);
+    const groups = [...html.matchAll(/<details class="vm-group vm-group-([^" ]+)" open><summary class="vm-group-toggle">([\s\S]*?)<\/summary><ul class="vm-steps-list">([\s\S]*?)<\/ul><\/details>/g)];
+    assert.equal(groups.length, [...html.matchAll(/class="vm-group vm-group-/g)].length);
+    assert.ok(groups.length > 1);
+    for (const [, key, summary, rows] of groups) {
+      assert.match(summary, /<h3 class="vm-group-title">/);
+      assert.match(summary, /class="vm-group-count">[1-9]/);
+      assert.match(summary, /class="vm-chevron vm-group-chevron"/);
+      assert.doesNotMatch(summary, /<li/);
+      assert.match(rows, /<li /, key);
+    }
+  }
 });
 test('shows status icon, id tag above the title and a one-line description', () => {
   const item = row(run('- [~] run: Ausführen | owner: Team\n  Wir ergänzen <fehlende> Angaben, damit `Preise` vergleichbar sind.'), 'run');

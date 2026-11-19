@@ -25,6 +25,7 @@ Not for knowledge docs that mainly agents read: those stay plain Markdown.
 | Thresholds and ranges, such as health states or tolerances | `scale` |
 | Screenshots side by side, before and after, light and dark | `gallery` |
 | A ready-to-copy message or agent prompt, with its own ticket and record links | `message`: optional `to: recipient`, separator `---`, then the exact Markdown body. Keep notes and conditions outside. The preview offers rich-text and Markdown copy |
+| Supplementary context the reader may open when needed | `toggle`: required `title:`, optional `open: true`, separator `---`, then Markdown content. Closed by default. For code fences inside, use a longer outer fence. Keep the current status and next action outside |
 | Two to four approaches with pros and cons | `compare`, at most one `| empfohlen` |
 | States in table cells | `badges:` in the front matter |
 | A topic someone will point at | `## Title {#id updated=YYYY-MM-DD}` |
@@ -62,13 +63,16 @@ When creating a ticket or updating an overview, read every relevant linked Linea
 
 If a completed fix still needs a local retest, keep the step open with the retest owner and their responsibility, while retaining the completed ticket's original status and assignee. A ticket's completion is not proof that `done-when` is met. Canceled and duplicate work does not satisfy successful prerequisites. Without a ticket, update from the observed work and confirmed assignments.
 
-Synchronise during authorised overview maintenance or an explicit refresh. A renderer load never calls Linear, and no recurring background job is implied. If access fails, retain the last verified ticket fields and the date of their last successful check in `status`, alongside the current access gap. `updated` may record today’s edit; it is not evidence of a successful ticket check. Never invent a new state.
+Synchronise during authorised overview maintenance or an explicit refresh. For automatic ticket facts, a step may explicitly opt in with `ticket-sync: true` beside its Linear `ticket` link. An installed local service discovers opted-in steps under configured project roots; no individual file registration is needed. A plain ticket link or `ticket-sync: false` does not opt in. See the README and `docs/linear-sync.md` for installation. Do not silently add sync markers or install a background service merely while formatting an overview. A renderer load never calls Linear.
+
+The service changes only `ticket-status`, `ticket-owner` and the calendar date `ticket-checked`. An unassigned ticket removes an old `ticket-owner`. Local `workflow`, checkbox, `owner`, `responsibility`, `status`, `next`, `updated` and `visual.as-of` stay unchanged, so a pending retest remains open. `ticket-checked` is source metadata only and is not displayed as a local update date. It advances on a successful check even when the facts stayed the same; subsequent unchanged checks that day do not rewrite the file. If access fails, retain the last verified facts and check date. During agent maintenance, also name the access gap in `status`. Never invent a new state.
 
 ## Dates mean "content last changed or confirmed"
 
 `updated` on a step or section and `as-of` in the front matter are the dates the content was last changed or confirmed true. They are what a reader trusts.
 
 - Changing a step or section: set its `updated` and the document's `as-of` to today.
+- Exception: the automatic service only changes ticket facts and `ticket-checked`; this does not confirm the local work or advance local dates.
 - Converting a page into the format without new facts: keep the source's date ("Stand: 30.10." becomes `2026-10-30`) for `as-of`, every `updated` and done steps. A format change is not new information.
 - A section or step you did not touch keeps its date, even when you edit the file.
 - `created` is the date the document was first written. If the source does not say, use the oldest date you know and say so in your reply.

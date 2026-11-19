@@ -80,7 +80,7 @@ export function renderSteps(steps, computed, lang, { idPrefix = 'vm-steps', toda
     return `<li id="${target(step.id)}" class="vm-step vm-${state} vm-responsibility-${responsibility}${isDismissed(step) ? ' vm-dismissed' : ''}${group === 'ready' ? ' vm-can-start' : ''}">${row}</li>`;
   };
   const rows = groups.map(group =>
-    `<section class="vm-group vm-group-${group.key}"><h3 class="vm-group-title">${icon(group.key)}${escapeHtml(progressLabels[group.key] ?? t(lang, `group_${group.key}`))}<span class="vm-group-count">${group.steps.length}</span></h3><ul class="vm-steps-list">${group.steps.map(renderRow).join('')}</ul></section>`).join('');
+    `<details class="vm-group vm-group-${group.key}" open><summary class="vm-group-toggle"><h3 class="vm-group-title">${icon(group.key)}${escapeHtml(progressLabels[group.key] ?? t(lang, `group_${group.key}`))}<span class="vm-group-count">${group.steps.length}</span><span class="vm-chevron vm-group-chevron">${CHEVRON_ICON}</span></h3></summary><ul class="vm-steps-list">${group.steps.map(renderRow).join('')}</ul></details>`).join('');
   const percent = computed.total ? Math.round(100 * computed.done / computed.total) : 0;
   const head = `<div class="vm-steps-head"><span>${escapeHtml(t(lang, 'progress', computed))}</span><span class="vm-progress"><span style="width:${percent}%"></span></span></div>`;
   return `<div class="vm-steps">${head}${rows}</div>`;

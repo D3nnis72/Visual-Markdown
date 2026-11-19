@@ -101,11 +101,66 @@
 
   /* Trennlinie */
   hr {
+    display: block;
+    width: 100%;
+    max-width: none;
     border: none;
     border-top: 1px solid var(--border);
-    margin: 1.2em 0;
+    margin: 28px 0;
+    padding: 0;
     height: 0;
     background: none;
+    &::before, &::after { content: none; }
+  }
+
+  /* Derselbe Baustein für toggle-Blöcke und bestehende HTML-Toggles.
+     Die eigenen Gruppen und Zeilen der Schrittliste bleiben unabhängig. */
+  details:is(:not([class]), .vm-toggle) {
+    margin: 12px 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--vm-table-body, transparent);
+    > summary {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 11px 14px;
+      border-radius: 9px;
+      background: var(--vm-subtle);
+      font-weight: 500;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+      list-style: none;
+      cursor: pointer;
+      &::-webkit-details-marker { display: none; }
+      &::before {
+        content: "";
+        flex: none;
+        width: 7px;
+        height: 7px;
+        margin: 7px 3px 0 0;
+        border: solid var(--muted);
+        border-width: 1.5px 1.5px 0 0;
+        transform: rotate(45deg);
+        transition: transform 150ms ease;
+      }
+      &:hover { background: var(--vm-border); }
+      &:focus-visible { outline: 2px solid var(--vm-running); outline-offset: -2px; }
+    }
+    &[open] > summary {
+      border-radius: 9px 9px 0 0;
+      border-bottom: 1px solid var(--border);
+      &::before { transform: rotate(135deg); }
+    }
+    /* Der Toggle bestimmt die äußeren Abstände seiner Kinder, auch wenn
+       ein Baustein wie .vm-message später eigene Margins setzt. */
+    > :not(summary) { margin-left: 34px; margin-right: 14px; }
+    > :last-child:not(summary) { margin-bottom: 14px; }
+    > summary + :not(summary) { margin-top: 12px; }
+    .vm-toggle-body { min-width: 0; overflow-wrap: anywhere; }
+    .vm-toggle-body > :first-child { margin-top: 0; }
+    .vm-toggle-body > :last-child { margin-bottom: 0; }
+    pre { overflow-x: auto; }
   }
 
   /* Inline-Code */
@@ -462,10 +517,18 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
   .vm-chart-legend-item { display: inline-flex; align-items: center; gap: 6px; }
   .vm-chart-legend-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
   .vm-chart-foot { display: flex; flex-direction: column; gap: 2px; margin-top: 8px; font-size: 12px; color: var(--vm-muted); }
-  /* Kennzahlen stehen flach in der Karte, nur durch eine Linie getrennt. */
-  .vm-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); row-gap: 14px; margin: 4px 0 6px; }
-  .vm-kpi { padding: 2px 18px; border-left: 1px solid var(--vm-border); }
-  .vm-kpi:first-child { padding-left: 0; border-left: 0; }
+  /* Kennzahlen: jede in einer eigenen Karte, Aussage und Grundlage stehen ohne Karte darum herum. */
+  .vm-chart-kpi { margin: 24px 0; padding: 0; background: none; border: 0; border-radius: 0; break-inside: auto; }
+  .vm-chart-kpi .vm-chart-says { margin-bottom: 12px; }
+  .vm-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin: 0; }
+  .vm-kpi {
+    padding: 14px 16px;
+    background: var(--vm-table-body);
+    border: 1px solid var(--vm-border);
+    border-radius: 12px;
+    break-inside: avoid;
+  }
+  .vm-chart-kpi .vm-chart-foot { margin-top: 12px; }
   .vm-kpi-label { font-size: 12px; color: var(--vm-muted); }
   .vm-kpi-value { margin-top: 4px; font-size: 26px; font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; }
   .vm-kpi-note { margin-top: 2px; font-size: 12px; color: var(--vm-muted); }
@@ -577,6 +640,14 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
     span { display: block; height: 100%; background: var(--vm-success); }
   }
   /* Liste wie in Linear: Gruppenleiste, darunter eine Zeile pro Schritt. */
+  .vm-group-toggle {
+    list-style: none;
+    cursor: pointer;
+    &::-webkit-details-marker { display: none; }
+    &:hover .vm-group-title { filter: brightness(1.1); }
+    &:focus-visible { outline: 2px solid var(--vm-running); outline-offset: -2px; }
+  }
+  .vm-group-chevron { margin-left: auto; }
   .vm-group-title {
     display: flex;
     align-items: center;
@@ -598,7 +669,7 @@ body.vscode-dark .markdown-preview.markdown-preview .mermaid {
   .vm-group-waiting .vm-group-title { color: var(--vm-warning); }
   .vm-group-p1 .vm-group-title { background: var(--vm-p1-fill); color: var(--vm-p1); }
   .vm-group-p2 .vm-group-title { background: var(--vm-p2-fill); color: var(--vm-p2); }
-  .vm-priority-mark { stroke: var(--vm-table-body); }
+  .vm-priority-mark, .vm-status-mark { stroke: var(--vm-table-body); }
   .vm-priority-dot { fill: var(--vm-table-body); }
   .vm-steps-list { list-style: none; padding: 0; margin: 0; }
   .vm-step {
@@ -870,13 +941,51 @@ body.vscode-dark .markdown-preview.markdown-preview .vm-chart {
     h1, h2, h3, h4, .vm-section-meta { break-after: avoid; }
     /* Wo Chrome eine Tabelle zwischen zwei Zeilen teilt, bleibt sonst ein grauer Streifen stehen. */
     table, .vm-steps { background: var(--vm-table-body); }
-    .vm-row-details::details-content { content-visibility: visible; }
+    .vm-group::details-content, .vm-row-details::details-content,
+    details:is(:not([class]), .vm-toggle)::details-content { content-visibility: visible; }
+    details:is(:not([class]), .vm-toggle):not([open]) > :not(summary) { display: block; }
+    details:is(:not([class]), .vm-toggle) > summary { break-after: avoid; &::before { display: none; } }
+    .vm-group:not([open]) > .vm-steps-list { display: block; }
     .vm-row-details:not([open]) .vm-row-body { display: block; }
     .vm-chevron { display: none; }
     .vm-row-details .vm-summary { display: none; }
     .vm-group-title { break-after: avoid; }
     .vm-copy, .vm-message-actions, .vm-message-status { display: none !important; }
+
+    /* Aktualisiert-Badges unter Überschriften sind Arbeitsstand für das Team, im PDF nur Rauschen. */
+    .vm-section-meta { display: none !important; }
+
+    /* Links und Verweise im Druck als ruhiger Text statt Badge mit Icon. */
+    :where(p, li, td, blockquote, .vm-field-text, .vm-chart-foot, .vm-kpi) a:not(.vm-dep):not(.vm-section-link):not(.vm-xref):not(.vm-term):not(:has(img)) {
+      padding: 0;
+      background: none;
+      border-radius: 0;
+      font-size: inherit;
+      white-space: normal;
+      color: var(--link);
+      &::before { display: none; }
+    }
+    a.vm-xref, a.vm-term { border-bottom: 0; }
+
+    /* Tabellen ohne Kartenrahmen: Ein Rahmen über einen Seitenumbruch lässt sonst leere Flächen stehen. */
+    table {
+      border: 0;
+      border-radius: 0;
+      background: none;
+      font-size: 12.5px;
+    }
+    th { border-bottom: 1.5px solid var(--vm-border); }
+    td { background: none; }
+    th, td { padding: 8px 10px; }
+
+    /* Diagramme bleiben ganz auf einer Seite; nur sehr hohe werden auf Seitenhöhe verkleinert. */
+    .mermaid, pre.mermaid, div.mermaid { break-inside: avoid; }
+    .mermaid svg { max-height: 230mm; }
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markdown-preview.markdown-preview details:is(:not([class]), .vm-toggle) > summary::before { transition: none; }
 }
 
 body.vscode-dark .markdown-preview.markdown-preview {

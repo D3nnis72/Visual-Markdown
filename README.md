@@ -26,14 +26,15 @@ git clone https://github.com/D3nnis72/Visual-Markdown.git ~/Projects/Visual-Mark
 ~/Projects/Visual-Markdown/install.sh
 ```
 
-Danach in den VS-Code-Einstellungen (`settings.json`) zwei Werte setzen und mit `Cmd+Shift+P` und `Developer: Reload Window` neu laden:
+Danach in den VS-Code-Einstellungen (`settings.json`) drei Werte setzen und mit `Cmd+Shift+P` und `Developer: Reload Window` neu laden:
 
 ```json
 "markdown-preview-enhanced.enablePreviewScripts": true,
-"markdown-preview-enhanced.previewMode": "Previews Only"
+"markdown-preview-enhanced.previewMode": "Previews Only",
+"markdown-preview-enhanced.puppeteerWaitForTimeout": 3000
 ```
 
-Die erste Einstellung schaltet die Kopierknöpfe ein. Die zweite sorgt dafür, dass ein Link auf eine andere `.md`-Datei wieder die Vorschau öffnet statt den Texteditor. Zum Ausprobieren `examples/bausteine.md` öffnen und die Vorschau starten. Auf Windows liegt das Verzeichnis unter `%USERPROFILE%\.local\state\crossnote`, dort die Dateien manuell kopieren oder verlinken.
+Die erste Einstellung schaltet die Kopierknöpfe ein. Die zweite sorgt dafür, dass ein Link auf eine andere `.md`-Datei wieder die Vorschau öffnet statt den Texteditor. Die dritte lässt den PDF-Export über Chrome (Puppeteer) drei Sekunden warten, bevor er druckt. Ohne sie druckt MPE direkt nach dem Laden, während Mermaid noch zeichnet: Diagramme fehlen dann oder ihre Kästen liegen übereinander. Zum Ausprobieren `examples/bausteine.md` öffnen und die Vorschau starten. Auf Windows liegt das Verzeichnis unter `%USERPROFILE%\.local\state\crossnote`, dort die Dateien manuell kopieren oder verlinken.
 
 Weil `install.sh` Symlinks setzt, landen Änderungen über `Markdown Preview Enhanced: Customize CSS` direkt in diesem Repo. Dann nur noch committen und pushen.
 
@@ -49,7 +50,7 @@ Die Preview überschreibt standardmäßig `margin` mit `0`. Eine gezielte Regel 
 
 Das Stand-Band zeigt den Stand, das Erstellungsdatum und den optionalen Status aus `visual:` im Frontmatter, also `as-of`, `created` und `status`. Beide Daten stehen im Format `JJJJ-MM-TT`. Wer das Dokument ändert, setzt `as-of` neu. Ein Stand, der älter als sieben Tage ist, bekommt eine Warnfarbe. Rechts im Band kopiert ein Knopf den Pfad des Dokuments, damit man mit einem Agent über die ganze Datei sprechen kann. Ein `steps`-Block zeigt Fortschritt und eine Arbeitsliste mit Zuständen, Zuständigen und Abhängigkeiten. Fehler im Block erscheinen mit der Zeilennummer. Das Datum steht unter `visual.as-of`. Die ergänzten Texte sind auf Deutsch, mit `visual.lang: en` auf Englisch.
 
-Das Format steht unter [steps](#steps). Die Bausteine haben eigene Flächen und Statusfarben, angelehnt an [LioCare](https://www.figma.com/design/wc58qYYenP6PLzQ7yuARzW/LioCare?node-id=12-2). Sie sind vom Seitenhintergrund abgesetzt. Normale Tabellen erscheinen im selben Kartenstil wie die Schrittliste, mit runden Ecken und nur waagerechten Linien. Zellen sind oben ausgerichtet, und Link-Badges brechen in Zellen um, damit ein langer Link nicht die Spaltenbreite bestimmt. Links im Text werden zu Badges mit Link-Icon. Chrome erhält ihre Farben auch beim PDF-Export ohne aktivierte Hintergrundgrafiken. Im PDF entfallen Kartenschatten und der zusätzliche Preview-Einzug, Tabellenzeilen werden nicht über zwei Seiten geteilt, und Überschriften bleiben bei ihrem Inhalt. Der Seitenrand beträgt 14 mm.
+Das Format steht unter [steps](#steps). Die Bausteine haben eigene Flächen und Statusfarben, angelehnt an [LioCare](https://www.figma.com/design/wc58qYYenP6PLzQ7yuARzW/LioCare?node-id=12-2). Sie sind vom Seitenhintergrund abgesetzt. Normale Tabellen erscheinen im selben Kartenstil wie die Schrittliste, mit runden Ecken und nur waagerechten Linien. Zellen sind oben ausgerichtet, und Link-Badges brechen in Zellen um, damit ein langer Link nicht die Spaltenbreite bestimmt. Links im Text werden zu Badges mit Link-Icon. Chrome erhält ihre Farben auch beim PDF-Export ohne aktivierte Hintergrundgrafiken. Im PDF entfallen Kartenschatten, der zusätzliche Preview-Einzug und die Aktualisiert-Badges unter den Überschriften. Links und Verweise erscheinen als normaler farbiger Text statt als Badge, Tabellen ohne Kartenrahmen, damit ein Seitenumbruch keine leeren Flächen stehen lässt. Tabellenzeilen werden nicht über zwei Seiten geteilt, Überschriften bleiben bei ihrem Inhalt, und Mermaid-Diagramme bleiben ganz auf einer Seite und werden höchstens auf 230 mm Höhe verkleinert. Der Seitenrand beträgt 14 mm.
 
 ```bash
 npm install && npm test
@@ -103,6 +104,8 @@ Die Feldnamen sind Englisch. Ältere deutsche Feldnamen und `visual.stand` bleib
 | `ticket` | Direkter Markdown-Link auf das zugeordnete Ticket. Der Renderer ruft es nicht ab. |
 | `ticket-status` | Zuletzt nachgelesener originaler Ticketstatus, etwa `In Review`, `Staging` oder `Done (Eng)`. |
 | `ticket-owner` | Zuletzt nachgelesener Verantwortlicher des Tickets. Darf vom nächsten lokalen Verantwortlichen abweichen. |
+| `ticket-sync` | `true` aktiviert den automatischen Linear-Abgleich für diesen Schritt, sobald der lokale Dienst eingerichtet ist. `false` oder weglassen deaktiviert ihn. Benötigt einen `ticket`-Link. |
+| `ticket-checked` | Datum des letzten erfolgreichen Ticketabrufs, Format `JJJJ-MM-TT`. Reine Quellmetadaten, bestätigt keine lokale Arbeit und ersetzt kein `updated`. |
 | `priority` | `P1`, `P2` oder `P3`. Sobald ein Schritt im Block eine Priorität hat, wird der Block nach Priorität gruppiert, siehe unten |
 | `see` | Ein oder mehrere Markdown-Links zu ausführlicheren Stellen, aufgeklappt unter „Mehr dazu“ |
 | `thread` | T3-Code-Thread, in dem ein Agent an dem Schritt arbeitet, als Erwähnung im Format `[Thread: Titel; ref=…]` |
@@ -119,18 +122,18 @@ Die Feldnamen sind Englisch. Ältere deutsche Feldnamen und `visual.stand` bleib
 
 Der Titel sagt das Ergebnis des Schritts. Die Beschreibung sagt in ein bis drei Sätzen, was passiert und warum es wichtig ist, und der erste Satz muss allein verständlich sein. Ohne expliziten Statustext wird er in der Übersicht als gekürzte Vorschau gezeigt. Interne Kürzel brauchen eine Erklärung. Mehrere eingerückte Zeilen werden zu einem Absatz zusammengefasst. Ausführliches gehört in einen Abschnitt mit derselben Kennung wie der Schritt, also `## Badges {#badges updated=…}` zum Schritt `badges`. Der Schritt verlinkt dann von selbst darauf.
 
-Die Liste gruppiert nach Fortschritt: Todo, In Progress, In Review, Backlog, On Hold, Done, Canceled und Duplicate. Leere Gruppen entfallen. Die Form des Icons steht für den Fortschritt, seine Farbe und das Zuständigkeitsbadge für den nächsten Verantwortlichen. Blau bedeutet bei mir, violett abgegeben, grau neutral. Das Badge zeigt nur den Namen, ohne diese Begriffe als Präfix. Ohne Namen steht dort „Nicht zugeordnet“. Die Zuständigkeit bleibt als Tooltip erhalten. Die Fortschrittsbeschriftung steht zusätzlich im Text. Die Farben gelten auch für Abhängigkeitslinks. Ein Todo bei einer anderen Person hat kein grünes Startsymbol.
+Die Liste gruppiert nach Fortschritt: Todo, In Progress, In Review, Backlog, On Hold, Done, Canceled und Duplicate. Leere Gruppen entfallen. Jede Gruppenleiste lässt sich per Klick oder mit Enter beziehungsweise Leertaste ein- und ausklappen, auch „Done“. Name und Anzahl bleiben sichtbar. Alle Gruppen starten aufgeklappt; im Druck erscheinen auch eingeklappte Schritte. Die Form des Icons steht für den Fortschritt, seine Farbe und das Zuständigkeitsbadge für den nächsten Verantwortlichen. Blau bedeutet bei mir, violett abgegeben, grau neutral. Das Badge zeigt nur den Namen, ohne diese Begriffe als Präfix. Ohne Namen steht dort „Nicht zugeordnet“. Die Zuständigkeit bleibt als Tooltip erhalten. Die Fortschrittsbeschriftung steht zusätzlich im Text. Die Farben gelten auch für Abhängigkeitslinks. Ein Todo bei einer anderen Person hat kein grünes Startsymbol.
 
 | `workflow` | Checkbox | Anzeige und Icon |
 | --- | --- | --- |
 | `todo` | `[ ]` | Todo, leerer Kreis |
-| `in-progress` | `[~]` | In Progress, halb gefüllter Kreis |
-| `review` | `[~]` | In Review, Prüfhaken mit Reviewmarkierung |
-| `backlog` | `[ ]` | Backlog, gestrichelter Kreis |
-| `on-hold` | `[!]` | On Hold, Pause im Kreis |
-| `done` | `[x]` | Done, Haken im Kreis |
-| `canceled` | `[ ]` | Canceled, Kreuz im Kreis |
-| `duplicate` | `[ ]` | Duplicate, überlappende Kästchen |
+| `in-progress` | `[~]` | In Progress, Kreis mit gefülltem Viertel |
+| `review` | `[~]` | In Review, Kreis mit gefüllter rechter Hälfte |
+| `backlog` | `[ ]` | Backlog, fein gepunkteter Kreis |
+| `on-hold` | `[!]` | On Hold, Kreis mit gefülltem Dreiviertel |
+| `done` | `[x]` | Done, ausgefüllter Kreis mit Haken |
+| `canceled` | `[ ]` | Canceled, ausgefüllter Kreis mit Kreuz |
+| `duplicate` | `[ ]` | Duplicate, ausgefüllter Kreis mit zwei Schrägstrichen |
 
 Das gemeinsame Schema `src/steps/schema.js` besitzt erlaubte Werte, Checkboxzuordnung, Beschriftungen und Formen. Ohne neue Felder bleiben alte Checkboxen lesbar und die Zuständigkeit neutral. Offene Schritte mit unerfüllten Voraussetzungen erscheinen ohne expliziten Fortschritt als Backlog, sonst als Todo. Ein explizites Backlog sowie abgegebene, wartende oder verworfene Aufgaben sind keine eigenen Startaktionen. Canceled und Duplicate werden aus dem Fortschrittsnenner und den Arbeitswellen genommen, zählen aber nicht als erfolgreich erledigte Voraussetzungen. Abhängige Aufgaben bleiben deshalb blockiert, bis die Abhängigkeit bewusst korrigiert wird.
 
@@ -147,7 +150,9 @@ Mit `priority` wird aus der Arbeitsliste eine Liste nach Dringlichkeit. Die Grup
 
 Positionsnummern gibt es nicht, weil sie sich bei jedem Zustandswechsel verschieben würden. Wie in Linear ist die feste Kennung der Name eines Schritts. Dependencies zeigen deshalb die Kennung, verlinken auf den Schritt und haben seine Zuständigkeitsfarbe: blau bei mir, violett abgegeben, grau neutral. Erfüllte Voraussetzungen verschwinden. Der Thread erscheint als Badge mit seinem Titel. Der Kopierknopf kopiert einen Verweis wie `/pfad/zur/datei.md#enrich` und hängt den Thread an, falls `thread` gesetzt ist. Den Verweis fügt man in den Chat mit einem Agent ein, damit klar ist, über welchen Schritt man spricht.
 
-Bei der Pflege einer Übersicht liest der Agent verknüpfte Linear-Tickets gezielt nach und aktualisiert `ticket-status`, `ticket-owner`, `status`, `updated` und gegebenenfalls den lokalen Fortschritt und Verantwortlichen. Namen und Status müssen aus der Quelle kommen. `Todo` allein beweist keinen begonnenen Fix. Ein abgeschlossenes Ticket ersetzt keinen erforderlichen Nachtest. Der Abgleich geschieht bei Bearbeitung oder ausdrücklich gewünschter Aktualisierung, nicht automatisch im Hintergrund. Bei fehlendem Zugriff bleibt der zuletzt belegte Stand mit seiner Prüfgrenze erhalten. Ohne Ticket pflegt der Agent den belegten lokalen Stand. Der Renderer bleibt offline und enthält keine Zugangsdaten.
+Bei der Pflege einer Übersicht liest der Agent verknüpfte Linear-Tickets gezielt nach und aktualisiert `ticket-status`, `ticket-owner`, `status`, `updated` und gegebenenfalls den lokalen Fortschritt und Verantwortlichen. Namen und Status müssen aus der Quelle kommen. `Todo` allein beweist keinen begonnenen Fix. Ein abgeschlossenes Ticket ersetzt keinen erforderlichen Nachtest. Ohne eingerichteten Dienst geschieht der Abgleich bei Bearbeitung oder ausdrücklich gewünschter Aktualisierung. Bei fehlendem Zugriff bleibt der zuletzt belegte Stand mit seiner Prüfgrenze erhalten. Ohne Ticket pflegt der Agent den belegten lokalen Stand. Der Renderer bleibt offline und enthält keine Zugangsdaten.
+
+Mit `ticket-sync: true` kann jeder Schritt seinen Ticketabgleich selbst aktivieren. Ein einmal eingerichteter lokaler Dienst findet solche Schritte in den konfigurierten Projektordnern und aktualisiert alle fünf Minuten ausschließlich `ticket-status`, `ticket-owner` und `ticket-checked`. Einzelne Dateien müssen nicht registriert werden. Lokale Fortschritte, Checkboxen, Zuständigkeiten, Statustexte und deren Daten bleiben erhalten. Das Ticket-Prüfdatum wird bei erfolgreichen Abrufen täglich aktualisiert und nur im Markdown gespeichert. Es verändert weder `updated` noch `visual.as-of`. Die Einrichtung, Einmalabrufe und Dienstverwaltung stehen in [Linear automatisch abgleichen](docs/linear-sync.md).
 
 Der Agent pflegt Zustände, Wartegründe, Abschlussbedingungen und Daten in der Datei. Bei jeder Änderung an einem Schritt setzt er dessen `updated` und das `as-of` des Dokuments auf den aktuellen Tag. Der Renderer berechnet daraus die Übersicht, erkennt aber keinen Arbeitsfortschritt außerhalb der Datei. Unterpunkte werden noch nicht unterstützt. Unbekannte Felder, doppelte Kürzel, fehlende Vorgänger und Zyklen erscheinen als Fehler mit Zeilennummer.
 
@@ -221,7 +226,7 @@ Den Typ wählt man danach, was der Leser mit den Zahlen tun soll:
 | `pareto` | Wenige große Teile tragen das meiste, mit kumuliertem Anteil und 80-%-Linie | Teil und Betrag, Reihenfolge egal |
 | `scatter` | Zusammenhang zweier Zahlen, höchstens drei Farben | Zwei Zahlenspalten, optional `label` und `color` |
 | `progress` | Stand gegen Ziel | Name, erledigt, Ziel |
-| `kpi` | Wenige Kennzahlen als Kacheln, der Wert steht wie in der Tabelle | Name, Wert, optional Hinweis |
+| `kpi` | Wenige Kennzahlen, jede in einer eigenen Karte, Aussage und Grundlage stehen ohne Karte darum. Der Wert steht wie in der Tabelle | Name, Wert, optional Hinweis |
 
 Zeilen, die „Gesamt“, „Summe“ oder „Total“ heißen, lässt jedes Diagramm weg, damit die Summe nicht als eigener Balken erscheint. Nur der Wasserfall nutzt sie als Zwischenstand. Torten- und Ringdiagramme gibt es bewusst nicht, weil Balken Anteile genauer vergleichbar machen. Für ein Ganzes in wenigen Teilen ist `share` gedacht.
 
@@ -316,6 +321,22 @@ Ein Abschnitt bekommt eine feste Kennung und das Datum seiner letzten Änderung 
 Im Preview verschwinden die geschweiften Klammern. Unter der Überschrift stehen dann das Datum als Badge und ein Kopierknopf für `pfad.md#format`. Die Kennung selbst erscheint nicht, sie steckt im kopierten Verweis. Ein altes oder fehlendes Datum erscheint wie bei Schritten in Warnfarbe. Überschriften ohne Klammern bleiben unverändert. Auf GitHub sind die Klammern als Text sichtbar.
 
 Die Kennungen sind die Übersicht für Agents. `grep -n '^## ' datei.md` zeigt pro Abschnitt eine Zeile mit Kennung, Datum und Titel, ohne dass die ganze Datei gelesen werden muss. Bevor ein Agent etwas ergänzt, liest er diese Liste, schreibt in den zuständigen Abschnitt und setzt dessen `updated` auf heute. Einen neuen Abschnitt legt er nur für ein Thema an, das noch keiner abdeckt.
+
+## Toggles und Divider
+
+Ein `toggle`-Block fasst ergänzenden Inhalt hinter einem aufklappbaren Titel zusammen:
+
+````markdown
+```toggle
+title: Technischer Kontext, Vorbereitung und Kopiertexte
+---
+Hier stehen **Details**, Listen, Tabellen und [Quellen](details.md).
+```
+````
+
+`title:` ist Pflicht. Mit `open: true` vor der Trennzeile beginnt der Toggle aufgeklappt, sonst bleibt er geschlossen. Der Inhalt nach `---` ist Markdown, HTML wird als Text angezeigt. Für Codeblöcke im Inhalt außen vier Backticks verwenden. Öffnen und Schließen funktionieren auch per Tastatur und ohne Preview-Skripte. Im PDF bleibt der Inhalt sichtbar. Bestehende HTML-Toggles ohne eigene CSS-Klasse (`<details><summary>…</summary>…</details>`) bekommen dieselbe Gestaltung. Die aufklappbaren Gruppen und Zeilen der Schrittliste behalten ihre eigene Darstellung.
+
+Ein alleinstehendes `---`, `***` oder `___` mit Leerzeilen davor und danach ergibt einen dezenten Divider über die ganze Textbreite. Importierte einzelne Langstriche (`—` oder `–`) werden ebenfalls als Divider dargestellt. Striche im Fließtext und in Codeblöcken bleiben Text.
 
 ## Prüfen
 

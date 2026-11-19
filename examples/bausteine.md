@@ -2,7 +2,7 @@
 visual:
   status: In Arbeit
   created: 2026-10-28
-  as-of: 2026-11-09
+  as-of: 2026-11-12
   lang: de
   share: intern
   badges: { angereichert: ok, offen: warn, fehlt: bad, läuft: info, später: muted }
@@ -40,6 +40,19 @@ Hier fehlt `updated`, deshalb steht im Badge „Datum fehlt“.
 ### Abschnitt ohne Kennung
 
 Überschriften ohne geschweifte Klammern bleiben unverändert.
+
+## Toggles und Divider {#toggles updated=2026-11-12}
+
+```toggle
+title: Technischer Kontext, Vorbereitung und Kopiertexte
+---
+Hier stehen ergänzende **Details**, ohne die Übersicht zu verlängern.
+
+- [Quelldokument](aufgabenstatus.md)
+- Vorbereitung und nächste Schritte
+```
+
+---
 
 ## Schritte {#schritte updated=2026-11-01}
 

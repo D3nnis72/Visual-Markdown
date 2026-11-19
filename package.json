@@ -3,6 +3,8 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "linear-sync": "node scripts/linear-sync.mjs",
+    "linear-service": "node scripts/linear-service.mjs",
     "build": "node scripts/build-parser.mjs",
     "test": "node scripts/build-parser.mjs && node --test test/",
     "tokens": "node scripts/count-tokens.mjs",

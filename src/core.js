@@ -66,6 +66,10 @@ export function transform(markdown, { today = new Date() } = {}) {
         output.push('', html, '');
         changed = true;
         i = end;
+      } else if (/^ {0,3}[—–]\s*$/.test(line)) {
+        // Some imported documents use a literal dash instead of a Markdown rule.
+        output.push('', '<hr class="vm-divider">', '');
+        changed = true;
       } else if (badges.size && tableBody && isTableRow(line)) {
         output.push(linkText(renderTableRow(line, badges)));
         changed = true;

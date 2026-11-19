@@ -7,4 +7,5 @@ Use with the complete skill and README. Baseline: an assigned Todo in the RFI ov
 - Ticket Staging at Nino, retest still belongs to the reader: open checkbox, todo workflow, self responsibility and retest owner. Preserve ticket-status Staging and ticket-owner Nino. Do not complete the Canvas step.
 - Explicit canceled or duplicate: preserve its terminal outcome, remove from active work, do not unblock consumers as if it succeeded.
 - Known owner without a relation to the reader: neutral until established. No name guessing.
-- Linear inaccessible: preserve the last checked values and their date, name the limitation. No silent status change, no background schedule.
+- Linear inaccessible: preserve the last checked values and their date, name the limitation. No silent status change, no implicit background schedule.
+- Explicit automatic sync: `ticket-sync: true` beside a Linear ticket link opts in only that step, if the service is installed. Leave local progress, ownership and completion conditions intact. Preserve local dates when only ticket facts change. Store successful API evidence in `ticket-checked`, clear stale ticket-owner when Linear has no assignee, and do not silently opt in other references. The exact CLI and configuration live in `docs/linear-sync.md`.

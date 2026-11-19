@@ -1,4 +1,5 @@
 import { WORKFLOWS, isDismissed } from './schema.js';
+import { parseDate } from '../dates.js';
 import { t } from '../labels.js';
 
 export function validateSteps(steps, lang) {
@@ -13,7 +14,8 @@ export function validateSteps(steps, lang) {
     if (workflow && workflow.state !== step.state) errors.push({ line: step.line, message: t(lang, 'errWorkflowCheckbox', { workflow: step.workflow }) });
     if (workflow && step.waitingFor && step.workflow !== 'on-hold') errors.push({ line: step.line, message: t(lang, 'errWorkflowWaiting') });
     if (step.ticket && !/^\[[^\]]+\]\(https?:\/\/[^)\s]+\)$/.test(step.ticket)) errors.push({ line: step.line, message: t(lang, 'errTicketLink') });
-    if ((step.ticketStatus || step.ticketOwner) && !step.ticket) errors.push({ line: step.line, message: t(lang, 'errTicketMissing') });
+    if ((step.ticketStatus || step.ticketOwner || step.ticketSync || step.ticketChecked) && !step.ticket) errors.push({ line: step.line, message: t(lang, 'errTicketMissing') });
+    if (step.ticketChecked !== undefined && !parseDate(step.ticketChecked)) errors.push({ line: step.line, message: t(lang, 'checkBadDate', { value: step.ticketChecked }) });
     for (const id of step.after) {
       if (!byId.has(id)) errors.push({ line: step.line, message: t(lang, 'errUnknown', { id }) });
     }
