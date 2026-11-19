@@ -931,9 +931,19 @@ body.vscode-dark .markdown-preview.markdown-preview .vm-chart {
     margin: 0 !important;
     padding: 0 !important;
 
+    /* Im PDF alles auf Dokumentgröße: Fließtext rund 9,5 pt statt Bildschirmgröße. Zoom verkleinert Schrift,
+       Abstände, Tabellen und Diagramme gemeinsam; breite Diagramme füllen weiter die Seitenbreite. */
+    zoom: 0.78;
     line-height: 1.5;
     > h1:first-child { margin-top: 0; }
-    h2 { margin-top: 1em; }
+    h1 { font-size: 2em; margin: 0.6em 0 0.35em; }
+    h2 { font-size: 1.45em; margin: 1.5em 0 0.35em; }
+    h3 { font-size: 1.15em; margin: 1.2em 0 0.25em; }
+    h4 { font-size: 1.05em; margin: 1em 0 0.2em; }
+    p, li, blockquote { orphans: 3; widows: 3; }
+    p { padding: 2px 0; }
+    li { margin: 0.15em 0; }
+    blockquote { break-inside: avoid; }
     /* Druckrenderer stellen weiche Schatten teils als graue Rechtecke dar. */
     .vm-steps, table { box-shadow: none; }
     .vm-step, tr { break-inside: avoid; }
@@ -972,15 +982,16 @@ body.vscode-dark .markdown-preview.markdown-preview .vm-chart {
       border: 0;
       border-radius: 0;
       background: none;
-      font-size: 12.5px;
+      font-size: 14px;
     }
     th { border-bottom: 1.5px solid var(--vm-border); }
     td { background: none; }
     th, td { padding: 8px 10px; }
 
-    /* Diagramme bleiben ganz auf einer Seite; nur sehr hohe werden auf Seitenhöhe verkleinert. */
+    /* Diagramme bleiben ganz auf einer Seite; nur sehr hohe werden auf Seitenhöhe verkleinert (285 mm vor dem Zoom). */
     .mermaid, pre.mermaid, div.mermaid { break-inside: avoid; }
-    .mermaid svg { max-height: 230mm; }
+    .mermaid svg { max-height: 285mm; }
+    .mermaid { margin: 14px 0; }
   }
 }
 
