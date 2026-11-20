@@ -12,9 +12,10 @@ The MPE Notion theme (`style.less` in this repo) colors Mermaid nodes by CSS cla
 1. Give every node one class from the table. Use `:::name` on the node or `class A,B,C name` at the end.
 2. Do not write `classDef`, `style`, `linkStyle`, hex colors or `%%{init}%%`.
 3. Pick the class by what the node is, not by what looks nice. A new meaning means a new class in `style.less` first, then a row here.
-4. If more than one class appears, add a one-line legend under the diagram in words, not hex.
+4. Do not write a legend for the node kinds (`code`, `llm`, `human`, `gate`, `store`): the renderer adds it under the diagram. Only `ok`, `warn`, `bad` and `accent` need a one-line legend in words, because their meaning changes per diagram.
 5. Long labels: quote them and break with `<br/>` at about 40 characters. Titles with description: `["<b>Title</b><br/>Description"]`.
 6. Decisions are hexagons `{{"..."}}`, not diamonds. The theme does not round diamonds.
+7. When nodes need more than their name, such as an explanation, a state badge or what each exit of a decision means, use a `flow` block from the visual-markdown skill instead of long labels or a numbered list under the diagram. Keep labels short there.
 
 ## Classes
 

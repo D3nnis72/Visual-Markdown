@@ -2,10 +2,10 @@
 visual:
   status: In Arbeit
   created: 2026-10-28
-  as-of: 2026-11-12
+  as-of: 2026-11-20
   lang: de
   share: intern
-  badges: { angereichert: ok, offen: warn, fehlt: bad, läuft: info, später: muted }
+  badges: { angereichert: ok, offen: warn, fehlt: bad, läuft: info, später: muted, gebaut: ok, "von hand": info, idee: muted }
 ---
 # Alle Bausteine im Überblick
 
@@ -22,7 +22,7 @@ visual:
   as-of: 2026-11-09
   lang: de
   share: intern
-  badges: { angereichert: ok, offen: warn, fehlt: bad, läuft: info, später: muted }
+  badges: { angereichert: ok, offen: warn, fehlt: bad, läuft: info, später: muted, gebaut: ok, "von hand": info, idee: muted }
 ```
 
 ## Abschnitte mit Kennung {#abschnitte updated=2026-11-01}
@@ -468,7 +468,7 @@ says: Der Parser-Hook reicht, eine eigene Extension lohnt sich erst mit eigenem 
   - am meisten Arbeit
 ```
 
-## Mermaid {#mermaid updated=2026-11-01}
+## Mermaid {#mermaid updated=2026-11-20}
 
 ```mermaid
 flowchart LR
@@ -485,7 +485,25 @@ flowchart LR
     G --> Z(( )):::dot
 ```
 
-Code, Modellschritt, Mensch, Entscheidung und Ablage haben je eine eigene Farbe. Blau ist der hervorgehobene Schritt, Grün, Gelb und Rot sind Ergebnisse, die Punkte Start und Ende.
+Code, Modellschritt, Mensch, Entscheidung und Ablage haben je eine eigene Farbe, die Legende darunter setzt der Renderer selbst. Blau ist der hervorgehobene Schritt, Grün, Gelb und Rot sind Ergebnisse, die Punkte Start und Ende. Diese Klassen bedeuten je nach Diagramm etwas anderes und stehen deshalb nicht in der Legende.
+
+### Ablauf mit Notizen {#flow updated=2026-11-20}
+
+Braucht ein Knoten mehr als seinen Namen, wird aus dem Diagramm ein `flow`: oben das Mermaid-Diagramm mit kurzen Namen, nach `---` eine Notiz je Knoten. Der Renderer nummeriert die Knoten, setzt die Legende darunter und listet die Notizen mit Art, Badge und den Ausgängen einer Entscheidung.
+
+```flow
+says: Jede Rechnung, Position für Position.
+flowchart LR
+    A["Rechnung auslesen"]:::code --> B["Positionen anreichern"]:::llm --> C{{"Stichprobe ok?"}}:::gate
+    C -->|nein| E["Gegenlesen"]:::human
+    E --> B
+    C -->|ja| D[("Preisliste")]:::store
+---
+A: Liest Kopf und Positionen aus dem PDF, auch gescannte Rechnungen. | gebaut
+B: Ergänzt Warengruppe, Maß und Material aus der Beschreibung. | von Hand
+C: Zehn Positionen je Lieferant, alle Felder müssen zum Beleg passen. | idee
+E: Wer gegenliest, korrigiert die Position und schreibt den Grund dazu.
+```
 
 ```mermaid
 sequenceDiagram

@@ -44,6 +44,11 @@ const labels = {
     errRequired: 'Pflichtfeld „{field}“ fehlt', errValue: '„{value}“ geht nicht für {field}, erlaubt sind {list}',
     errNoTable: 'keine Tabelle direkt über dem Block', errColumn: 'Spalte „{column}“ gibt es in der Tabelle nicht',
     errColorMulti: 'color geht nur mit einer Spalte in y', errNumber: '„{value}“ in {column} ist keine Zahl',
+    kind_code: 'Code', kind_llm: 'Modell', kind_human: 'Mensch', kind_gate: 'Entscheidung', kind_store: 'Ablage',
+    errFlowDiagram: 'Über den Notizen fehlt ein Mermaid-Flowchart, also eine Zeile mit „flowchart“ oder „graph“', errFlowField: 'Vor dem Diagramm ist nur „says: …“ erlaubt',
+    errFlowSeparator: 'Zwischen Diagramm und Notizen fehlt die Trennzeile „---“', errFlowNote: 'Notizen sehen so aus: „knoten: Erklärung | Badge“',
+    errFlowNode: 'Den Knoten „{id}“ gibt es im Diagramm nicht', errFlowDuplicate: 'Zu „{id}“ gibt es schon eine Notiz',
+    errFlowEmpty: 'Der flow-Block braucht mindestens eine Notiz, ohne Notizen reicht ein normaler mermaid-Block',
   },
   en: {
     progress: '{done} of {total} done', done: 'done', running: 'running',
@@ -88,6 +93,11 @@ const labels = {
     errRequired: 'required field "{field}" is missing', errValue: '"{value}" is not allowed for {field}, use {list}',
     errNoTable: 'no table directly above the block', errColumn: 'the table has no column "{column}"',
     errColorMulti: 'color works only with one column in y', errNumber: '"{value}" in {column} is not a number',
+    kind_code: 'Code', kind_llm: 'Model', kind_human: 'Human', kind_gate: 'Decision', kind_store: 'Store',
+    errFlowDiagram: 'a Mermaid flowchart (a line with "flowchart" or "graph") is missing above the notes', errFlowField: 'only "says: …" is allowed before the diagram',
+    errFlowSeparator: 'the "---" line between diagram and notes is missing', errFlowNote: 'notes look like "node: explanation | badge"',
+    errFlowNode: 'the diagram has no node "{id}"', errFlowDuplicate: '"{id}" already has a note',
+    errFlowEmpty: 'add at least one note, without notes a plain mermaid block is enough',
   },
 };
 export function t(lang, key, vars = {}) {

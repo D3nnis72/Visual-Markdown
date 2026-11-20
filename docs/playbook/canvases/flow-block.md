@@ -1,6 +1,6 @@
 ---
 visual:
-  status: Brainstorming
+  status: Leftover
   created: 2026-11-20
   as-of: 2026-11-20
   lang: de
@@ -13,61 +13,25 @@ visual:
 > Specs and plans are distilled from this file. Not canonical product behavior.
 > After shipping, the README and skills own shipped truth; leftovers hold remaining work only, then delete when nothing remains.
 
-## Was die Dokumente heute zeigen {#bestand updated=2026-11-20}
+## Was gebaut ist {#gebaut updated=2026-11-20}
 
-Gezählt am 20.11. in den eigenen Dokumenten unter `Customers/Accenture`, `LioCare` und `Onboarding-automation`: 26 Mermaid-Diagramme. Nicht mitgezählt sind askLio, t3code, dieses Repo und die Historienordner.
+Gebaut am 20.11.: Unter jedem Mermaid-Diagramm erscheint die Legende der Knotenarten automatisch, und der Block `flow` legt Notizen je Knoten unter ein normales Mermaid-Diagramm. Das Format steht im [README unter flow](../../../README.md#flow), die Regeln für Agents in den Skills `visual-markdown` und `mermaid-theme`.
 
-| Befund | Anzahl von 26 |
-| --- | --- |
-| Mindestens eine Entscheidung (`:::gate`) | 16 |
-| Mit Phasen oder Bahnen (`subgraph`) | 9 |
-| Direkt darunter eine handgeschriebene Legende („Legende: blau rechnet der Code, orange …“) | rund 20 |
-| Durchschnittliche Knotenbeschriftung über 40 Zeichen, meist `<b>Titel</b><br/>Erklärung` | 14 |
-| Darunter eine nummerierte Liste, die die Knoten einzeln erklärt | 4 |
+Ausgangspunkt war die Zählung der 26 Mermaid-Diagramme in `Customers/Accenture`, `LioCare` und `Onboarding-automation`: 16 davon verzweigen, unter rund 20 steht eine handgeschriebene Legende, und 4 erklären die Knoten in einer zweiten nummerierten Liste. Deshalb zeichnet Mermaid weiter die Form, und der Baustein liefert nur den Platz für Information.
 
-Heißt konkret: Abzweigungen sind der Normalfall, ein Block nur für gerade Abläufe deckt die Minderheit ab und müsste Mermaid trotzdem nachbauen. Was fehlt, ist Platz für Information. Die Erklärung wird heute in die Kästen gequetscht oder in einer zweiten Liste darunter wiederholt, die man über Nummern im Kopf zuordnet, und die Legende schreibt jeder Agent anders, teils mit widersprüchlichen Farben (einmal ist Mensch grün, einmal blau).
+## Was noch offen ist {#offen updated=2026-11-20}
 
-Beispiele: `bundling-umbau/01_artikel_und_familien.md` (Diagramm plus sechs nummerierte Erklärungen), `Docs/human/autonomous-sourcing-process.md` (sechs Diagramme, jedes mit Legende, zwei mit nummerierter Liste), `LioCare/docs/playbook/photo-agent/00_overview.md` (Diagramm plus acht nummerierte Abschnitte).
-
-## Richtung {#richtung updated=2026-11-20}
-
-Grob abgestimmt am 20.11.: Mermaid bleibt für die Form zuständig, der Baustein legt die Information daneben. Ein Block `flow` enthält oben ein normales Mermaid-Diagramm mit kurzen Knotennamen und nach einer Trennzeile `---` eine Notiz je Knoten.
-
-````markdown
-```flow
-says: Je Lieferant, Position für Position.
-flowchart LR
-  daten["Datenfehler prüfen"]:::code --> kat["Kategorien bilden"]:::llm --> was{{"Was tun?"}}:::gate
-  was -->|nicht erklärt| ziel["Zielpreis an Lieferant"]:::human
-  was -->|erklärt| ann(["Annehmen"]):::dot
----
-daten: Einheit, Incoterm, Menge und Mindestmenge müssen zur Baseline passen. | von Hand
-kat: Kategorie heißt die Art des Produkts mit gemeinsamem Preistreiber. | Idee
-was: Den Zielpreis ändern darf nur der SLB Category Owner (E32).
-ziel: Ziel ist die Baseline als Dollarbetrag. | Idee
+```steps
+- [ ] mpe: Legende und flow im echten MPE-Preview und im PDF-Export prüfen | owner: Dennis | updated: 2026-11-20
+  Geprüft ist bisher nur die Vorschau aus `scripts/preview.mjs` mit Mermaid 10.9 aus dem Netz, hell und dunkel. Offen ist, ob MPE die Nummern in den Knoten, die Legende und die Notizen genauso zeigt und ob der PDF-Export sie mitnimmt. Nach `./install.sh` und „Developer: Reload Window“ `examples/bausteine.md` öffnen.
+- [ ] legenden: Handgeschriebene Legenden unter den bestehenden Diagrammen entfernen | after: mpe | updated: 2026-11-20
+  Rund 20 Diagramme in den Kundenordnern haben eine Legende in Worten, die jetzt doppelt erscheint. Zeilen, die nur die Knotenarten erklären, fallen weg. Erklärungen zu `ok`, `warn`, `bad` oder `accent` bleiben. Diagramme mit nummerierter Liste darunter sind Kandidaten für `flow`.
 ```
-````
-
-Der Renderer macht daraus drei Teile:
-
-1. Das Diagramm, wie Mermaid es zeichnet. Jeder Knoten mit Notiz bekommt eine Nummer in der Reihenfolge der Notizen, und ein Klick auf den Knoten springt zur Notiz.
-2. Eine Legende, die er aus den benutzten Klassen erzeugt, mit den Farben aus dem Theme. Die handgeschriebene Legende entfällt.
-3. Die Notizen als nummerierte Liste: Nummer im selben Stil wie die Badges (getönter Grund, farbige Ziffer) in der Farbe der Knotenart, Knotenname als Titel, Art als kleines Wort, Badge rechts, Erklärung darunter. Bei einer Entscheidung erscheinen die Beschriftungen der ausgehenden Pfeile als Ausgänge, ohne dass man sie zweimal schreibt.
-
-Die Abgrenzung wird damit einfach: Ein Diagramm ohne Erklärung bleibt ein normaler `mermaid`-Block, braucht ein Knoten mehr als seinen Namen, wird es ein `flow`. Arbeit, die jemand erledigt, bleibt `steps`.
-
-Ein Teil davon lohnt sich auch ohne neuen Block: Die Legende aus den Klassen kann der Renderer unter jedes normale Mermaid-Diagramm setzen. Das betrifft die rund 20 Diagramme mit handgeschriebener Legende sofort.
-
-Noch zu prüfen: ob der Parser einen `flow` vor MPE in einen `mermaid`-Block plus HTML umschreiben kann, sodass MPE das Diagramm wie bisher zeichnet, und ob die Klick-Sprünge im Preview und im PDF funktionieren.
-
-## Offene Fragen {#offen updated=2026-11-20}
-
-> [!card question yellow] Zuerst nur die automatische Legende oder gleich den ganzen Block?
-> Die Legende ist klein, ändert an keiner Datei die Syntax und hilft bei 20 Diagrammen. Der Block braucht Parser, Nummerierung und Verlinkung.
 
 > [!card question grey] Braucht ein `flow` ohne Diagramm eine eigene Form?
-> Bei einem rein geraden Ablauf könnte man das Diagramm weglassen, dann erscheint nur die nummerierte Liste mit Linie. Erst klären, wenn der Hauptfall steht.
+> Bei einem rein geraden Ablauf könnte man das Diagramm weglassen, dann erscheint nur die nummerierte Liste. Erst klären, wenn sich `flow` in echten Dokumenten bewährt hat.
 
 ## Verworfen
 
-Ein eigener Block nur für gerade Abläufe mit selbst gezeichneten Abzweigungen: deckt die Minderheit ab, und Abzweigungen als Kacheln oder Äste sahen schlechter aus als Mermaid.
+- Ein eigener Block nur für gerade Abläufe mit selbst gezeichneten Abzweigungen: deckt die Minderheit ab, und Abzweigungen als Kacheln oder Äste sahen schlechter aus als Mermaid.
+- Klick auf einen Knoten springt zur Notiz: braucht `securityLevel: loose` in Mermaid und würde damit Skripte in Diagrammen erlauben. Die Nummer reicht als Verbindung.

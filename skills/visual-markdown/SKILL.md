@@ -1,6 +1,6 @@
 ---
 name: visual-markdown
-description: Use when writing, converting or updating a document people look at in Markdown Preview Enhanced, such as a canvas, project status page, decision or question list or report, and when a Markdown file has a `visual:` front matter key, a `steps`, `chart`, `scale`, `gallery`, `compare`, `glossary` or `message` code block, headings like `## Title {#id updated=…}` or `> [!card …]` callouts.
+description: Use when writing, converting or updating a document people look at in Markdown Preview Enhanced, such as a canvas, project status page, decision or question list or report, and when a Markdown file has a `visual:` front matter key, a `steps`, `chart`, `scale`, `gallery`, `compare`, `glossary`, `message` or `flow` code block, headings like `## Title {#id updated=…}` or `> [!card …]` callouts.
 ---
 
 # Visual Markdown
@@ -25,6 +25,7 @@ Not for knowledge docs that mainly agents read: those stay plain Markdown.
 | A few headline numbers | Table, then `chart` with `type: kpi` |
 | Thresholds and ranges, such as health states or tolerances | `scale` |
 | Screenshots side by side, before and after, light and dark | `gallery` |
+| A process where nodes need more than their name: explanation, state badge, what each exit of a decision means | `flow`: Mermaid flowchart with short node names, `---`, then `node: explanation \| badge` per node. The renderer numbers the nodes, adds the legend and lists the exits from the edge labels. A diagram whose nodes are clear from their names stays `mermaid` |
 | A ready-to-copy message or agent prompt, with its own ticket and record links | `message`: optional `to: recipient`, separator `---`, then the exact Markdown body. Keep notes and conditions outside. The preview offers rich-text and Markdown copy |
 | Supplementary context the reader may open when needed | `toggle`: required `title:`, optional `open: true`, separator `---`, then Markdown content. Closed by default. For code fences inside, use a longer outer fence. Keep the current status and next action outside |
 | Two to four approaches with pros and cons | `compare`, at most one `| empfohlen` |
@@ -32,7 +33,7 @@ Not for knowledge docs that mainly agents read: those stay plain Markdown.
 | A topic someone will point at | `## Title {#id updated=YYYY-MM-DD}` |
 | Page with customer data (path under `Customers/`) | `share: intern` in the front matter |
 
-Everything else stays normal Markdown, flows stay Mermaid (skill `mermaid-theme`).
+Everything else stays normal Markdown, plain diagrams stay Mermaid (skill `mermaid-theme`). The renderer adds the legend of node kinds under every Mermaid diagram, so do not write one.
 
 `steps` shows the project's work across everyone involved. One person's own to-dos stay in their task tool, such as Notion, and are not copied into `steps`.
 

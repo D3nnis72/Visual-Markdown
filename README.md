@@ -368,8 +368,39 @@ Das Theme erzwingt Füllung, Rand und Textfarbe mit `!important`. Ein `classDef`
 
 Boxen mit Titel und Beschreibung schreibt man als `["<b>Titel</b><br/>Beschreibung"]`.
 
+Unter jedes Diagramm setzt der Renderer eine Legende der Knotenarten, die darin vorkommen, sobald es mindestens zwei sind. Er liest sie aus `:::art` und `class a,b art`. Eine Legende in Worten ist deshalb nur noch für `ok`, `warn`, `bad` und `accent` nötig, weil deren Bedeutung je nach Diagramm wechselt.
+
+## flow
+
+Ein Ablauf, bei dem ein Knoten mehr als seinen Namen braucht. Oben steht ein normales Mermaid-Flowchart mit kurzen Knotennamen, nach der Trennzeile `---` eine Notiz je Knoten. Mermaid zeichnet die Form wie bisher, auch Abzweigungen und Schleifen.
+
+````markdown
+```flow
+says: Je Lieferant, Position für Position.
+flowchart LR
+  daten["Datenfehler prüfen"]:::code --> was{{"Was tun?"}}:::gate
+  was -->|nicht erklärt| ziel["Zielpreis an Lieferant"]:::human
+  was -->|erklärt| ann(["Annehmen"])
+---
+daten: Einheit, Incoterm und Menge müssen zur Baseline passen. | von Hand
+was: Den Zielpreis ändern darf nur der Category Owner.
+ziel: Ziel ist die Baseline als Dollarbetrag. | Idee
+```
+````
+
+| Teil | Bedeutung |
+| --- | --- |
+| `says:` | Optional, Aussage über dem Diagramm |
+| Diagramm | Ab der Zeile mit `flowchart` oder `graph` bis `---`, Klassen wie unter [Mermaid-Diagramme](#mermaid-diagramme) |
+| `knoten: Text \| Badge` | Notiz zu einem Knoten des Diagramms. Der Badge nach dem letzten ` \| ` ist optional und bekommt seine Farbe aus `visual.badges`, sonst grau. Eingerückte Zeilen gehören zur Notiz darüber |
+
+Jeder Knoten mit Notiz bekommt im Diagramm die Nummer seiner Notiz vor den Namen. Darunter folgen die Legende und die Notizen: Nummer in der Farbe der Knotenart im Stil der Badges, Knotenname, Art, Badge, Erklärung. Haben die Pfeile eines Knotens Beschriftungen, erscheinen sie als Ausgänge mit Ziel, etwa „nicht erklärt → 3 Zielpreis an Lieferant“. Man schreibt sie also nur einmal. Eine Notiz zu einem Knoten, den es im Diagramm nicht gibt, ist ein Fehler.
+
+Abgrenzung: Ein Diagramm, dessen Knoten mit ihrem Namen auskommen, bleibt ein normaler `mermaid`-Block. Arbeit mit Zuständigen und Stand bleibt `steps`.
+
 ## Bekannte Grenzen
 
 - Mermaid rundet Rauten nicht ab und setzt Abzweigungen immer eine Ebene tiefer. Für Entscheidungen sind deshalb Sechsecke `{{"..."}}` mit etwas Padding im Label im Einsatz.
 - Die Schriftgröße der Diagramme kommt aus `config.js`. Per CSS geändert, wird Text abgeschnitten, weil Mermaid die Boxbreite vor dem Styling misst.
 - Ob das Layout bei neuen Mermaid-Versionen stabil bleibt, ist ungeprüft. Getestet ist die Version aus MPE 0.8.39.
+- Ein Klick auf einen Knoten im `flow` springt nicht zur Notiz. Mermaid erlaubt Klick-Links nur mit `securityLevel: loose`, und das würde Skripte in Diagrammen zulassen. Die Nummer verbindet Knoten und Notiz.

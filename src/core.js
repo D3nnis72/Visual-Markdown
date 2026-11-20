@@ -9,6 +9,7 @@ import { renderSection, sectionIds } from './sections.js';
 import { parseBadges, isTableSeparator, isTableRow, renderTableRow } from './badges.js';
 import { renderCard } from './cards.js';
 import { collectReferences, createLinker } from './references.js';
+import { usedKinds, renderLegend } from './mermaid.js';
 
 export function transform(markdown, { today = new Date() } = {}) {
   const { visual, endLine } = readVisual(markdown);
@@ -37,7 +38,15 @@ export function transform(markdown, { today = new Date() } = {}) {
     } else if (fence) {
       output.push(line);
       const close = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(line);
-      if (close && close[1][0] === fence.char && close[1].length >= fence.length) fence = null;
+      if (close && close[1][0] === fence.char && close[1].length >= fence.length) {
+        // Mermaid diagrams get the legend of the node kinds they use, so nobody writes it by hand.
+        const legend = /^mermaid(\s|$)/.test(fence.kind ?? '') ? renderLegend(usedKinds(lines.slice(fence.start, i)), lang) : '';
+        if (legend) {
+          output.push('', legend, '');
+          changed = true;
+        }
+        fence = null;
+      }
     } else {
       const open = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line);
       const kind = open && !line.startsWith(' ') ? open[2].trim() : null;
@@ -49,7 +58,7 @@ export function transform(markdown, { today = new Date() } = {}) {
           end++;
         }
         if (BLOCKS[kind]) {
-          const block = BLOCKS[kind](lines, i, end, lang);
+          const block = BLOCKS[kind](lines, i, end, lang, { badges });
           output.push(...(block.errors ? ['', renderError(block.errors, lang, kind), ''] : ['', ...block.output]));
           changed = true;
           i = end;
@@ -91,7 +100,7 @@ export function transform(markdown, { today = new Date() } = {}) {
         const linked = open ? line : linkText(line);
         if (linked !== line) changed = true;
         output.push(linked);
-        if (open) fence = { char: open[1][0], length: open[1].length };
+        if (open) fence = { char: open[1][0], length: open[1].length, kind, start: i + 1 };
       }
     }
     if (!isTableRow(line)) tableBody = false;

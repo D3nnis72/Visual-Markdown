@@ -177,7 +177,19 @@ var __visualMarkdown = (() => {
       errNoTable: "keine Tabelle direkt \xFCber dem Block",
       errColumn: "Spalte \u201E{column}\u201C gibt es in der Tabelle nicht",
       errColorMulti: "color geht nur mit einer Spalte in y",
-      errNumber: "\u201E{value}\u201C in {column} ist keine Zahl"
+      errNumber: "\u201E{value}\u201C in {column} ist keine Zahl",
+      kind_code: "Code",
+      kind_llm: "Modell",
+      kind_human: "Mensch",
+      kind_gate: "Entscheidung",
+      kind_store: "Ablage",
+      errFlowDiagram: "\xDCber den Notizen fehlt ein Mermaid-Flowchart, also eine Zeile mit \u201Eflowchart\u201C oder \u201Egraph\u201C",
+      errFlowField: "Vor dem Diagramm ist nur \u201Esays: \u2026\u201C erlaubt",
+      errFlowSeparator: "Zwischen Diagramm und Notizen fehlt die Trennzeile \u201E---\u201C",
+      errFlowNote: "Notizen sehen so aus: \u201Eknoten: Erkl\xE4rung | Badge\u201C",
+      errFlowNode: "Den Knoten \u201E{id}\u201C gibt es im Diagramm nicht",
+      errFlowDuplicate: "Zu \u201E{id}\u201C gibt es schon eine Notiz",
+      errFlowEmpty: "Der flow-Block braucht mindestens eine Notiz, ohne Notizen reicht ein normaler mermaid-Block"
     },
     en: {
       progress: "{done} of {total} done",
@@ -287,7 +299,19 @@ var __visualMarkdown = (() => {
       errNoTable: "no table directly above the block",
       errColumn: 'the table has no column "{column}"',
       errColorMulti: "color works only with one column in y",
-      errNumber: '"{value}" in {column} is not a number'
+      errNumber: '"{value}" in {column} is not a number',
+      kind_code: "Code",
+      kind_llm: "Model",
+      kind_human: "Human",
+      kind_gate: "Decision",
+      kind_store: "Store",
+      errFlowDiagram: 'a Mermaid flowchart (a line with "flowchart" or "graph") is missing above the notes',
+      errFlowField: 'only "says: \u2026" is allowed before the diagram',
+      errFlowSeparator: 'the "---" line between diagram and notes is missing',
+      errFlowNote: 'notes look like "node: explanation | badge"',
+      errFlowNode: 'the diagram has no node "{id}"',
+      errFlowDuplicate: '"{id}" already has a note',
+      errFlowEmpty: "add at least one note, without notes a plain mermaid block is enough"
     }
   };
   function t(lang, key, vars = {}) {
@@ -6738,8 +6762,263 @@ var __visualMarkdown = (() => {
     return { output: [`<details class="vm-toggle"${fields.open === "true" ? " open" : ""}><summary>${escapeHtml(fields.title)}</summary><div class="vm-toggle-body">${html}</div></details>`, ""] };
   }
 
+  // src/mermaid.js
+  var KINDS = ["code", "llm", "human", "gate", "store"];
+  var CLASS_LINE = /^\s*class\s+([\w\s,-]+?)\s+([\w-]+)\s*;?\s*$/;
+  var SKIP_LINE = /^\s*(?:%%|subgraph\b|end\b|classDef\b|class\s|style\s|linkStyle\b|click\s|direction\s|flowchart\b|graph\b)/;
+  function usedKinds(lines) {
+    const found = /* @__PURE__ */ new Set();
+    for (const line of lines) {
+      for (const match of line.matchAll(/:::([\w-]+)/g)) found.add(match[1]);
+      const classes = CLASS_LINE.exec(line);
+      if (classes) found.add(classes[2]);
+    }
+    return KINDS.filter((kind) => found.has(kind));
+  }
+  var kindLabel = (kind, lang) => t(lang, `kind_${kind}`);
+  function renderLegend2(kinds, lang) {
+    if (kinds.length < 2) return "";
+    const items = kinds.map((kind) => `<span class="vm-legend-item vm-kind-${kind}"><i></i>${escapeHtml(kindLabel(kind, lang))}</span>`);
+    return `<div class="vm-mermaid-legend">${items.join("")}</div>`;
+  }
+  var SHAPES = [
+    ["(((", [")))"]],
+    ["([", ["])"]],
+    ["[[", ["]]"]],
+    ["[(", [")]"]],
+    ["((", ["))"]],
+    ["{{", ["}}"]],
+    ["[/", ["/]", "\\]"]],
+    ["[\\", ["\\]", "/]"]],
+    ["[", ["]"]],
+    ["(", [")"]],
+    ["{", ["}"]],
+    [">", ["]"]]
+  ];
+  var ID = /[A-Za-z_À-￿][\wÀ-￿]*(?:-[\wÀ-￿]+)*/y;
+  var KIND = /:::([\w-]+)/y;
+  var TEXT_ARROW = /<?(?:--|==|-\.)\s+(\S.*?)\s+(?:-{2,}|={2,}|\.+-+)[>ox]?/y;
+  var ARROW = /<?(?:-{2,}|={2,}|-\.+-?|~{3,})[>ox]?/y;
+  var PIPE_LABEL = /\s*\|([^|]*)\|/y;
+  var sticky = (regex, text2, at) => {
+    regex.lastIndex = at;
+    return regex.exec(text2);
+  };
+  function readShape(line, at) {
+    const shape = SHAPES.find(([open2]) => line.startsWith(open2, at));
+    if (!shape) return null;
+    const [open, closers] = shape;
+    let p = at + open.length;
+    while (line[p] === " ") p++;
+    if (line[p] === '"') {
+      const endQuote = line.indexOf('"', p + 1);
+      if (endQuote < 0) return null;
+      let q = endQuote + 1;
+      while (line[q] === " ") q++;
+      const close = closers.find((closer) => line.startsWith(closer, q));
+      if (!close) return null;
+      return { labelStart: p, labelEnd: endQuote + 1, quoted: true, text: line.slice(p + 1, endQuote), end: q + close.length };
+    }
+    let best = null;
+    for (const closer of closers) {
+      const index = line.indexOf(closer, p);
+      if (index >= 0 && (!best || index < best.index)) best = { index, closer };
+    }
+    if (!best) return null;
+    return { labelStart: p, labelEnd: best.index, quoted: false, text: line.slice(p, best.index).trim(), end: best.index + best.closer.length };
+  }
+  function labelTitle(text2) {
+    return text2.split(/<br\s*\/?>/i)[0].replace(/<[^>]+>/g, "").replace(/#quot;/g, '"').replace(/\s+/g, " ").trim();
+  }
+  function parseFlowchart(lines) {
+    const nodes = /* @__PURE__ */ new Map();
+    const edges = [];
+    const node = (id) => {
+      if (!nodes.has(id)) nodes.set(id, { id, title: id, kind: null, def: null });
+      return nodes.get(id);
+    };
+    lines.forEach((line, lineIndex) => {
+      const classes = CLASS_LINE.exec(line);
+      if (classes) {
+        for (const id of classes[1].split(",").map((part) => part.trim()).filter(Boolean)) {
+          const entry = node(id);
+          if (!entry.kind && KINDS.includes(classes[2])) entry.kind = classes[2];
+        }
+        return;
+      }
+      if (SKIP_LINE.test(line) || !line.trim()) return;
+      const tokens = [];
+      let p = 0;
+      while (p < line.length) {
+        const char = line[p];
+        if (/[\s;]/.test(char)) {
+          p++;
+          continue;
+        }
+        if (char === "&") {
+          tokens.push({ type: "and" });
+          p++;
+          continue;
+        }
+        if (char === "@" && line[p + 1] === "{") {
+          const close = line.indexOf("}", p);
+          p = close < 0 ? line.length : close + 1;
+          continue;
+        }
+        let match = sticky(TEXT_ARROW, line, p);
+        if (match) {
+          tokens.push({ type: "edge", label: match[1] });
+          p += match[0].length;
+          continue;
+        }
+        match = sticky(ARROW, line, p);
+        if (match) {
+          p += match[0].length;
+          const label = sticky(PIPE_LABEL, line, p);
+          if (label) p += label[0].length;
+          tokens.push({ type: "edge", label: label ? label[1] : "" });
+          continue;
+        }
+        match = /[\wÀ-￿-]/.test(line[p - 1] ?? "") ? null : sticky(ID, line, p);
+        if (match) {
+          const id = match[0];
+          const entry = node(id);
+          p += id.length;
+          const shape = readShape(line, p);
+          if (shape) {
+            if (!entry.def) {
+              entry.def = { line: lineIndex, ...shape };
+              entry.title = labelTitle(shape.text) || id;
+            }
+            p = shape.end;
+          }
+          const kind = sticky(KIND, line, p);
+          if (kind) {
+            if (!entry.kind && KINDS.includes(kind[1])) entry.kind = kind[1];
+            p += kind[0].length;
+          }
+          tokens.push({ type: "node", id });
+          continue;
+        }
+        p++;
+      }
+      let left = [];
+      let current = [];
+      let pending = null;
+      for (const token of tokens) {
+        if (token.type === "node") current.push(token.id);
+        else if (token.type === "edge") {
+          if (pending) for (const from of left) for (const to of current) edges.push({ from, to, label: pending.label });
+          left = current;
+          current = [];
+          pending = token;
+        }
+      }
+      if (pending) for (const from of left) for (const to of current) edges.push({ from, to, label: pending.label });
+    });
+    return { nodes, edges };
+  }
+  function numberNodes(lines, nodes, numbers) {
+    const out = [...lines];
+    const extra = [];
+    const byLine = /* @__PURE__ */ new Map();
+    for (const [id, number] of numbers) {
+      const def = nodes.get(id)?.def;
+      if (!def) {
+        extra.push(`    ${id}["<b>${number}</b> ${id}"]`);
+        continue;
+      }
+      if (!byLine.has(def.line)) byLine.set(def.line, []);
+      byLine.get(def.line).push({ def, number });
+    }
+    for (const [lineIndex, entries] of byLine) {
+      let line = out[lineIndex];
+      for (const { def, number } of entries.sort((a, b) => b.def.labelStart - a.def.labelStart)) {
+        const tag = `<b>${number}</b> `;
+        line = def.quoted || def.text.includes('"') ? line.slice(0, def.labelStart + (def.quoted ? 1 : 0)) + tag + line.slice(def.labelStart + (def.quoted ? 1 : 0)) : `${line.slice(0, def.labelStart)}"${tag}${def.text}"${line.slice(def.labelEnd)}`;
+      }
+      out[lineIndex] = line;
+    }
+    return [...out, ...extra];
+  }
+
+  // src/blocks/flow.js
+  var HEADER = /^\s*(flowchart|graph)\b/;
+  var NOTE = /^([\wÀ-￿-]+):\s*(\S.*)$/;
+  function parseFlow(lines, firstLine, lang) {
+    const errors2 = [];
+    const header = lines.findIndex((line) => HEADER.test(line));
+    if (header < 0) return { errors: [{ line: firstLine, message: t(lang, "errFlowDiagram") }] };
+    let says = "";
+    lines.slice(0, header).forEach((line, index) => {
+      const field = /^says:\s*(.*)$/.exec(line.trim());
+      if (field) says = field[1];
+      else if (line.trim()) errors2.push({ line: firstLine + index, message: t(lang, "errFlowField") });
+    });
+    const separator = lines.findIndex((line, index) => index > header && line.trim() === "---");
+    if (separator < 0) return { errors: [...errors2, { line: firstLine, message: t(lang, "errFlowSeparator") }] };
+    const diagram = lines.slice(header, separator);
+    const { nodes, edges } = parseFlowchart(diagram);
+    const notes = [];
+    lines.slice(separator + 1).forEach((text2, index) => {
+      const line = firstLine + separator + 1 + index;
+      if (!text2.trim()) return;
+      if (/^\s/.test(text2) && notes.length) {
+        notes[notes.length - 1].text += ` ${text2.trim()}`;
+        return;
+      }
+      const match = NOTE.exec(text2.trim());
+      if (!match) return errors2.push({ line, message: t(lang, "errFlowNote") });
+      const [, id, rest] = match;
+      if (!nodes.has(id)) return errors2.push({ line, message: t(lang, "errFlowNode", { id }) });
+      if (notes.some((note) => note.id === id)) return errors2.push({ line, message: t(lang, "errFlowDuplicate", { id }) });
+      const cut = rest.lastIndexOf(" | ");
+      notes.push({ id, line, text: cut < 0 ? rest.trim() : rest.slice(0, cut).trim(), badge: cut < 0 ? "" : rest.slice(cut + 3).trim() });
+    });
+    if (!notes.length && !errors2.length) errors2.push({ line: firstLine + separator, message: t(lang, "errFlowEmpty") });
+    return { says, diagram, nodes, edges, notes, errors: errors2 };
+  }
+  function renderFlow({ says, diagram, nodes, edges, notes }, lang, { badges = /* @__PURE__ */ new Map(), anchor = "vm-flow" } = {}) {
+    const numbers = new Map(notes.map((note, index) => [note.id, index + 1]));
+    const chip = (id) => `<span class="vm-flow-ref${nodes.get(id)?.kind ? ` vm-kind-${nodes.get(id).kind}` : ""}">${numbers.get(id)}</span>`;
+    const items = notes.map((note) => {
+      const node = nodes.get(note.id);
+      const kind = node.kind;
+      const color = note.badge ? badges.get(note.badge.toLowerCase()) ?? "muted" : "";
+      const outs = edges.filter((edge) => edge.from === note.id && edge.label.trim()).map((edge) => {
+        const target = nodes.get(edge.to);
+        const ref = numbers.has(edge.to) ? `${chip(edge.to)} ` : "";
+        return `<li><span class="vm-flow-out">${escapeHtml(labelTitle(edge.label.replace(/^"|"$/g, "")))}</span> \u2192 ${ref}${escapeHtml(target?.title ?? edge.to)}</li>`;
+      });
+      return [
+        `<div class="vm-flow-note${kind ? ` vm-kind-${kind}` : ""}" id="${anchor}-${escapeHtml(note.id)}">`,
+        `<span class="vm-flow-no">${numbers.get(note.id)}</span><div class="vm-flow-body">`,
+        `<div class="vm-flow-head"><span class="vm-flow-title">${escapeHtml(node.title)}</span>`,
+        kind ? `<span class="vm-flow-kind">${escapeHtml(kindLabel(kind, lang))}</span>` : "",
+        color ? `<span class="vm-pill vm-pill-${color}">${escapeHtml(note.badge)}</span>` : "",
+        "</div>",
+        note.text ? `<div class="vm-flow-text">${inline(note.text)}</div>` : "",
+        outs.length ? `<ul class="vm-flow-outs">${outs.join("")}</ul>` : "",
+        "</div></div>"
+      ].join("");
+    });
+    return [
+      ...says ? [renderSays(says, "vm-flow-says"), ""] : [],
+      "```mermaid",
+      ...numberNodes(diagram, nodes, numbers),
+      "```",
+      "",
+      `${renderLegend2(usedKinds(diagram), lang)}<div class="vm-flow-notes">${items.join("")}</div>`,
+      ""
+    ];
+  }
+  function transformFlow(lines, start, end, lang, { badges } = {}) {
+    const flow = parseFlow(lines.slice(start + 1, end), start + 2, lang);
+    return flow.errors.length ? { errors: flow.errors } : { output: renderFlow(flow, lang, { badges, anchor: `vm-flow-${start + 1}` }) };
+  }
+
   // src/blocks/index.js
-  var BLOCKS = { chart: transformChart, scale: transformScale, gallery: transformGallery, compare: transformCompare, glossary: transformGlossary, message: transformMessage, toggle: transformToggle };
+  var BLOCKS = { chart: transformChart, scale: transformScale, gallery: transformGallery, compare: transformCompare, glossary: transformGlossary, message: transformMessage, toggle: transformToggle, flow: transformFlow };
 
   // src/sections.js
   var HEADING = /^(#{2,6})\s+(.*?)\s+\{#([a-z0-9][a-z0-9-]*)((?:\s+[a-z][a-z-]*=[^\s}]+)*)\s*\}\s*$/i;
@@ -6900,7 +7179,14 @@ var __visualMarkdown = (() => {
       } else if (fence2) {
         output.push(line);
         const close = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(line);
-        if (close && close[1][0] === fence2.char && close[1].length >= fence2.length) fence2 = null;
+        if (close && close[1][0] === fence2.char && close[1].length >= fence2.length) {
+          const legend = /^mermaid(\s|$)/.test(fence2.kind ?? "") ? renderLegend2(usedKinds(lines.slice(fence2.start, i)), lang) : "";
+          if (legend) {
+            output.push("", legend, "");
+            changed = true;
+          }
+          fence2 = null;
+        }
       } else {
         const open = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line);
         const kind = open && !line.startsWith(" ") ? open[2].trim() : null;
@@ -6912,7 +7198,7 @@ var __visualMarkdown = (() => {
             end++;
           }
           if (BLOCKS[kind]) {
-            const block2 = BLOCKS[kind](lines, i, end, lang);
+            const block2 = BLOCKS[kind](lines, i, end, lang, { badges });
             output.push(...block2.errors ? ["", renderError(block2.errors, lang, kind), ""] : ["", ...block2.output]);
             changed = true;
             i = end;
@@ -6953,7 +7239,7 @@ var __visualMarkdown = (() => {
           const linked = open ? line : linkText(line);
           if (linked !== line) changed = true;
           output.push(linked);
-          if (open) fence2 = { char: open[1][0], length: open[1].length };
+          if (open) fence2 = { char: open[1][0], length: open[1].length, kind, start: i + 1 };
         }
       }
       if (!isTableRow(line)) tableBody = false;

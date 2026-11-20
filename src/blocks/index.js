@@ -5,6 +5,7 @@ import { transformCompare } from './compare.js';
 import { transformGlossary } from './glossary.js';
 import { transformMessage } from './message.js';
 import { transformToggle } from './toggle.js';
+import { transformFlow } from './flow.js';
 
 /** Code blocks that turn into HTML, besides `steps`. Each returns `{ output }` lines or `{ errors }`. */
-export const BLOCKS = { chart: transformChart, scale: transformScale, gallery: transformGallery, compare: transformCompare, glossary: transformGlossary, message: transformMessage, toggle: transformToggle };
+export const BLOCKS = { chart: transformChart, scale: transformScale, gallery: transformGallery, compare: transformCompare, glossary: transformGlossary, message: transformMessage, toggle: transformToggle, flow: transformFlow };
