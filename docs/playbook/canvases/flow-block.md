@@ -4,61 +4,70 @@ visual:
   created: 2026-11-20
   as-of: 2026-11-20
   lang: de
-  badges: { idee: muted, teilweise: warn, von hand: info }
 ---
-# Baustein `flow` für Abläufe
+# Abläufe mit mehr Information als Mermaid
 
-> **Main question:** Brauchen wir einen eigenen Baustein, der einen Ablauf in fester Reihenfolge schön zeigt, und wie sieht er aus?
+> **Main question:** Brauchen wir einen eigenen Baustein, der Abläufe besser zeigt als ein reines Mermaid-Diagramm, und was muss er wirklich können?
 >
 > Living map of this brainstorm. Rewrite it when the direction changes.
 > Specs and plans are distilled from this file. Not canonical product behavior.
 > After shipping, the README and skills own shipped truth; leftovers hold remaining work only, then delete when nothing remains.
 
-## Warum {#warum updated=2026-11-20}
+## Was die Dokumente heute zeigen {#bestand updated=2026-11-20}
 
-Abläufe stehen heute in drei Formen in den Dokumenten, und keine passt richtig. Als `steps` bekommen sie Fortschritt, Zuständige und Todo-Gruppen, die bei einer Methode nichts sagen, und die Gruppierung nach Zustand zerstört die Reihenfolge. Als Mermaid-Diagramm passen Verzweigungen und Übersichten gut, aber ein Schritt mit zwei Sätzen Erklärung wird zu kleinem Text in einer Box. Als nummerierte Liste `1. **Titel.** Erklärung` ist der Inhalt richtig, aber die Darstellung flach, und ein Schritt kann keinen Stand oder keine Art tragen.
+Gezählt am 20.11. in den eigenen Dokumenten unter `Customers/Accenture`, `LioCare` und `Onboarding-automation`: 26 Mermaid-Diagramme. Nicht mitgezählt sind askLio, t3code, dieses Repo und die Historienordner.
 
-Nummerierte Abläufe mit Titel und Erklärung gibt es schon mehrfach in den Accenture-Dokumenten, etwa die Prüfreihenfolge in `batch1/08_preise_einordnen.md`, der Ablauf des Bundling Agent in `bundling-umbau/01_artikel_und_familien.md` (sechs Schritte, jeweils Modell, Code oder Nutzer) und der Paketplaner in `Docs/human/autonomous-sourcing-process.md`.
+| Befund | Anzahl von 26 |
+| --- | --- |
+| Mindestens eine Entscheidung (`:::gate`) | 16 |
+| Mit Phasen oder Bahnen (`subgraph`) | 9 |
+| Direkt darunter eine handgeschriebene Legende („Legende: blau rechnet der Code, orange …“) | rund 20 |
+| Durchschnittliche Knotenbeschriftung über 40 Zeichen, meist `<b>Titel</b><br/>Erklärung` | 14 |
+| Darunter eine nummerierte Liste, die die Knoten einzeln erklärt | 4 |
 
-Abgrenzung, Vorschlag: Bei Mermaid ist die Form die Aussage, bei `flow` der Text. Mermaid nimmt man, wenn der Leser vor allem sehen soll, wie Dinge zusammenhängen: mehrere Stränge mit eigenen Schritten, Pfade, die wieder zusammenlaufen, Schleifen, Übersichten mit kurzen Knotennamen. `flow` nimmt man, wenn es einen Hauptweg von oben nach unten gibt und jeder Schritt einen Satz Erklärung braucht. Arbeit, die jemand erledigt, bleibt `steps`.
+Heißt konkret: Abzweigungen sind der Normalfall, ein Block nur für gerade Abläufe deckt die Minderheit ab und müsste Mermaid trotzdem nachbauen. Was fehlt, ist Platz für Information. Die Erklärung wird heute in die Kästen gequetscht oder in einer zweiten Liste darunter wiederholt, die man über Nummern im Kopf zuordnet, und die Legende schreibt jeder Agent anders, teils mit widersprüchlichen Farben (einmal ist Mensch grün, einmal blau).
+
+Beispiele: `bundling-umbau/01_artikel_und_familien.md` (Diagramm plus sechs nummerierte Erklärungen), `Docs/human/autonomous-sourcing-process.md` (sechs Diagramme, jedes mit Legende, zwei mit nummerierter Liste), `LioCare/docs/playbook/photo-agent/00_overview.md` (Diagramm plus acht nummerierte Abschnitte).
 
 ## Richtung {#richtung updated=2026-11-20}
 
-Vorschlag, noch nicht entschieden: ein Codeblock `flow`, aufgebaut wie `compare`, in drei Stufen, die man nur bei Bedarf nutzt.
-
-1. Schritte: `- Titel | Badge`, darunter eingerückt die Erklärung als Markdown. Die Nummern vergibt der Renderer.
-2. Phasen: eine Zeile `## Name` im Block setzt eine kleine Zwischenüberschrift auf die Linie, etwa Angebot, Kategorie, Position.
-3. Eine Entscheidung: Ein Schritt, dessen Titel mit `?` endet, wird zur Raute. Seine Ausgänge stehen eingerückt als `-> Name: Erklärung` und erscheinen nebeneinander. Ein Ausgang endet dort oder sagt mit `→ Ziel`, wohin es geht. Danach läuft der Hauptweg weiter.
-
-Was darüber hinausgeht, ist Mermaid: Ausgänge mit eigenen mehreren Schritten, verschachtelte Entscheidungen, Rücksprünge, parallele Stränge. Der Checker meldet das nicht als Fehler, die Syntax lässt es einfach nicht zu.
+Vorschlag, noch nicht entschieden: Mermaid bleibt für die Form zuständig, der Baustein legt die Information daneben. Ein Block `flow` enthält oben ein normales Mermaid-Diagramm mit kurzen Knotennamen und nach einer Trennzeile `---` eine Notiz je Knoten.
 
 ````markdown
 ```flow
 says: Je Lieferant, Position für Position.
-## Angebot
-- Abweichung zuerst auf Datenfehler prüfen | von Hand
-  Einheit, Incoterm, Menge und Mindestmenge müssen zur Baseline passen.
-- Artikel in Produktkategorien gruppieren | Idee
-  Kategorie heißt die Art des Produkts mit gemeinsamem Preistreiber.
-## Position
-- Was machen wir mit der Position? | Idee
-  Den Zielpreis ändern darf nur der SLB Category Owner (E32).
-  -> Verhandeln: Erhöhung nicht erklärt, kein zweiter Lieferant.
-  -> Annehmen: Erhöhung erklärt oder Spend zu klein.
-  -> Zurückstellen: SLB kauft den Artikel auch woanders. → spätere Wave
+flowchart LR
+  daten["Datenfehler prüfen"]:::code --> kat["Kategorien bilden"]:::llm --> was{{"Was tun?"}}:::gate
+  was -->|nicht erklärt| ziel["Zielpreis an Lieferant"]:::human
+  was -->|erklärt| ann(["Annehmen"]):::dot
+---
+daten: Einheit, Incoterm, Menge und Mindestmenge müssen zur Baseline passen. | von Hand
+kat: Kategorie heißt die Art des Produkts mit gemeinsamem Preistreiber. | Idee
+was: Den Zielpreis ändern darf nur der SLB Category Owner (E32).
+ziel: Ziel ist die Baseline als Dollarbetrag. | Idee
 ```
 ````
 
-Gerendert als senkrechte Linie mit nummerierten Kreisen, Phasen als kleine Großbuchstaben auf der Linie, die Entscheidung als Raute mit Ausgängen als Kacheln darunter. Eine Fläche, keine Karte in der Karte, kein Fortschritt, keine Zuständigen, kein Datum je Schritt. Auf schmalen Fenstern stehen die Ausgänge untereinander. Im Druck bleibt alles sichtbar, auf GitHub erscheint der Block als lesbarer Codeblock. Ein HTML-Entwurf liegt im Chat vom 20.11.
+Der Renderer macht daraus drei Teile:
+
+1. Das Diagramm, wie Mermaid es zeichnet. Jeder Knoten mit Notiz bekommt eine Nummer in der Reihenfolge der Notizen, und ein Klick auf den Knoten springt zur Notiz.
+2. Eine Legende, die er aus den benutzten Klassen erzeugt, mit den Farben aus dem Theme. Die handgeschriebene Legende entfällt.
+3. Die Notizen als nummerierte Liste: Nummer in der Farbe der Knotenart, Knotenname als Titel, Art als kleines Wort, Badge rechts, Erklärung darunter. Bei einer Entscheidung erscheinen die Beschriftungen der ausgehenden Pfeile als Ausgänge, ohne dass man sie zweimal schreibt.
+
+Die Abgrenzung wird damit einfach: Ein Diagramm ohne Erklärung bleibt ein normaler `mermaid`-Block, braucht ein Knoten mehr als seinen Namen, wird es ein `flow`. Arbeit, die jemand erledigt, bleibt `steps`.
+
+Ein Teil davon lohnt sich auch ohne neuen Block: Die Legende aus den Klassen kann der Renderer unter jedes normale Mermaid-Diagramm setzen. Das betrifft die rund 20 Diagramme mit handgeschriebener Legende sofort.
+
+Noch zu prüfen: ob der Parser einen `flow` vor MPE in einen `mermaid`-Block plus HTML umschreiben kann, sodass MPE das Diagramm wie bisher zeichnet, und ob die Klick-Sprünge im Preview und im PDF funktionieren.
 
 ## Offene Fragen {#offen updated=2026-11-20}
 
-> [!card question yellow] Was steht im Badge eines Schritts?
-> Ein freies Wort mit Farbe aus `badges:` (Idee, von Hand, gebaut, aber auch Modell oder Code), feste Arten aus dem Mermaid-Theme (Code, Modell, Mensch, Daten, Entscheidung) mit eigenem Icon, oder beides.
+> [!card question yellow] Zuerst nur die automatische Legende oder gleich den ganzen Block?
+> Die Legende ist klein, ändert an keiner Datei die Syntax und hilft bei 20 Diagrammen. Der Block braucht Parser, Nummerierung und Verlinkung.
 
-> [!card question grey] Reicht eine Entscheidungsebene?
-> Vorschlag ist genau eine Ebene mit Ausgängen, die enden oder auf ein Ziel zeigen. Offen, ob es Fälle gibt, in denen ein Ausgang zwei eigene Schritte braucht und Mermaid dafür zu schwer wäre.
+> [!card question grey] Braucht ein `flow` ohne Diagramm eine eigene Form?
+> Bei einem rein geraden Ablauf könnte man das Diagramm weglassen, dann erscheint nur die nummerierte Liste mit Linie. Erst klären, wenn der Hauptfall steht.
 
-## Nicht jetzt
+## Verworfen
 
-Verschachtelte Entscheidungen, Ausgänge mit eigenen Schrittfolgen, Schleifen und parallele Stränge, dafür bleibt Mermaid.
+Ein eigener Block nur für gerade Abläufe mit selbst gezeichneten Abzweigungen: deckt die Minderheit ab, und Abzweigungen als Kacheln oder Äste sahen schlechter aus als Mermaid.
