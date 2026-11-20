@@ -12,6 +12,38 @@ const sameText = (left, right) => left?.trim().replace(/\s+/g, ' ').toLowerCase(
 const threadLabel = (reference, lang) => /^\[Thread:\s*([^;\]]+)/.exec(reference)?.[1].trim() || t(lang, 'thread');
 
 /**
+ * Stage of each step: 1 without predecessors, else one more than its latest predecessor.
+ * Counted over all dependencies, done ones included, so a number never moves when a step is ticked off.
+ */
+export function stagesOf(steps, byId = new Map(steps.map(step => [step.id, step]))) {
+  const stages = new Map();
+  const stage = step => {
+    if (!stages.has(step.id)) stages.set(step.id, step.after.length ? 1 + Math.max(...step.after.map(id => stage(byId.get(id)))) : 1);
+    return stages.get(step.id);
+  };
+  steps.forEach(stage);
+  return stages;
+}
+
+/** Stage groups: finished stages fold away, a stage with a step that can start now says so. */
+function stageGroups(steps, stages, groupOf, lang) {
+  const count = Math.max(...stages.values());
+  return Array.from({ length: count }, (_, index) => index + 1).map(number => {
+    const members = steps.filter(step => stages.get(step.id) === number);
+    const open = members.filter(step => step.state !== 'done' && !isDismissed(step));
+    const kind = !open.length ? 'finished' : open.some(step => !['later', 'backlog'].includes(groupOf(step))) ? 'now' : 'next';
+    const parallel = open.length > 1 ? `<span class="vm-stage-hint">· ${escapeHtml(t(lang, 'stageParallel'))}</span>` : '';
+    return {
+      key: `stage vm-stage-${kind}`,
+      steps: members,
+      open: kind !== 'finished',
+      mark: `<span class="vm-stage-no">${number}</span>`,
+      title: `${escapeHtml(t(lang, `stage_${kind}`))}${parallel}`,
+    };
+  }).filter(group => group.steps.length);
+}
+
+/**
  * One compact row per step, like an issue list: status icon, id tag, title and a one-line
  * description. Everything else opens in native details, so the overview stays scannable.
  */
@@ -32,9 +64,13 @@ export function renderSteps(steps, computed, lang, { idPrefix = 'vm-steps', toda
   const listGroupOf = step => !prioritized ? groupOf(step)
     : step.state === 'done' ? 'done' : isDismissed(step) ? groupOf(step) : step.priority?.toLowerCase() ?? 'none';
   const groupKeys = prioritized ? ['p1', 'p2', 'p3', 'none', 'done', 'canceled', 'duplicate'] : workflowGroups;
-  const groups = groupKeys
-    .map(key => ({ key, steps: steps.filter(step => listGroupOf(step) === key) }))
-    .filter(group => group.steps.length);
+  // With dependencies and no priorities the list answers "in which order": one group per stage.
+  const staged = !prioritized && steps.some(step => step.after.length);
+  const stages = staged ? stagesOf(steps, byId) : null;
+  const groups = staged ? stageGroups(steps, stages, groupOf, lang)
+    : groupKeys
+      .map(key => ({ key, steps: steps.filter(step => listGroupOf(step) === key) }))
+      .filter(group => group.steps.length);
   const target = id => `${idPrefix}-${id}`;
   // A dependency takes the color of the step it points to.
   const dependency = id => `<a href="#${target(id)}" class="vm-dep vm-ref-${groupOf(byId.get(id)) === 'ready' ? 'can-start' : groupOf(byId.get(id)) === 'later' ? 'open' : groupOf(byId.get(id))}" title="${escapeHtml(byId.get(id).label)}" data-responsibility="${escapeHtml(byId.get(id).responsibility ?? 'unassigned')}">${DEPENDENCY_ICON}${escapeHtml(id)}</a>`;
@@ -83,7 +119,7 @@ export function renderSteps(steps, computed, lang, { idPrefix = 'vm-steps', toda
     return `<li id="${target(step.id)}" class="vm-step vm-${state} vm-responsibility-${responsibility}${isDismissed(step) ? ' vm-dismissed' : ''}${group === 'ready' ? ' vm-can-start' : ''}">${row}</li>`;
   };
   const rows = groups.map(group =>
-    `<details class="vm-group vm-group-${group.key}" open><summary class="vm-group-toggle"><h3 class="vm-group-title">${icon(group.key)}${escapeHtml(progressLabels[group.key] ?? t(lang, `group_${group.key}`))}<span class="vm-group-count">${group.steps.length}</span><span class="vm-chevron vm-group-chevron">${CHEVRON_ICON}</span></h3></summary><ul class="vm-steps-list">${group.steps.map(renderRow).join('')}</ul></details>`).join('');
+    `<details class="vm-group vm-group-${group.key}"${group.open === false ? '' : ' open'}><summary class="vm-group-toggle"><h3 class="vm-group-title">${group.mark ?? icon(group.key)}${group.title ?? escapeHtml(progressLabels[group.key] ?? t(lang, `group_${group.key}`))}<span class="vm-group-count">${group.steps.length}</span><span class="vm-chevron vm-group-chevron">${CHEVRON_ICON}</span></h3></summary><ul class="vm-steps-list">${group.steps.map(renderRow).join('')}</ul></details>`).join('');
   const percent = computed.total ? Math.round(100 * computed.done / computed.total) : 0;
   const head = `<div class="vm-steps-head"><span>${escapeHtml(t(lang, 'progress', computed))}</span><span class="vm-progress"><span style="width:${percent}%"></span></span></div>`;
   return `<div class="vm-steps">${head}${rows}</div>`;

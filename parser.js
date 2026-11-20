@@ -86,6 +86,10 @@ var __visualMarkdown = (() => {
       group_later: "Geplant",
       group_waiting: "Wartet",
       group_done: "Fertig",
+      stage_now: "Jetzt",
+      stage_next: "Danach",
+      stage_finished: "Erledigt",
+      stageParallel: "parallel m\xF6glich",
       and: "und",
       goal: "Ziel",
       description: "Beschreibung",
@@ -210,6 +214,10 @@ var __visualMarkdown = (() => {
       group_later: "Planned",
       group_waiting: "Waiting",
       group_done: "Done",
+      stage_now: "Now",
+      stage_next: "Next",
+      stage_finished: "Done",
+      stageParallel: "can run in parallel",
       and: "and",
       goal: "Goal",
       description: "Description",
@@ -599,6 +607,31 @@ var __visualMarkdown = (() => {
   var icon = (key, className = "vm-group-icon") => svg(`${className} vm-icon-${key}`, 16, progressShapes[key] ?? PRIORITY_SHAPES[key]);
   var sameText = (left, right) => left?.trim().replace(/\s+/g, " ").toLowerCase() === right?.trim().replace(/\s+/g, " ").toLowerCase();
   var threadLabel = (reference2, lang) => /^\[Thread:\s*([^;\]]+)/.exec(reference2)?.[1].trim() || t(lang, "thread");
+  function stagesOf(steps, byId = new Map(steps.map((step) => [step.id, step]))) {
+    const stages = /* @__PURE__ */ new Map();
+    const stage = (step) => {
+      if (!stages.has(step.id)) stages.set(step.id, step.after.length ? 1 + Math.max(...step.after.map((id) => stage(byId.get(id)))) : 1);
+      return stages.get(step.id);
+    };
+    steps.forEach(stage);
+    return stages;
+  }
+  function stageGroups(steps, stages, groupOf, lang) {
+    const count = Math.max(...stages.values());
+    return Array.from({ length: count }, (_, index) => index + 1).map((number) => {
+      const members = steps.filter((step) => stages.get(step.id) === number);
+      const open = members.filter((step) => step.state !== "done" && !isDismissed(step));
+      const kind = !open.length ? "finished" : open.some((step) => !["later", "backlog"].includes(groupOf(step))) ? "now" : "next";
+      const parallel = open.length > 1 ? `<span class="vm-stage-hint">\xB7 ${escapeHtml(t(lang, "stageParallel"))}</span>` : "";
+      return {
+        key: `stage vm-stage-${kind}`,
+        steps: members,
+        open: kind !== "finished",
+        mark: `<span class="vm-stage-no">${number}</span>`,
+        title: `${escapeHtml(t(lang, `stage_${kind}`))}${parallel}`
+      };
+    }).filter((group) => group.steps.length);
+  }
   function renderSteps(steps, computed, lang, { idPrefix = "vm-steps", today = /* @__PURE__ */ new Date(), sections = /* @__PURE__ */ new Set() } = {}) {
     const byId = new Map(steps.map((step) => [step.id, step]));
     const stateOf = (step) => step.state === "open" && step.waitingFor ? "waiting" : step.state;
@@ -612,7 +645,9 @@ var __visualMarkdown = (() => {
     const anyOwner = steps.some((step) => step.who);
     const listGroupOf = (step) => !prioritized ? groupOf(step) : step.state === "done" ? "done" : isDismissed(step) ? groupOf(step) : step.priority?.toLowerCase() ?? "none";
     const groupKeys2 = prioritized ? ["p1", "p2", "p3", "none", "done", "canceled", "duplicate"] : groupKeys;
-    const groups = groupKeys2.map((key) => ({ key, steps: steps.filter((step) => listGroupOf(step) === key) })).filter((group) => group.steps.length);
+    const staged = !prioritized && steps.some((step) => step.after.length);
+    const stages = staged ? stagesOf(steps, byId) : null;
+    const groups = staged ? stageGroups(steps, stages, groupOf, lang) : groupKeys2.map((key) => ({ key, steps: steps.filter((step) => listGroupOf(step) === key) })).filter((group) => group.steps.length);
     const target = (id) => `${idPrefix}-${id}`;
     const dependency = (id) => `<a href="#${target(id)}" class="vm-dep vm-ref-${groupOf(byId.get(id)) === "ready" ? "can-start" : groupOf(byId.get(id)) === "later" ? "open" : groupOf(byId.get(id))}" title="${escapeHtml(byId.get(id).label)}" data-responsibility="${escapeHtml(byId.get(id).responsibility ?? "unassigned")}">${DEPENDENCY_ICON}${escapeHtml(id)}</a>`;
     const field = (kind, label, content) => `<div class="vm-field vm-field-${kind}"><div class="vm-caption">${CAPTION_ICONS[kind]}${escapeHtml(t(lang, label))}</div><div class="vm-field-text">${content}</div></div>`;
@@ -656,7 +691,7 @@ var __visualMarkdown = (() => {
       const row = body ? `<details class="vm-row-details"${step.priority === "P1" && !closed ? " open" : ""}><summary class="vm-row">${head2}<span class="vm-chevron">${CHEVRON_ICON}</span></div></summary><div class="vm-row-body">${body}</div></details>` : `<div class="vm-row">${head2}<span class="vm-chevron"></span></div></div>`;
       return `<li id="${target(step.id)}" class="vm-step vm-${state} vm-responsibility-${responsibility}${isDismissed(step) ? " vm-dismissed" : ""}${group === "ready" ? " vm-can-start" : ""}">${row}</li>`;
     };
-    const rows = groups.map((group) => `<details class="vm-group vm-group-${group.key}" open><summary class="vm-group-toggle"><h3 class="vm-group-title">${icon(group.key)}${escapeHtml(progressLabels[group.key] ?? t(lang, `group_${group.key}`))}<span class="vm-group-count">${group.steps.length}</span><span class="vm-chevron vm-group-chevron">${CHEVRON_ICON}</span></h3></summary><ul class="vm-steps-list">${group.steps.map(renderRow).join("")}</ul></details>`).join("");
+    const rows = groups.map((group) => `<details class="vm-group vm-group-${group.key}"${group.open === false ? "" : " open"}><summary class="vm-group-toggle"><h3 class="vm-group-title">${group.mark ?? icon(group.key)}${group.title ?? escapeHtml(progressLabels[group.key] ?? t(lang, `group_${group.key}`))}<span class="vm-group-count">${group.steps.length}</span><span class="vm-chevron vm-group-chevron">${CHEVRON_ICON}</span></h3></summary><ul class="vm-steps-list">${group.steps.map(renderRow).join("")}</ul></details>`).join("");
     const percent = computed.total ? Math.round(100 * computed.done / computed.total) : 0;
     const head = `<div class="vm-steps-head"><span>${escapeHtml(t(lang, "progress", computed))}</span><span class="vm-progress"><span style="width:${percent}%"></span></span></div>`;
     return `<div class="vm-steps">${head}${rows}</div>`;

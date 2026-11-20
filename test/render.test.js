@@ -8,7 +8,7 @@ const row = (html, id) => html.match(new RegExp(`<li id="[^" ]*-${id}"[^>]*>[\\s
 const caption = (label, text) => new RegExp(`class="vm-caption"><svg class="vm-caption-icon"[^>]*>[\\s\\S]*?</svg>${label}</div><div class="vm-field-text">${text}`);
 
 test('groups rows once in ready, running, planned, waiting, done order with counts', () => {
-  const html = run(example);
+  const html = run(example.replace(/ \| after: [^|\n]+/g, '').replace('review: Stichprobe prüfen', 'review: Stichprobe prüfen | workflow: backlog').replace('publish: Ergebnisse übernehmen', 'publish: Ergebnisse übernehmen | workflow: backlog'));
   const groups = [...html.matchAll(/class="vm-group vm-group-([^" ]+)"/g)].map(match => match[1]);
   assert.deepEqual(groups, ['ready', 'running', 'later', 'waiting', 'done']);
   const ids = [...html.matchAll(/<li id="vm-steps-1-([^" ]+)"/g)].map(match => match[1]);
@@ -16,10 +16,26 @@ test('groups rows once in ready, running, planned, waiting, done order with coun
   assert.match(html, /<h3 class="vm-group-title"><svg class="vm-group-icon vm-icon-later"[^>]*>[\s\S]*?<\/svg>Backlog<span class="vm-group-count">2<\/span><span class="vm-chevron vm-group-chevron">[\s\S]*?<\/span><\/h3>/);
   assert.doesNotMatch(html, /vm-number|<ol/);
 });
+test('a block with dependencies lists its steps by stage, numbered by the dependencies', () => {
+  const html = run(example);
+  const groups = [...html.matchAll(/class="vm-group vm-group-stage vm-stage-(\w+)"/g)].map(match => match[1]);
+  assert.deepEqual(groups, ['now', 'now', 'next', 'next']);
+  const ids = [...html.matchAll(/<li id="vm-steps-1-([^" ]+)"/g)].map(match => match[1]);
+  assert.deepEqual(ids, ['basis', 'approval', 'docs', 'run', 'review', 'publish']);
+  assert.match(html, /<span class="vm-stage-no">1<\/span>Jetzt<span class="vm-stage-hint">· parallel möglich<\/span><span class="vm-group-count">3<\/span>/);
+  assert.match(html, /<span class="vm-stage-no">3<\/span>Danach<span class="vm-group-count">1<\/span>/);
+  // Ticking off a step keeps every number; a finished stage folds away.
+  const later = run(example.replace('[~] run', '[x] run').replace('[!] approval', '[x] approval').replace('approval: Freigabe einholen | waiting-for: Rückmeldung', 'approval: Freigabe einholen').replace('[ ] docs', '[x] docs'));
+  assert.match(later, /<details class="vm-group vm-group-stage vm-stage-finished"><summary[^>]*><h3 class="vm-group-title"><span class="vm-stage-no">1<\/span>Erledigt/);
+  assert.match(later, /vm-stage-finished"><summary[^>]*><h3 class="vm-group-title"><span class="vm-stage-no">2<\/span>/);
+  assert.match(later, /vm-stage-now" open><summary[^>]*><h3 class="vm-group-title"><span class="vm-stage-no">3<\/span>Jetzt/);
+  // Priorities win: a ranked list stays grouped by urgency.
+  assert.doesNotMatch(run('- [ ] a: A | priority: P1\n- [ ] b: B | after: a'), /vm-stage/);
+});
 test('makes every group independently collapsible with its label and count always visible', () => {
   for (const body of [example, '- [ ] a: Urgent | priority: P1\n- [ ] b: Other\n- [x] c: Finished']) {
     const html = run(body);
-    const groups = [...html.matchAll(/<details class="vm-group vm-group-([^" ]+)" open><summary class="vm-group-toggle">([\s\S]*?)<\/summary><ul class="vm-steps-list">([\s\S]*?)<\/ul><\/details>/g)];
+    const groups = [...html.matchAll(/<details class="vm-group vm-group-([^"]+)" open><summary class="vm-group-toggle">([\s\S]*?)<\/summary><ul class="vm-steps-list">([\s\S]*?)<\/ul><\/details>/g)];
     assert.equal(groups.length, [...html.matchAll(/class="vm-group vm-group-/g)].length);
     assert.ok(groups.length > 1);
     for (const [, key, summary, rows] of groups) {
@@ -77,7 +93,7 @@ test('keeps anchor targets unique across blocks with the same ids', () => {
 });
 test('translates labels and escapes text and attributes', () => {
   const html = transform('---\nvisual:\n  lang: en\n---\n' + fence('- [~] a: <img> "A" | done-when: `ok`\n- [ ] b: B | after: a'));
-  assert.match(html, /Backlog<span/);
+  assert.match(html, /Next<span/);
   assert.match(html, caption('Goal', '<code>ok</code>'));
   assert.match(html, /&lt;img&gt; &quot;A&quot;/);
   assert.doesNotMatch(html, /<img>/);
