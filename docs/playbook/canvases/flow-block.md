@@ -31,7 +31,7 @@ Beispiele: `bundling-umbau/01_artikel_und_familien.md` (Diagramm plus sechs numm
 
 ## Richtung {#richtung updated=2026-11-20}
 
-Vorschlag, noch nicht entschieden: Mermaid bleibt für die Form zuständig, der Baustein legt die Information daneben. Ein Block `flow` enthält oben ein normales Mermaid-Diagramm mit kurzen Knotennamen und nach einer Trennzeile `---` eine Notiz je Knoten.
+Grob abgestimmt am 20.11.: Mermaid bleibt für die Form zuständig, der Baustein legt die Information daneben. Ein Block `flow` enthält oben ein normales Mermaid-Diagramm mit kurzen Knotennamen und nach einer Trennzeile `---` eine Notiz je Knoten.
 
 ````markdown
 ```flow
@@ -52,7 +52,7 @@ Der Renderer macht daraus drei Teile:
 
 1. Das Diagramm, wie Mermaid es zeichnet. Jeder Knoten mit Notiz bekommt eine Nummer in der Reihenfolge der Notizen, und ein Klick auf den Knoten springt zur Notiz.
 2. Eine Legende, die er aus den benutzten Klassen erzeugt, mit den Farben aus dem Theme. Die handgeschriebene Legende entfällt.
-3. Die Notizen als nummerierte Liste: Nummer in der Farbe der Knotenart, Knotenname als Titel, Art als kleines Wort, Badge rechts, Erklärung darunter. Bei einer Entscheidung erscheinen die Beschriftungen der ausgehenden Pfeile als Ausgänge, ohne dass man sie zweimal schreibt.
+3. Die Notizen als nummerierte Liste: Nummer im selben Stil wie die Badges (getönter Grund, farbige Ziffer) in der Farbe der Knotenart, Knotenname als Titel, Art als kleines Wort, Badge rechts, Erklärung darunter. Bei einer Entscheidung erscheinen die Beschriftungen der ausgehenden Pfeile als Ausgänge, ohne dass man sie zweimal schreibt.
 
 Die Abgrenzung wird damit einfach: Ein Diagramm ohne Erklärung bleibt ein normaler `mermaid`-Block, braucht ein Knoten mehr als seinen Namen, wird es ein `flow`. Arbeit, die jemand erledigt, bleibt `steps`.
 
