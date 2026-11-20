@@ -92,3 +92,13 @@ test('explicit waiting reasons require the On Hold workflow', () => {
   const { steps } = parse('- [!] x: X | workflow: on-hold | waiting-for: Feedback');
   assert.deepEqual(validateSteps(steps, 'de'), []);
 });
+
+test('rows leave out badges that repeat the group title or say nothing', () => {
+  const plain = render('- [ ] a: A | updated: 2026-11-20\n- [ ] b: B | updated: 2026-11-20');
+  assert.doesNotMatch(plain, /vm-owner/);
+  assert.doesNotMatch(plain, /vm-workflow-name/);
+  const mixed = render('- [ ] a: A | owner: Dennis\n- [ ] b: B');
+  assert.match(mixed, /vm-owner[^>]*><svg[\s\S]*?<\/svg>Nicht zugeordnet/);
+  const prioritized = render('- [ ] a: A | priority: P1');
+  assert.match(prioritized, /vm-workflow-name/);
+});

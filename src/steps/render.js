@@ -27,6 +27,8 @@ export function renderSteps(steps, computed, lang, { idPrefix = 'vm-steps', toda
   // With priorities the list answers "what first": open steps by priority, done steps at the end.
   // The status icon in each row still shows whether a step runs, waits or can start.
   const prioritized = steps.some(step => step.priority);
+  // "Unassigned" only says something when other steps in the block have an owner.
+  const anyOwner = steps.some(step => step.who);
   const listGroupOf = step => !prioritized ? groupOf(step)
     : step.state === 'done' ? 'done' : isDismissed(step) ? groupOf(step) : step.priority?.toLowerCase() ?? 'none';
   const groupKeys = prioritized ? ['p1', 'p2', 'p3', 'none', 'done', 'canceled', 'duplicate'] : workflowGroups;
@@ -52,14 +54,15 @@ export function renderSteps(steps, computed, lang, { idPrefix = 'vm-steps', toda
     const currentStatus = `<div class="vm-current-status"><span class="vm-current-status-label">${escapeHtml(t(lang, 'currentStatus'))}:</span> ${inline(step.status || progressLabels[group])}</div>`;
     const summary = !step.status && step.description ? `<div class="vm-summary">${inline(step.description)}</div>` : '';
     const ownerIcon = step.who && /^agent\b/i.test(step.who) ? AGENT_ICON : PERSON_ICON;
-    const owner = badge(`vm-owner${step.who && /^agent\b/i.test(step.who) ? ' vm-agent' : ''}`, ownerIcon, step.who ? inline(step.who) : escapeHtml(t(lang, 'responsibility_unassigned')), ownershipLabel);
+    const owner = !step.who && !anyOwner ? '' : badge(`vm-owner${step.who && /^agent\b/i.test(step.who) ? ' vm-agent' : ''}`, ownerIcon, step.who ? inline(step.who) : escapeHtml(t(lang, 'responsibility_unassigned')), ownershipLabel);
     const showTicketStatus = step.ticketStatus && !sameText(step.ticketStatus, workflowLabel);
     const showTicketOwner = step.ticketOwner && !sameText(step.ticketOwner, step.who);
     const ticket = step.ticket ? `<span class="vm-ticket">${inline(step.ticket)}${showTicketStatus ? ` · ${escapeHtml(step.ticketStatus)}` : ''}${showTicketOwner ? ` · ${escapeHtml(t(lang, 'ticketOwner', { who: step.ticketOwner }))}` : ''}</span>` : '';
     const meta = [
       ...pending.map(dependency),
       owner,
-      `<span class="vm-badge vm-workflow-name">${escapeHtml(workflowLabel)}</span>`,
+      // Grouped by progress, the group title already names it; grouped by priority, the row has to.
+      prioritized ? `<span class="vm-badge vm-workflow-name">${escapeHtml(workflowLabel)}</span>` : '',
       ticket,
       step.thread ? badge('vm-thread', THREAD_ICON, escapeHtml(threadLabel(step.thread, lang)), step.thread) : '',
       step.since && !showNeed ? badge('vm-since', SINCE_ICON, inline(step.since), t(lang, 'since', { when: step.since })) : '',
